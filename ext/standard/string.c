@@ -13,7 +13,7 @@
    | license@php.net so we can mail you a copy immediately.               |
    +----------------------------------------------------------------------+
    | Authors: Rasmus Lerdorf <rasmus@php.net>                             |
-   |          Stig Sæther Bakken <ssb@php.net>                            |
+   |          Stig SÃ¦ther Bakken <ssb@php.net>                            |
    |          Zeev Suraski <zeev@zend.com>                                |
    +----------------------------------------------------------------------+
  */
@@ -59,6 +59,7 @@
 #include "scanf.h"
 #include "zend_API.h"
 #include "zend_execute.h"
+#include "zend_encodings.h"
 #include "php_globals.h"
 #include "basic_functions.h"
 #include "php_smart_str.h"
@@ -5604,6 +5605,52 @@ PHP_FUNCTION(substr_compare)
 	} else {
 		RETURN_LONG(zend_binary_strncasecmp_l(s1 + offset, (s1_len - offset), s2, s2_len, cmp_len));
 	}
+}
+/* }}} */
+
+/* {{{ proto int str_encoding(string str)
+   Get associated encoding of a string */
+PHP_FUNCTION(str_encoding)
+{
+    zval *zstr;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &zstr) == FAILURE) {
+        RETURN_FALSE;
+    }
+    if (Z_TYPE_P(zstr) == IS_STRING) {
+        RETURN_STRING(Z_STRENC_P(zstr)->name, TRUE);
+    } else {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "string expected");
+        RETURN_FALSE;
+    }
+}
+/* }}} */
+
+/* {{{ proto int str_force_encoding(string str, string encoding)
+   Set associated encoding of a string */
+PHP_FUNCTION(str_force_encoding)
+{
+    zval *zstr;
+    char *wanted_enc;
+    int wanted_enc_len;
+
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs", &zstr, &wanted_enc, &wanted_enc_len) == FAILURE) {
+        RETURN_FALSE;
+    }
+    if (Z_TYPE_P(zstr) == IS_STRING) {
+        EncodingPtr enc;
+
+        if (NULL == (enc = enc_by_name(wanted_enc))) {
+            php_error_docref(NULL TSRMLS_CC, E_WARNING, "unknown encoding: '%s'", wanted_enc);
+            RETURN_FALSE;
+        } else {
+            Z_STRENC_P(zstr) = enc;
+            RETURN_TRUE;
+        }
+    } else {
+        php_error_docref(NULL TSRMLS_CC, E_WARNING, "string expected");
+        RETURN_FALSE;
+    }
 }
 /* }}} */
 

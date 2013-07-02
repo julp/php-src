@@ -2698,6 +2698,16 @@ ZEND_END_ARG_INFO()
 /* }}} */
 /* }}} */
 
+
+ZEND_BEGIN_ARG_INFO(arginfo_str_encoding, 0)
+	ZEND_ARG_INFO(1, string)
+ZEND_END_ARG_INFO()
+
+ZEND_BEGIN_ARG_INFO(arginfo_str_force_encoding, 0)
+	ZEND_ARG_INFO(1, string)
+	ZEND_ARG_INFO(0, encoding)
+ZEND_END_ARG_INFO()
+
 const zend_function_entry basic_functions[] = { /* {{{ */
 	PHP_FE(constant,														arginfo_constant)
 	PHP_FE(bin2hex,															arginfo_bin2hex)
@@ -3390,6 +3400,8 @@ const zend_function_entry basic_functions[] = { /* {{{ */
 	PHP_FE(output_reset_rewrite_vars,										arginfo_output_reset_rewrite_vars)
 
 	PHP_FE(sys_get_temp_dir,												arginfo_sys_get_temp_dir)
+	PHP_FE(str_encoding, arginfo_str_encoding)
+	PHP_FE(str_force_encoding, arginfo_str_force_encoding)
 
 	PHP_FE_END
 };

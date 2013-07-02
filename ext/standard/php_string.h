@@ -99,6 +99,8 @@ PHP_FUNCTION(strcoll);
 #if HAVE_STRFMON
 PHP_FUNCTION(money_format);
 #endif
+PHP_FUNCTION(str_encoding);
+PHP_FUNCTION(str_force_encoding);
 
 #if defined(HAVE_LOCALECONV) && defined(ZTS)
 PHP_MINIT_FUNCTION(localeconv);

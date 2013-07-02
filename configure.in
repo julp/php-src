@@ -1463,6 +1463,7 @@ case $host_alias in
 esac
 
 PHP_ADD_SOURCES(Zend, \
+    zend_encodings.c \
     zend_language_parser.c zend_language_scanner.c \
     zend_ini_parser.c zend_ini_scanner.c \
     zend_alloc.c zend_compile.c zend_constants.c zend_dynamic_array.c zend_dtrace.c \

@@ -1601,7 +1601,7 @@ PHP_FUNCTION(dom_node_lookup_prefix)
 	int uri_len = 0;
 	char *uri;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os", &id, dom_node_class_entry, &uri, &uri_len) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ou", &id, dom_node_class_entry, &uri, &uri_len) == FAILURE) {
 		return;
 	}
 
@@ -1651,7 +1651,7 @@ PHP_FUNCTION(dom_node_is_default_namespace)
 	int uri_len = 0;
 	char *uri;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os", &id, dom_node_class_entry, &uri, &uri_len) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ou", &id, dom_node_class_entry, &uri, &uri_len) == FAILURE) {
 		return;
 	}
 
@@ -1684,7 +1684,7 @@ PHP_FUNCTION(dom_node_lookup_namespace_uri)
 	int prefix_len = 0;
 	char *prefix=NULL;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Os!", &id, dom_node_class_entry, &prefix, &prefix_len) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ou!", &id, dom_node_class_entry, &prefix, &prefix_len) == FAILURE) {
 		return;
 	}
 

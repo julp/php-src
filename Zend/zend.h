@@ -253,6 +253,7 @@ char *alloca ();
 
 #include "zend_types.h"
 #include "zend_string.h"
+#include "zend_encodings.h"
 
 #ifdef HAVE_LIMITS_H
 # include <limits.h>
@@ -324,6 +325,7 @@ typedef union _zvalue_value {
 	struct {
 		char *val;
 		int len;
+		EncodingPtr enc;
 	} str;
 	HashTable *ht;				/* hash table value */
 	zend_object_value obj;

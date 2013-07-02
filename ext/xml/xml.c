@@ -30,6 +30,7 @@
 
 #define PHP_XML_INTERNAL
 #include "zend_variables.h"
+#include "zend_encodings.h"
 #include "ext/standard/php_string.h"
 #include "ext/standard/info.h"
 #include "ext/standard/html.h"
@@ -1685,7 +1686,7 @@ PHP_FUNCTION(utf8_encode)
 	XML_Char *encoded;
 	int arg_len, len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "e", &arg, &arg_len, enc_iso_8859_1) == FAILURE) {
 		return;
 	}
 
@@ -1693,7 +1694,7 @@ PHP_FUNCTION(utf8_encode)
 	if (encoded == NULL) {
 		RETURN_FALSE;
 	}
-	RETVAL_STRINGL(encoded, len, 0);
+	RETVAL_STRINGL_UTF8(encoded, len, 0);
 }
 /* }}} */
 
@@ -1705,7 +1706,7 @@ PHP_FUNCTION(utf8_decode)
 	XML_Char *decoded;
 	int arg_len, len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "u", &arg, &arg_len) == FAILURE) {
 		return;
 	}
 
@@ -1713,7 +1714,7 @@ PHP_FUNCTION(utf8_decode)
 	if (decoded == NULL) {
 		RETURN_FALSE;
 	}
-	RETVAL_STRINGL(decoded, len, 0);
+	RETVAL_STRINGL_ENC(decoded, len, enc_iso_8859_1, 0);
 }
 /* }}} */
 

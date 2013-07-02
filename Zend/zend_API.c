@@ -421,11 +421,19 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 			}
 			break;
 
-		case 'p':
-		case 's':
+		case 'p': /* a path: char **ptr, int *ptr_len */
+		case 'u': /* an utf-8 string: char **ptr, int *ptr_len */
+		case 'e': /* a string encoded or compatible with a given encoding: char **ptr, int *ptr_len, EncodingPtr enc */
+		case 's': /* a string without an associated encoding: char **ptr, int *ptr_len */
 			{
 				char **p = va_arg(*va, char **);
 				int *pl = va_arg(*va, int *);
+				EncodingPtr enc = enc_unassociated; // TODO: use it
+				if ('e' == c) {
+					enc = va_arg(*va, EncodingPtr);
+				} else if ('u' == c) {
+					enc = enc_utf8;
+				}
 				switch (Z_TYPE_PP(arg)) {
 					case IS_NULL:
 						if (check_null) {
@@ -451,6 +459,9 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 						if (c == 'p' && CHECK_ZVAL_NULL_PATH(*arg)) {
 							return "a valid path";
 						}
+						if (enc_unassociated != enc /*&& ('e' == c || 'u' == c)*/ && Z_STRENC_PP(arg) != enc && Z_STRENC_PP(arg)->compat >= enc->compat) {
+							return "a compatible string";
+						}
 						break;
 
 					case IS_OBJECT:
@@ -464,7 +475,7 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 					case IS_ARRAY:
 					case IS_RESOURCE:
 					default:
-						return c == 's' ? "string" : "a valid path";
+						return c != 'p' ? "string" : "a valid path";
 				}
 			}
 			break;
@@ -751,6 +762,7 @@ static int zend_parse_va_args(int num_args, const char *type_spec, va_list *va, 
 			case 'C': case 'h':
 			case 'f': case 'A':
 			case 'H': case 'p':
+			case 'e': case 'u':
 				max_num_args++;
 				break;
 

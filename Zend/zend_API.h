@@ -577,6 +577,7 @@ END_EXTERN_C()
 		Z_STRLEN_P(__z) = strlen(__s);		\
 		Z_STRVAL_P(__z) = (duplicate?estrndup(__s, Z_STRLEN_P(__z)):(char*)__s);\
 		Z_TYPE_P(__z) = IS_STRING;			\
+		Z_STRENC_P(__z) = enc_unassociated; \
 	} while (0)
 
 #define ZVAL_STRINGL(z, s, l, duplicate) do {	\
@@ -585,6 +586,7 @@ END_EXTERN_C()
 		Z_STRLEN_P(__z) = __l;					\
 		Z_STRVAL_P(__z) = (duplicate?estrndup(__s, __l):(char*)__s);\
 		Z_TYPE_P(__z) = IS_STRING;				\
+		Z_STRENC_P(__z) = enc_unassociated; \
 	} while (0)
 
 #define ZVAL_EMPTY_STRING(z) do {	\
@@ -592,6 +594,7 @@ END_EXTERN_C()
 		Z_STRLEN_P(__z) = 0;		\
 		Z_STRVAL_P(__z) = STR_EMPTY_ALLOC();\
 		Z_TYPE_P(__z) = IS_STRING;	\
+		Z_STRENC_P(__z) = enc_unassociated; \
 	} while (0)
 
 #define ZVAL_ZVAL(z, zv, copy, dtor) {			\
