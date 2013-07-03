@@ -14,6 +14,14 @@ static const Encoding __enc_unassociated = {
     }
 };
 
+static const Encoding __enc_binary = {
+    "binary",
+    ASCII_NON_COMPATIBLE,
+    {
+        NULL
+    }
+};
+
 static const Encoding __enc_ascii = {
     "US-ASCII",
     ASCII_REAL,
@@ -83,6 +91,9 @@ static const Encoding __enc_utf8 = {
         "x-UTF_8J",
         "unicode-1-1-utf-8",
         "unicode-2-0-utf-8",
+        /* MySQL */
+        "utf8",
+        "utf8mb4",
         NULL
     }
 };
@@ -91,6 +102,7 @@ EncodingPtr enc_unassociated = &__enc_unassociated;
 EncodingPtr enc_ascii = &__enc_ascii;
 EncodingPtr enc_iso_8859_1 = &__enc_iso_8859_1;
 EncodingPtr enc_utf8 = &__enc_utf8;
+EncodingPtr enc_binary = &__enc_binary;
 
 static EncodingPtr known_encodings[] = {
     &__enc_ascii,

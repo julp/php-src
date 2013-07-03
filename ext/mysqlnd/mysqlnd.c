@@ -64,6 +64,58 @@ PHPAPI const char * const mysqlnd_out_of_memory = "Out of memory";
 
 PHPAPI MYSQLND_STATS *mysqlnd_global_stats = NULL;
 
+PHPAPI EncodingPtr mysqlnd_enc_to_php(unsigned int charsetnr)
+{
+    switch (charsetnr) {
+        case 63:
+            return enc_binary;
+        case 5:
+        case 8:
+        case 15:
+        case 31:
+        case 47:
+        case 48:
+        case 49:
+        case 94:
+            /* For MySQL, latin1 = CP1252 not ISO-8859-1 */
+            return enc_by_name("CP1252")/*enc_cp1252*/;
+        default:
+        {
+            EncodingPtr enc;
+            const MYSQLND_CHARSET *charset;
+
+            enc = enc_unassociated;
+            if (NULL != (charset = mysqlnd_find_charset_nr(charsetnr))) {
+                if (NULL == (enc = enc_by_name(charset->name))) {
+                    return enc_unassociated;
+                }
+            }
+
+            return enc;
+        }
+    }
+}
+
+PHPAPI int mysqlnd_is_string_type(
+#ifdef MYSQLI_USE_MYSQLND
+    enum_mysqlnd_field_types
+#else
+    enum_field_types
+#endif
+type) {
+    switch (type) {
+        case MYSQL_TYPE_VARCHAR:
+        case MYSQL_TYPE_TINY_BLOB:
+        case MYSQL_TYPE_MEDIUM_BLOB:
+        case MYSQL_TYPE_LONG_BLOB:
+        case MYSQL_TYPE_BLOB:
+        case MYSQL_TYPE_VAR_STRING:
+        case MYSQL_TYPE_STRING:
+            return 1;
+        default:
+            return 0;
+    }
+}
 
 /* {{{ mysqlnd_conn_data::free_options */
 static void

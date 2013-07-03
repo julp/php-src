@@ -32,7 +32,6 @@
 
 #define MYSQLND_SILENT
 
-
 /* {{{ mysqlnd_res::initialize_result_set_rest */
 static enum_func_status
 MYSQLND_METHOD(mysqlnd_res, initialize_result_set_rest)(MYSQLND_RES * const result TSRMLS_DC)
@@ -785,6 +784,9 @@ mysqlnd_fetch_row_unbuffered(MYSQLND_RES * result, void *param, unsigned int fla
 					lengths[i] = len;
 				}
 
+				if (IS_STRING == Z_TYPE_P(data)) {
+                    Z_STRENC_P(data) = mysqlnd_enc_to_php(result->meta->fields[i].charsetnr);
+                }
 				if (flags & MYSQLND_FETCH_NUM) {
 					Z_ADDREF_P(data);
 					zend_hash_next_index_insert(row_ht, &data, sizeof(zval *), NULL);
@@ -961,6 +963,7 @@ mysqlnd_fetch_row_buffered_c(MYSQLND_RES * result TSRMLS_DC)
 				if (Z_TYPE_P(data) != IS_NULL) {
 					convert_to_string(data);
 					ret[i] = Z_STRVAL_P(data);
+                    Z_STRENC_P(data) = mysqlnd_enc_to_php(result->meta->fields[i].charsetnr);
 				} else {
 					ret[i] = NULL;
 				}
@@ -1018,6 +1021,7 @@ mysqlnd_fetch_row_buffered(MYSQLND_RES * result, void *param, unsigned int flags
 					if (field->max_length < len) {
 						field->max_length = len;
 					}
+                    Z_STRENC_P(current_row[i]) = mysqlnd_enc_to_php(result->meta->fields[i].charsetnr);
 				}
 			}
 		}

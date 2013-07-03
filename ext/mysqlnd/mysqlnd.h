@@ -61,6 +61,9 @@
 #include "mysqlnd_enum_n_def.h"
 #include "mysqlnd_structs.h"
 
+#include "zend_encodings.h"
+PHPAPI EncodingPtr mysqlnd_enc_to_php(unsigned int charsetnr);
+PHPAPI int mysqlnd_is_string_type(enum_mysqlnd_field_types type);
 
 /* Library related */
 PHPAPI void mysqlnd_library_init(TSRMLS_D);

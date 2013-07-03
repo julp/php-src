@@ -753,6 +753,7 @@ mysqlnd_stmt_fetch_row_buffered(MYSQLND_RES *result, void *param, unsigned int f
 							if (meta->fields[i].max_length < len) {
 								meta->fields[i].max_length = len;
 							}
+							Z_STRENC_P(current_row[i]) = mysqlnd_enc_to_php(result->meta->fields[i].charsetnr);
 						}
 					}
 				}
@@ -777,6 +778,9 @@ mysqlnd_stmt_fetch_row_buffered(MYSQLND_RES *result, void *param, unsigned int f
 						  counting the user can't delete the strings the variables point to.
 						*/
 
+                        if (IS_STRING == Z_TYPE_P(current_row[i])) {
+                            Z_STRENC_P(stmt->result_bind[i].zv) = Z_STRENC_P(current_row[i]);
+                        }
 						Z_TYPE_P(stmt->result_bind[i].zv) = Z_TYPE_P(current_row[i]);
 						stmt->result_bind[i].zv->value = current_row[i]->value;
 #ifndef WE_DONT_COPY_IN_BUFFERED_AND_UNBUFFERED_BECAUSEOF_IS_REF
@@ -873,6 +877,10 @@ mysqlnd_stmt_fetch_row_unbuffered(MYSQLND_RES *result, void *param, unsigned int
 						if ((Z_TYPE_P(data) == IS_STRING) && (result->meta->fields[i].max_length < (unsigned long) Z_STRLEN_P(data))) {
 							result->meta->fields[i].max_length = Z_STRLEN_P(data);
 						}
+						if (mysqlnd_is_string_type(result->meta->fields[i].type)) {
+//                         if (IS_STRING == Z_TYPE_P(data)) {
+                            Z_STRENC_P(data) = mysqlnd_enc_to_php(result->meta->fields[i].charsetnr);
+                        }
 						stmt->result_bind[i].zv->value = data->value;
 						/* copied data, thus also the ownership. Thus null data */
 						ZVAL_NULL(data);
@@ -1056,6 +1064,9 @@ mysqlnd_fetch_stmt_row_cursor(MYSQLND_RES *result, void *param, unsigned int fla
 						/* copied data, thus also the ownership. Thus null data */
 						ZVAL_NULL(data);
 					}
+					if (IS_STRING == Z_TYPE_P(data)) {
+                        Z_STRENC_P(data) = mysqlnd_enc_to_php(result->meta->fields[i].charsetnr);
+                    }
 				}
 			}
 		} else {
