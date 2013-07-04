@@ -459,7 +459,8 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 						if (c == 'p' && CHECK_ZVAL_NULL_PATH(*arg)) {
 							return "a valid path";
 						}
-						if (enc_unassociated != enc /*&& ('e' == c || 'u' == c)*/ && Z_STRENC_PP(arg) != enc && Z_STRENC_PP(arg)->compat >= enc->compat) {
+						//if (enc_unassociated != enc /*&& ('e' == c || 'u' == c)*/ && Z_STRENC_PP(arg) != enc && Z_STRENC_PP(arg)->compat >= enc->compat) {
+						if (enc_are_incompatible(Z_STRENC_PP(arg), enc)) {
 							return "a compatible string";
 						}
 						break;

@@ -7,18 +7,7 @@ enum {
     TRUE
 };
 
-typedef enum {
-    ASCII_NON_COMPATIBLE,
-    ASCII_REAL,
-    ASCII_COMPATIBLE
-} AsciiCompatibility;
-
-typedef struct {
-    const char *name;
-    AsciiCompatibility compat;
-    const char *aliases[];
-} Encoding;
-
+typedef struct _Encoding Encoding;
 typedef const Encoding * EncodingPtr;
 
 extern EncodingPtr enc_unassociated;
@@ -70,6 +59,8 @@ extern EncodingPtr enc_binary;
 # define RETVAL_STRINGL_UTF8(s, l, duplicate) \
     ZVAL_STRINGL_UTF8(return_value, s, l, duplicate)
 
-EncodingPtr enc_by_name(const char *);
+ZEND_API EncodingPtr enc_by_name(const char *);
+ZEND_API int enc_are_incompatible(EncodingPtr, EncodingPtr);
+ZEND_API EncodingPtr enc_for_filesystem(void);
 
 #endif /* ZEND_ENCODINGS_H */

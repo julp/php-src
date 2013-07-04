@@ -2,12 +2,34 @@
 #include "zend_API.h"
 #include "zend_encodings.h"
 
+#ifdef PHP_WIN32
+# include <win32/php_stdint.h>
+#else
+# include <inttypes.h>
+#endif /* PHP_WIN32 */
+
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #define STR_LEN(str)      (ARRAY_SIZE(str) - 1)
 #define STR_SIZE(str)     (ARRAY_SIZE(str))
 
+typedef enum {
+    ASCII_NON_COMPATIBLE,
+    ASCII_REAL,
+    ASCII_SUPERSET
+} AsciiCompatibility;
+
+#define WINDOWS_CODE_PAGE_NONE 0
+
+struct _Encoding {
+    const char *name;
+    uint16_t windows_code_page; /* http://msdn.microsoft.com/en-us/library/windows/desktop/dd317756.aspx */
+    AsciiCompatibility compat;
+    const char *aliases[];
+};
+
 static const Encoding __enc_unassociated = {
     "unassociated",
+    WINDOWS_CODE_PAGE_NONE,
     ASCII_NON_COMPATIBLE,
     {
         NULL
@@ -16,6 +38,7 @@ static const Encoding __enc_unassociated = {
 
 static const Encoding __enc_binary = {
     "binary",
+    WINDOWS_CODE_PAGE_NONE,
     ASCII_NON_COMPATIBLE,
     {
         NULL
@@ -24,6 +47,7 @@ static const Encoding __enc_binary = {
 
 static const Encoding __enc_ascii = {
     "US-ASCII",
+    20127,
     ASCII_REAL,
     {
         "ASCII",
@@ -47,7 +71,8 @@ static const Encoding __enc_ascii = {
 
 static const Encoding __enc_iso_8859_1 = {
     "ISO-8859-1",
-    ASCII_COMPATIBLE,
+    28591,
+    ASCII_SUPERSET,
     {
         "ibm-819",
         "IBM819",
@@ -65,7 +90,8 @@ static const Encoding __enc_iso_8859_1 = {
 
 static const Encoding __enc_cp1252 = {
     "cp1252",
-    ASCII_COMPATIBLE,
+    1252,
+    ASCII_SUPERSET,
     {
         "ibm-5348_P100-1997",
         "ibm-5348",
@@ -76,7 +102,8 @@ static const Encoding __enc_cp1252 = {
 
 static const Encoding __enc_utf8 = {
     "UTF-8",
-    ASCII_COMPATIBLE,
+    65001,
+    ASCII_SUPERSET,
     {
         "ibm-1208",
         "ibm-1209",
@@ -111,7 +138,7 @@ static EncodingPtr known_encodings[] = {
     &__enc_utf8
 };
 
-EncodingPtr enc_by_name(const char *name_or_alias)
+ZEND_API EncodingPtr enc_by_name(const char *name_or_alias)
 {
     size_t i;
 
@@ -129,4 +156,31 @@ EncodingPtr enc_by_name(const char *name_or_alias)
     }
 
     return NULL;
+}
+
+/*
+AreFileApisANSI() ? GetACP() : GetOEMCP()
+*/
+ZEND_API EncodingPtr enc_for_filesystem()
+{
+#ifdef WIN32
+    size_t i;
+
+    for (i = 0; i < ARRAY_SIZE(known_encodings); i++) {
+        if (GetACP() == known_encodings[i]->windows_code_page) {
+            return known_encodings[i];
+        }
+    }
+#endif /* WIN32 */
+    return enc_unassociated;
+}
+
+ZEND_API int enc_are_incompatible(EncodingPtr reference, EncodingPtr tested)
+{
+    if (enc_unassociated == tested) {
+        /* For now, if charset is undetermined, ignore them: let's they are compatible */
+        return FALSE;
+    } else {
+        return reference != tested && reference->compat >= tested->compat;
+    }
 }
