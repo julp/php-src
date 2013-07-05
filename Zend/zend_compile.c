@@ -6452,9 +6452,10 @@ void zend_do_declare_stmt(znode *var, znode *val TSRMLS_DC) /* {{{ */
 
 			convert_to_string(&val->u.constant);
 			new_encoding = zend_multibyte_fetch_encoding(val->u.constant.value.str.val TSRMLS_CC);
-			if (!new_encoding) {
+			/*if (!new_encoding) {
 				zend_error(E_COMPILE_WARNING, "Unsupported encoding [%s]", val->u.constant.value.str.val);
-			} else {
+			} else {*/
+			if (new_encoding) {
 				old_input_filter = LANG_SCNG(input_filter);
 				old_encoding = LANG_SCNG(script_encoding);
 				zend_multibyte_set_filter(new_encoding TSRMLS_CC);
@@ -6467,6 +6468,15 @@ void zend_do_declare_stmt(znode *var, znode *val TSRMLS_DC) /* {{{ */
 			}
 		} else {
 			zend_error(E_COMPILE_WARNING, "declare(encoding=...) ignored because Zend multibyte feature is turned off by settings");
+		}
+		{
+			EncodingPtr enc;
+
+			if (NULL == (enc = enc_by_name(val->u.constant.value.str.val))) {
+				zend_error(E_COMPILE_WARNING, "Unknown encoding '%s'", var->u.constant.value.str.val);
+			} else {
+				CG(source_encoding) = enc;
+			}
 		}
 		zval_dtor(&val->u.constant);
 	} else {

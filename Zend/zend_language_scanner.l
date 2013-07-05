@@ -882,6 +882,7 @@ static void zend_scan_escape_string(zval *zendlval, char *str, int len, char quo
 	char *end;
 
 	ZVAL_STRINGL(zendlval, str, len, 1);
+	Z_STRENC_P(zendlval) = CG(source_encoding);
 
 	/* convert escape sequences */
 	s = t = zendlval->value.str.val;
@@ -2035,6 +2036,7 @@ inline_html:
 	zendlval->value.str.val = estrndup(yytext+bprefix+1, yyleng-bprefix-2);
 	zendlval->value.str.len = yyleng-bprefix-2;
 	zendlval->type = IS_STRING;
+	zendlval->value.str.enc = CG(source_encoding); /* TODO: consider b prefix */
 
 	/* convert escape sequences */
 	s = t = zendlval->value.str.val;

@@ -36,6 +36,7 @@
 #include "zend_modules.h"
 #include "zend_float.h"
 #include "zend_multibyte.h"
+#include "zend_encodings.h"
 
 /* Define ZTS if you want a thread-safe Zend */
 /*#undef ZTS*/
@@ -150,6 +151,7 @@ struct _zend_compiler_globals {
 	zend_bool multibyte;
 	zend_bool detect_unicode;
 	zend_bool encoding_declared;
+	EncodingPtr source_encoding;
 
 #ifdef ZTS
 	zval ***static_members_table;
