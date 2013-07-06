@@ -28,6 +28,7 @@
 #include "zend_operators.h"
 #include "zend_variables.h"
 #include "zend_execute.h"
+#include "zend_encodings.h"
 
 
 BEGIN_EXTERN_C()
@@ -380,6 +381,7 @@ ZEND_API int add_assoc_resource_ex(zval *arg, const char *key, uint key_len, int
 ZEND_API int add_assoc_double_ex(zval *arg, const char *key, uint key_len, double d);
 ZEND_API int add_assoc_string_ex(zval *arg, const char *key, uint key_len, char *str, int duplicate);
 ZEND_API int add_assoc_stringl_ex(zval *arg, const char *key, uint key_len, char *str, uint length, int duplicate);
+ZEND_API int add_assoc_stringl_enc_ex(zval *arg, const char *key, uint key_len, char *str, uint length, EncodingPtr enc, int duplicate);
 ZEND_API int add_assoc_zval_ex(zval *arg, const char *key, uint key_len, zval *value);
 
 #define add_assoc_long(__arg, __key, __n) add_assoc_long_ex(__arg, __key, strlen(__key)+1, __n)
@@ -389,6 +391,7 @@ ZEND_API int add_assoc_zval_ex(zval *arg, const char *key, uint key_len, zval *v
 #define add_assoc_double(__arg, __key, __d) add_assoc_double_ex(__arg, __key, strlen(__key)+1, __d)
 #define add_assoc_string(__arg, __key, __str, __duplicate) add_assoc_string_ex(__arg, __key, strlen(__key)+1, __str, __duplicate)
 #define add_assoc_stringl(__arg, __key, __str, __length, __duplicate) add_assoc_stringl_ex(__arg, __key, strlen(__key)+1, __str, __length, __duplicate)
+#define add_assoc_stringl_enc(__arg, __key, __str, __length, __enc, __duplicate) add_assoc_stringl_enc_ex(__arg, __key, strlen(__key)+1, __str, __length, __enc, __duplicate)
 #define add_assoc_zval(__arg, __key, __value) add_assoc_zval_ex(__arg, __key, strlen(__key)+1, __value)
 
 /* unset() functions are only suported for legacy modules and null() functions should be used */
@@ -404,6 +407,7 @@ ZEND_API int add_index_resource(zval *arg, ulong idx, int r);
 ZEND_API int add_index_double(zval *arg, ulong idx, double d);
 ZEND_API int add_index_string(zval *arg, ulong idx, const char *str, int duplicate);
 ZEND_API int add_index_stringl(zval *arg, ulong idx, const char *str, uint length, int duplicate);
+ZEND_API int add_index_stringl_enc(zval *arg, ulong index, const char *str, uint length, EncodingPtr enc, int duplicate);
 ZEND_API int add_index_zval(zval *arg, ulong index, zval *value);
 
 ZEND_API int add_next_index_long(zval *arg, long n);
@@ -420,6 +424,7 @@ ZEND_API int add_get_assoc_stringl_ex(zval *arg, const char *key, uint key_len, 
 
 #define add_get_assoc_string(__arg, __key, __str, __dest, __duplicate) add_get_assoc_string_ex(__arg, __key, strlen(__key)+1, __str, __dest, __duplicate)
 #define add_get_assoc_stringl(__arg, __key, __str, __length, __dest, __duplicate) add_get_assoc_stringl_ex(__arg, __key, strlen(__key)+1, __str, __length, __dest, __duplicate)
+#define add_get_assoc_stringl_enc(__arg, __key, __str, __length, __dest, __enc, __duplicate) add_get_assoc_stringl_enc_ex(__arg, __key, strlen(__key)+1, __str, __length, __dest, __enc, __duplicate)
 
 ZEND_API int add_get_index_long(zval *arg, ulong idx, long l, void **dest);
 ZEND_API int add_get_index_double(zval *arg, ulong idx, double d, void **dest);

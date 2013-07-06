@@ -10,7 +10,7 @@ My thoughts
   + Note: a `SET NAMES` (or equivalent) in the middle of fetching operation does not affect new lines. In other words, charset is set one for all at query execution.
 * postgresql (pgsql + pdo_pgsql)
   + input: as is? (check if compatible with PQclientEncoding?)
-  + output: see PQclientEncoding + pg_encoding_to_char
+  + output: see member client_encoding of structure PGResult (but it is "private") + pg_encoding_to_char
 * sqlite3: I/O in UTF-8 **or** UTF-16
 * PCRE:
   + input: indifferent (except modifier u implies UTF-8)

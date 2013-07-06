@@ -1312,6 +1312,17 @@ ZEND_API int add_assoc_stringl_ex(zval *arg, const char *key, uint key_len, char
 }
 /* }}} */
 
+ZEND_API int add_assoc_stringl_enc_ex(zval *arg, const char *key, uint key_len, char *str, uint length, EncodingPtr enc, int duplicate) /* {{{ */
+{
+	zval *tmp;
+
+	MAKE_STD_ZVAL(tmp);
+	ZVAL_STRINGL_ENC(tmp, str, length, enc, duplicate);
+
+	return zend_symtable_update(Z_ARRVAL_P(arg), key, key_len, (void *) &tmp, sizeof(zval *), NULL);
+}
+/* }}} */
+
 ZEND_API int add_assoc_zval_ex(zval *arg, const char *key, uint key_len, zval *value) /* {{{ */
 {
 	return zend_symtable_update(Z_ARRVAL_P(arg), key, key_len, (void *) &value, sizeof(zval *), NULL);
@@ -1390,6 +1401,17 @@ ZEND_API int add_index_stringl(zval *arg, ulong index, const char *str, uint len
 
 	MAKE_STD_ZVAL(tmp);
 	ZVAL_STRINGL(tmp, str, length, duplicate);
+
+	return zend_hash_index_update(Z_ARRVAL_P(arg), index, (void *) &tmp, sizeof(zval *), NULL);
+}
+/* }}} */
+
+ZEND_API int add_index_stringl_enc(zval *arg, ulong index, const char *str, uint length, EncodingPtr enc, int duplicate) /* {{{ */
+{
+	zval *tmp;
+
+	MAKE_STD_ZVAL(tmp);
+	ZVAL_STRINGL_ENC(tmp, str, length, enc, duplicate);
 
 	return zend_hash_index_update(Z_ARRVAL_P(arg), index, (void *) &tmp, sizeof(zval *), NULL);
 }

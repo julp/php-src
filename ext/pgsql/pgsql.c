@@ -46,6 +46,7 @@
 #include "php_pgsql.h"
 #include "php_globals.h"
 #include "zend_exceptions.h"
+#include "zend_encodings.h"
 
 #if HAVE_PGSQL
 
@@ -2369,6 +2370,58 @@ PHP_FUNCTION(pg_field_num)
 }
 /* }}} */
 
+/* an ugly hach for a missing function:
+int PQencoding(PGresult *res)
+{
+	return ((pg_result *) res)->client_encoding;
+}
+*/
+static int PQencoding(PGresult *res)
+{
+#if PG_VERSION_NUM >= 80300
+# define CMDSTATUS_LEN 64
+#else
+# define CMDSTATUS_LEN 40
+#endif /* Postgre >= 8.3.0 */
+
+	typedef struct {
+		/*PQnoticeReceiver*/ void *noticeRec;
+		void *noticeRecArg;
+		/*PQnoticeProcessor*/ void *noticeProc;
+		void *noticeProcArg;
+	} PGNoticeHooks;
+
+	struct pg_result
+	{
+		int ntups;
+		int numAttributes;
+		/*PGresAttDesc*/ void *attDescs;
+		/*PGresAttValue*/ void **tuples;
+		int tupArrSize;
+#if PG_VERSION_NUM >= 80200
+		int numParameters;
+		/*PGresParamDesc*/ void *paramDescs;
+#endif /* Postgre >= 8.2.0 */
+		ExecStatusType resultStatus;
+		char cmdStatus[CMDSTATUS_LEN];
+		int binary;
+		PGNoticeHooks noticeHooks;
+#if PG_VERSION_NUM >= 80400
+		/*PGEvent*/ void *events;
+		int nEvents;
+#endif /* Postgre >= 8.4.0 */
+		int client_encoding;
+		char *errMsg;
+		/*PGMessageField*/ void *errFields;
+		char null_field[1];
+		/*PGresult_data*/ void *curBlock;
+		int curOffset;
+		int spaceLeft;
+	};
+
+	return ((struct pg_result *) res)->client_encoding;
+}
+
 /* {{{ proto mixed pg_fetch_result(resource result, [int row_number,] mixed field_name)
    Returns values from a result identifier */
 PHP_FUNCTION(pg_fetch_result)
@@ -2428,6 +2481,14 @@ PHP_FUNCTION(pg_fetch_result)
 		char *value = PQgetvalue(pgsql_result, pgsql_row, field_offset);
 		int value_len = PQgetlength(pgsql_result, pgsql_row, field_offset);
 		ZVAL_STRINGL(return_value, value, value_len, 1);
+		if (0 == PQfformat(pgsql_result, field_offset)) {
+			EncodingPtr enc;
+
+			if (NULL == (enc = enc_by_name(pg_encoding_to_char(PQencoding(pgsql_result))))) {
+				enc = enc_unassociated;
+			}
+			Z_STRENC_P(return_value) = enc;
+		}
 	}
 }
 /* }}} */
@@ -2443,6 +2504,7 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 	char            *field_name;
 	zval            *ctor_params = NULL;
 	zend_class_entry *ce = NULL;
+	EncodingPtr enc;
 
 	if (into_object) {
 		char *class_name = NULL;
@@ -2487,6 +2549,9 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 
 	pgsql_result = pg_result->result;
 
+	if (NULL == (enc = enc_by_name(pg_encoding_to_char(PQencoding(pgsql_result))))) {
+		enc = enc_unassociated;
+	}
 	if (use_row) { 
 		pgsql_row = row;
 		pg_result->row = pgsql_row;
@@ -2526,13 +2591,21 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 				data_len = element_len;
 			
 				if (result_type & PGSQL_NUM) {
-					add_index_stringl(return_value, i, data, data_len, should_copy);
+					if (0 == PQfformat(pgsql_result, i)) {
+						add_index_stringl_enc(return_value, i, data, data_len, enc, should_copy);
+					} else {
+						add_index_stringl(return_value, i, data, data_len, should_copy);
+					}
 					should_copy=1;
 				}
 			
 				if (result_type & PGSQL_ASSOC) {
 					field_name = PQfname(pgsql_result, i);
-					add_assoc_stringl(return_value, field_name, data, data_len, should_copy);
+					if (0 == PQfformat(pgsql_result, i)) {
+						add_assoc_stringl_enc(return_value, field_name, data, data_len, enc, should_copy);
+					} else {
+						add_assoc_stringl(return_value, field_name, data, data_len, should_copy);
+					}
 				}
 			}
 		}
