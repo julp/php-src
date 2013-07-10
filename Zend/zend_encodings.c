@@ -8,6 +8,13 @@
 # include <inttypes.h>
 #endif /* PHP_WIN32 */
 
+#ifndef TRUE
+# define TRUE 1
+#endif /* !TRUE */
+#ifndef FALSE
+# define FALSE 0
+#endif /* !FALSE */
+
 #define ARRAY_SIZE(array) (sizeof(array) / sizeof((array)[0]))
 #define STR_LEN(str)      (ARRAY_SIZE(str) - 1)
 #define STR_SIZE(str)     (ARRAY_SIZE(str))
@@ -156,6 +163,11 @@ ZEND_API EncodingPtr enc_by_name(const char *name_or_alias)
     }
 
     return NULL;
+}
+
+ZEND_API const char *enc_name(EncodingPtr enc)
+{
+    return enc->name;
 }
 
 /*

@@ -2,11 +2,6 @@
 
 # define ZEND_ENCODINGS_H
 
-enum {
-    FALSE,
-    TRUE
-};
-
 typedef struct _Encoding Encoding;
 typedef const Encoding * EncodingPtr;
 
@@ -62,5 +57,6 @@ extern EncodingPtr enc_binary;
 ZEND_API EncodingPtr enc_by_name(const char *);
 ZEND_API int enc_are_incompatible(EncodingPtr, EncodingPtr);
 ZEND_API EncodingPtr enc_for_filesystem(void);
+ZEND_API const char *enc_name(EncodingPtr);
 
 #endif /* ZEND_ENCODINGS_H */
