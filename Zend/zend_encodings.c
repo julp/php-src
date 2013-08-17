@@ -132,11 +132,11 @@ static const Encoding __enc_utf8 = {
     }
 };
 
-EncodingPtr enc_unassociated = &__enc_unassociated;
-EncodingPtr enc_ascii = &__enc_ascii;
-EncodingPtr enc_iso_8859_1 = &__enc_iso_8859_1;
-EncodingPtr enc_utf8 = &__enc_utf8;
-EncodingPtr enc_binary = &__enc_binary;
+ZEND_API EncodingPtr enc_unassociated = &__enc_unassociated;
+ZEND_API EncodingPtr enc_ascii = &__enc_ascii;
+ZEND_API EncodingPtr enc_iso_8859_1 = &__enc_iso_8859_1;
+ZEND_API EncodingPtr enc_utf8 = &__enc_utf8;
+ZEND_API EncodingPtr enc_binary = &__enc_binary;
 
 static EncodingPtr known_encodings[] = {
     &__enc_ascii,
