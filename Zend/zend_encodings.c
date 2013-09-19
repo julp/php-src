@@ -175,6 +175,9 @@ AreFileApisANSI() ? GetACP() : GetOEMCP()
 */
 ZEND_API EncodingPtr enc_for_filesystem()
 {
+    /**
+     * TODO: to avoid lookup at each call, set it as a global variable (a MINIT callback equivalent ?)
+     **/
 #ifdef WIN32
     size_t i;
 

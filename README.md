@@ -1,6 +1,6 @@
 My thoughts
 
-* sources: see `declare(encoding=...)` and `zend.script_encoding` (last one is specific to UTF-8/UTF-16/UTF-32 and doesn't associate any data to charsets)
+* PHP files: see `declare(encoding=...)` and `zend.script_encoding` (last one is specific to UTF-8/UTF-16/UTF-32 and doesn't associate any data to charsets)
 * HTTP (GET, POST, etc):
   + input: check if this is a valid UTF-8 and fallback to an ASCII-8bit encoding?
   + output: -
@@ -11,7 +11,8 @@ My thoughts
 * postgresql (pgsql + pdo_pgsql)
   + input: as is? (check if compatible with PQclientEncoding?)
   + output: see member client_encoding of structure PGResult (but it is "private") + pg_encoding_to_char
-* sqlite3: I/O in UTF-8 **or** UTF-16
+  + Note: a `SET NAMES` (or equivalent) in the middle of fetching operation does not affect new lines. In other words, charset is set one for all at query execution.
+* sqlite3: I/O in UTF-8 (even if SQLite >= 3 also permits UTF-16)
 * PCRE:
   + input: indifferent (except modifier u implies UTF-8)
   + output: same as input
@@ -26,6 +27,7 @@ My thoughts
   + Unix: guess it from locale or use an INI directive?
   + Windows: current ANSI code page see GetACP() (PHP does not use (yet) Unicode (UTF-16) functions of windows API)
 * mbstring: removal of mb_internal_encoding (duplicate/conflict with zend.script_encoding/declare(encoding=...))
+* iconv: same as mbstring with iconv.\*\_encoding
 * conversions (iconv, mbstring, intl/UConverter, utf8_(en|de)code): we know I/O charsets (redondant in long term)
 
 Functions added:
@@ -89,6 +91,7 @@ PHPAPI EncodingPtr mysql_enc_to_php(unsigned int charsetnr)
                 return null_or_a_default_encoding; // no match, return default encoding
             } else {
                 // rewrite latin1 into CP1252 instead of ISO-8859-1 (MySQL feature)
+                //if (0 == zend_binary_strcasecmp(enc->name, strlen(enc->name), "latin1", sizeof("latin1") - 1)) {
                 if (0 == strcasecmp(enc->name, "latin1")) {
                     return CP1252_ENCODING;
                 }
@@ -97,4 +100,24 @@ PHPAPI EncodingPtr mysql_enc_to_php(unsigned int charsetnr)
         }
     }
 }
+```
+
+Quick workaround for filesystem:
+```C
+#undef ZVAL_STRING
+#undef ZVAL_STRINGL
+#undef RETVAL_STRING
+#undef RETVAL_STRINGL
+
+#define ZVAL_STRING(z, s, duplicate) \
+    ZVAL_STRING_ENC(z, s, enc_for_filesystem(), duplicate)
+
+#define ZVAL_STRINGL(z, s, l, duplicate) \
+    ZVAL_STRINGL_ENC(z, s, l, enc_for_filesystem(), duplicate)
+
+#define RETVAL_STRING(s, duplicate) \
+    RETVAL_STRING_ENC(s, enc_for_filesystem(), duplicate)
+
+#define RETVAL_STRINGL(s, l, duplicate) \
+    RETVAL_STRINGL_ENC(s, l, enc_for_filesystem(), duplicate)
 ```
