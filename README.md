@@ -237,11 +237,15 @@ I/O imply UTF-8: almost nothing to do
 
 ## pcre
 
-Modifier u (present) else current locale is the key?
+Take back haystack charset
+
+Note: modifier u would become obsolete
 
 ## iconv, mbstring
 
-I/O charsets are known because user gives them to us
+I/O charsets are known because user gives them to us.
+
+Note: from_encoding parameter would become obsolete
 
 ## zip
 
