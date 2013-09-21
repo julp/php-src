@@ -19,7 +19,7 @@ My thoughts
 * libxml2 related extensions (DOM, SimpleXML, XMLReader, XMLWriter):
   + input (paths excluded, see filesystem): UTF-8 implied
   + output: UTF-8
-* intl:
+* intl, json:
   + input: UTF-8 implied
   + output: all outputs are in UTF-8
 * zip: due to an old ZIP format, a MSDOS code page should be used (like CP850 for Western Europe - see GetOEMCP() on windows)
@@ -30,9 +30,116 @@ My thoughts
 * iconv: same as mbstring with iconv.\*\_encoding
 * conversions (iconv, mbstring, intl/UConverter, utf8_(en|de)code): we know I/O charsets (redondant in long term)
 
-Functions added:
-* `string str_encoding(mixed &$variable)` return current encoding of a string variable
-* `bool str_force_encoding(mixed &$variable, string $encoding)` true if the new encoding was successfully associated to the string variable
+# Introduction
+
+A good compromise before an hypothetic use of Unicode (UTF-8 like UTF-16 - previous attempt of PHP 6) as internal charset for PHP can be to:
+1. identify the charset of any string
+2. associate a charset to any string
+
+It permits us to:
+* in long term, do charset conversion
+* immediately, make charset checks (eg: utf8_encode of an UTF-8 string will throw an error)
+
+# Implementation
+
+* For this, a change to zval is required (just add a pointer - or int ? - to zvalue_value.str)
+* Have a way to get script encoding (through `declare(encoding=...)` ?)
+* Have a kind of virtual hierarchy of charsets, something like this:
+
+```
+|- binary (for blob, varbinary from databases, raw md5, content of binary file, etc)
+|- unassociated (undefined/unknown/default charset)
+|- ascii + php_identifier associated to each function/constant/class name
+   |- iso-8859-1
+   |- cp1252
+   |- utf-8
+|- utf-16 (le/be)
+|- utf-32 (le/be)
+```
+
+# Backward Incompatible Changes
+
+None (as far I know) but it will be great to remove iconv.\*\_encoding and mb_internal_encoding in long term (first depreciate them ? - emit a E_DEPRECATED and do nothing)
+
+# Internal API changes
+
+Rewrite all [ZVAL|RETVAL]\_\* macros. In order to not break anything, introduce new macros with a "ENC" suffix which expect a pointer to a charset. "Old" [ZVAL|RETVAL]\_\* macros are redirected to their ENC equivalent with the default encoding. Eg:
+
+```
+#define ZVAL_STRING_ENC(z, s, enc, duplicate) /* not shown */
+#define ZVAL_STRING(z, s, duplicate) ZVAL_STRING_ENC(z, s, ENC_UNASSOCIATED, duplicate)
+```
+
+Add modifiers to zend_parse_arg_impl:
+* 's', a string without an associated encoding: `char **ptr, int *ptr_len`, is kept as is for compatibility (at least temporarily)
+* 'e', a string encoded or compatible with a given encoding: ` char **ptr, int *ptr_len, EncodingPtr enc`
+* 'u', for convenience, an utf-8 string: `char **ptr, int *ptr_len`
+
+Add convenient function for array insertion (add_[assoc|index]_stringl?_enc)
+
+# Extension specific
+
+## pdo
+
+new callbacks needed
+
+## pgsql
+
+```C
+/* an ugly hach for a missing function:
+int PQencoding(PGresult *res)
+{
+       return ((pg_result *) res)->client_encoding;
+}
+*/
+static int PQencoding(PGresult *res)
+{
+#if PG_VERSION_NUM >= 80300
+# define CMDSTATUS_LEN 64
+#else
+# define CMDSTATUS_LEN 40
+#endif /* Postgre >= 8.3.0 */
+
+       typedef struct {
+               /*PQnoticeReceiver*/ void *noticeRec;
+               void *noticeRecArg;
+               /*PQnoticeProcessor*/ void *noticeProc;
+               void *noticeProcArg;
+       } PGNoticeHooks;
+
+       struct pg_result
+       {
+               int ntups;
+               int numAttributes;
+               /*PGresAttDesc*/ void *attDescs;
+               /*PGresAttValue*/ void **tuples;
+               int tupArrSize;
+#if PG_VERSION_NUM >= 80200
+               int numParameters;
+               /*PGresParamDesc*/ void *paramDescs;
+#endif /* Postgre >= 8.2.0 */
+               ExecStatusType resultStatus;
+               char cmdStatus[CMDSTATUS_LEN];
+               int binary;
+               PGNoticeHooks noticeHooks;
+#if PG_VERSION_NUM >= 80400
+               /*PGEvent*/ void *events;
+               int nEvents;
+#endif /* Postgre >= 8.4.0 */
+               int client_encoding;
+               char *errMsg;
+               /*PGMessageField*/ void *errFields;
+               char null_field[1];
+               /*PGresult_data*/ void *curBlock;
+               int curOffset;
+               int spaceLeft;
+       };
+
+       return ((struct pg_result *) res)->client_encoding;
+}
+```
+
+## mysql(i)
 
 ```C
 /* SELECT CHARACTER_SET_NAME, GROUP_CONCAT(id) from INFORMATION_SCHEMA.COLLATIONS GROUP BY CHARACTER_SET_NAME; */
@@ -102,6 +209,8 @@ PHPAPI EncodingPtr mysql_enc_to_php(unsigned int charsetnr)
 }
 ```
 
+## Filesystem
+
 Quick workaround for filesystem:
 ```C
 #undef ZVAL_STRING
@@ -121,3 +230,26 @@ Quick workaround for filesystem:
 #define RETVAL_STRINGL(s, l, duplicate) \
     RETVAL_STRINGL_ENC(s, l, enc_for_filesystem(), duplicate)
 ```
+
+## intl, json, sqlite3, xmlreader, xmlwriter, simplexml, dom
+
+I/O imply UTF-8: almost nothing to do
+
+## pcre
+
+Modifier u (present) else current locale is the key?
+
+## iconv, mbstring
+
+I/O charsets are known because user gives them to us
+
+## zip
+
+Use the bit 11 of general purpose bit flag?
+
+See: [.ZIP File Format Specification](http://www.pkware.com/documents/casestudies/APPNOTE.TXT) (APPENDIX D in particular)
+
+# New functions
+
+* `string str_encoding(mixed &$variable)` return current encoding of a string variable
+* `bool str_force_encoding(mixed &$variable, string $encoding)` true if the new encoding was successfully associated to the string variable
