@@ -30,6 +30,7 @@
 #include "zend_strtod.h"
 #include "zend_exceptions.h"
 #include "zend_closures.h"
+#include "zend_encodings.h"
 
 #if ZEND_USE_TOLOWER_L
 #include <locale.h>
@@ -1309,6 +1310,9 @@ ZEND_API int concat_function(zval *result, zval *op1, zval *op2 TSRMLS_DC) /* {{
 	}
 	if (use_copy2) {
 		op2 = &op2_copy;
+	}
+	if (enc_are_incompatible(Z_STRENC_P(op1), Z_STRENC_P(op2))) {
+		zend_error(E_COMPILE_WARNING, "concatenation of incompatible charsets found: '%s' and '%s'", enc_name(Z_STRENC_P(op1)), enc_name(Z_STRENC_P(op2)));
 	}
 	if (result==op1 && !IS_INTERNED(Z_STRVAL_P(op1))) {	/* special case, perform operations on result */
 		uint res_len = Z_STRLEN_P(op1) + Z_STRLEN_P(op2);

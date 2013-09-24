@@ -1,6 +1,7 @@
 My thoughts
 
 * PHP files: see `declare(encoding=...)` and `zend.script_encoding` (last one is specific to UTF-8/UTF-16/UTF-32 and doesn't associate any data to charsets)
+* for CLI get stdin charset (Unix: use locale)
 * HTTP (GET, POST, etc):
   + input: check if this is a valid UTF-8 and fallback to an ASCII-8bit encoding?
   + output: -
@@ -38,7 +39,10 @@ A good compromise before an hypothetic use of Unicode (UTF-8 like UTF-16 - previ
 
 It permits us to:
 * in long term, do charset conversion
-* immediately, make charset checks (eg: utf8_encode of an UTF-8 string will throw an error)
+* immediately, make charset checks (eg: utf8_encode of an UTF-8 string will throw a warning)
+* throw a notice when using a non multibyte function (strlen with an UTF-8 string)
+* allow `[]` operator to access to a code point instead of a byte
+* ...
 
 # Implementation
 
@@ -71,9 +75,10 @@ Rewrite all [ZVAL|RETVAL]\_\* macros. In order to not break anything, introduce 
 ```
 
 Add modifiers to zend_parse_arg_impl:
-* 's', a string without an associated encoding: `char **ptr, int *ptr_len`, is kept as is for compatibility (at least temporarily)
+* 's', a string without an associated encoding (or we don't care about its encoding): `char **ptr, int *ptr_len`, is kept as is for compatibility (at least temporarily)
 * 'e', a string encoded or compatible with a given encoding: ` char **ptr, int *ptr_len, EncodingPtr enc`
 * 'u', for convenience, an utf-8 string: `char **ptr, int *ptr_len`
+* 'E', same as 's' but we want to get its encoding: `char **ptr, int *ptr_len, EncodingPtr *enc`
 
 Add convenient function for array insertion (add_[assoc|index]_stringl?_enc)
 
@@ -233,7 +238,7 @@ Quick workaround for filesystem:
 
 ## intl, json, sqlite3, xmlreader, xmlwriter, simplexml, dom
 
-I/O imply UTF-8: almost nothing to do
+I/O imply UTF-8 (except for paths): almost nothing to do
 
 ## pcre
 
@@ -241,11 +246,21 @@ Take back haystack charset
 
 Note: modifier u would become obsolete
 
-## iconv, mbstring
+## iconv, mbstring, intl/UConverter
 
 I/O charsets are known because user gives them to us.
 
 Note: from_encoding parameter would become obsolete
+
+## GET/POST/COOKIE
+
+Check if ASCII or UTF-8?
+
+## SESSION + (un)serialize
+
+* Keep format s:<string length>:<string content> as is
+* Add format e:<charset name length>:<charset name>:<string length>:<string content>
+?
 
 ## zip
 
@@ -255,5 +270,5 @@ See: [.ZIP File Format Specification](http://www.pkware.com/documents/casestudie
 
 # New functions
 
-* `string str_encoding(mixed &$variable)` return current encoding of a string variable
+* `string str_encoding(string $str)` return current encoding of given string
 * `bool str_force_encoding(mixed &$variable, string $encoding)` true if the new encoding was successfully associated to the string variable

@@ -424,13 +424,19 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 		case 'p': /* a path: char **ptr, int *ptr_len */
 		case 'u': /* an utf-8 string: char **ptr, int *ptr_len */
 		case 'e': /* a string encoded or compatible with a given encoding: char **ptr, int *ptr_len, EncodingPtr enc */
-		case 's': /* a string without an associated encoding: char **ptr, int *ptr_len */
+		case 's': /* a string without an associated encoding (or we don't care about its encoding): char **ptr, int *ptr_len */
+		case 'E': /* same as 's' but we want to get its encoding: char **ptr, int *ptr_len, EncodingPtr *enc */
 			{
 				char **p = va_arg(*va, char **);
 				int *pl = va_arg(*va, int *);
 				EncodingPtr enc = enc_unassociated; // TODO: use it
+				EncodingPtr *oenc = NULL; /* output encoding */
+
 				if ('e' == c) {
 					enc = va_arg(*va, EncodingPtr);
+				} else if ('E' == c) {
+					oenc = va_arg(*va, EncodingPtr *);
+					*oenc = enc_unassociated;
 				} else if ('u' == c) {
 					enc = enc_utf8;
 				}
@@ -458,8 +464,9 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 						*pl = Z_STRLEN_PP(arg);
 						if (c == 'p' && CHECK_ZVAL_NULL_PATH(*arg)) {
 							return "a valid path";
+						} else if ('E' == c) {
+							*oenc = Z_STRENC_PP(arg);
 						}
-						//if (enc_unassociated != enc /*&& ('e' == c || 'u' == c)*/ && Z_STRENC_PP(arg) != enc && Z_STRENC_PP(arg)->compat >= enc->compat) {
 						if (enc_are_incompatible(Z_STRENC_PP(arg), enc)) {
 							return "a compatible string";
 						}
@@ -764,6 +771,7 @@ static int zend_parse_va_args(int num_args, const char *type_spec, va_list *va, 
 			case 'f': case 'A':
 			case 'H': case 'p':
 			case 'e': case 'u':
+			case 'E':
 				max_num_args++;
 				break;
 

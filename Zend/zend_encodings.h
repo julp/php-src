@@ -7,6 +7,7 @@ typedef const Encoding * EncodingPtr;
 
 extern EncodingPtr enc_unassociated;
 extern EncodingPtr enc_ascii;
+extern EncodingPtr enc_php_identifier;
 extern EncodingPtr enc_iso_8859_1;
 extern EncodingPtr enc_utf8;
 extern EncodingPtr enc_binary;
@@ -54,9 +55,34 @@ extern EncodingPtr enc_binary;
 # define RETVAL_STRINGL_UTF8(s, l, duplicate) \
     ZVAL_STRINGL_UTF8(return_value, s, l, duplicate)
 
+#define RETURN_STRING_ENC(s, enc, duplicate) \
+    do { \
+        RETVAL_STRING_ENC(s, enc, duplicate); \
+        return; \
+    } while (0);
+
+#define RETURN_STRING_UTF8(s, duplicate) \
+    do { \
+        RETVAL_STRING_UTF8(s, duplicate); \
+        return; \
+    } while (0);
+
+#define RETURN_STRINGL_ENC(s, l, enc, duplicate) \
+    do { \
+        RETVAL_STRINGL_ENC(s, l, enc, duplicate); \
+        return; \
+    } while (0);
+
+#define RETURN_STRINGL_UTF8(s, l, duplicate) \
+    do { \
+        RETVAL_STRINGL_UTF8(s, l, duplicate); \
+        return; \
+    } while (0);
+
 ZEND_API EncodingPtr enc_by_name(const char *);
 ZEND_API int enc_are_incompatible(EncodingPtr, EncodingPtr);
 ZEND_API EncodingPtr enc_for_filesystem(void);
 ZEND_API const char *enc_name(EncodingPtr);
+ZEND_API EncodingPtr enc_guess(const char *, int);
 
 #endif /* ZEND_ENCODINGS_H */
