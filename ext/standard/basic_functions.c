@@ -2700,7 +2700,7 @@ ZEND_END_ARG_INFO()
 
 
 ZEND_BEGIN_ARG_INFO(arginfo_str_encoding, 0)
-	ZEND_ARG_INFO(1, string)
+	ZEND_ARG_INFO(0, string)
 ZEND_END_ARG_INFO()
 
 ZEND_BEGIN_ARG_INFO(arginfo_str_force_encoding, 0)
