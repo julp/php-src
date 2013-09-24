@@ -216,25 +216,9 @@ PHPAPI EncodingPtr mysql_enc_to_php(unsigned int charsetnr)
 
 ## Filesystem
 
-Quick workaround for filesystem:
-```C
-#undef ZVAL_STRING
-#undef ZVAL_STRINGL
-#undef RETVAL_STRING
-#undef RETVAL_STRINGL
-
-#define ZVAL_STRING(z, s, duplicate) \
-    ZVAL_STRING_ENC(z, s, enc_for_filesystem(), duplicate)
-
-#define ZVAL_STRINGL(z, s, l, duplicate) \
-    ZVAL_STRINGL_ENC(z, s, l, enc_for_filesystem(), duplicate)
-
-#define RETVAL_STRING(s, duplicate) \
-    RETVAL_STRING_ENC(s, enc_for_filesystem(), duplicate)
-
-#define RETVAL_STRINGL(s, l, duplicate) \
-    RETVAL_STRINGL_ENC(s, l, enc_for_filesystem(), duplicate)
-```
+* Windows: GetACP
+* Unix: locale based and/or by an ini setting ?
+See: Zend/encoding_fs_overrides.h
 
 ## intl, json, sqlite3, xmlreader, xmlwriter, simplexml, dom
 
@@ -258,8 +242,8 @@ Check if ASCII or UTF-8?
 
 ## SESSION + (un)serialize
 
-* Keep format s:<string length>:<string content> as is
-* Add format e:<charset name length>:<charset name>:<string length>:<string content>
+* Keep format s:\<string length\>:\<string content\> as is
+* Add format e:\<charset name length\>:\<charset name\>:\<string length\>:\<string content\>
 ?
 
 ## zip
