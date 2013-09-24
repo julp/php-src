@@ -52,6 +52,9 @@
 #if HAVE_SETLOCALE
 #include <locale.h>
 #endif
+#if HAVE_NL_LANGINFO
+#include <langinfo.h>
+#endif
 #include "zend.h"
 #include "zend_extensions.h"
 #include "php_ini.h"
@@ -676,6 +679,14 @@ static int do_cli(int argc, char **argv TSRMLS_DC) /* {{{ */
 	zend_try {
 	
 		CG(in_compilation) = 0; /* not initialized but needed for several options */
+#if HAVE_NL_LANGINFO
+		if (NULL == (CG(source_encoding) = enc_by_name(nl_langinfo(CODESET)))) {
+			zend_output_debug_string(0, "unknown charset '%s'", nl_langinfo(CODESET));
+			CG(source_encoding) = enc_unassociated;
+		}
+#else
+		CG(source_encoding) = enc_unassociated;
+#endif
 		EG(uninitialized_zval_ptr) = NULL;
 
 		while ((c = php_getopt(argc, argv, OPTIONS, &php_optarg, &php_optind, 0, 2)) != -1) {
