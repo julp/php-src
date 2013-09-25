@@ -92,7 +92,7 @@ ZEND_DECLARE_MODULE_GLOBALS(array)
 
 /* {{{ php_array_init_globals
 */
-static void php_array_init_globals(zend_array_globals *array_globals)
+static void php_array_init_globals(zend_array_globals *array_globals, TSRMLS_D)
 {
 	memset(array_globals, 0, sizeof(zend_array_globals));
 }

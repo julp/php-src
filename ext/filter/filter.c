@@ -189,7 +189,7 @@ PHP_INI_BEGIN()
 PHP_INI_END()
 /* }}} */
 
-static void php_filter_init_globals(zend_filter_globals *filter_globals) /* {{{ */
+static void php_filter_init_globals(zend_filter_globals *filter_globals, TSRMLS_D) /* {{{ */
 {
 	filter_globals->post_array = NULL;
 	filter_globals->get_array = NULL;
