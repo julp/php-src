@@ -53,7 +53,7 @@ It permits us to:
 ```
 |- binary (for blob, varbinary from databases, raw md5, content of binary file, etc)
 |- unassociated (undefined/unknown/default charset)
-|- ascii + php_identifier associated to each function/constant/class name
+|- ascii
    |- iso-8859-1
    |- cp1252
    |- utf-8
@@ -81,6 +81,8 @@ Add modifiers to zend_parse_arg_impl:
 * 'E', same as 's' but we want to get its encoding: `char **ptr, int *ptr_len, EncodingPtr *enc`
 
 Add convenient function for array insertion (add_[assoc|index]_stringl?_enc)
+
+TODO: need to keep charset associated to identifiers but hashtables for symbols use a char * as key, not a zval *.
 
 # Extension specific
 
