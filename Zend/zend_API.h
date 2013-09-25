@@ -252,11 +252,14 @@ ZEND_API int zend_copy_parameters_array(int param_count, zval *argument_array, T
 /* Parameter parsing API -- andrei */
 
 #define ZEND_PARSE_PARAMS_QUIET 1<<1
-ZEND_API int zend_parse_parameters(int num_args, TSRMLS_D, const char *type_spec, ...);
-ZEND_API int zend_parse_parameters_ex(int flags, int num_args, TSRMLS_D, const char *type_spec, ...);
+#define zend_parse_parameters(num_args, tsrm_ls, type_spec, ...) \
+	zend_parse_parameters_ex(0, num_args, tsrm_ls, type_spec, ## __VA_ARGS__)
+#define zend_parse_parameters_ex(flags, num_args, tsrm_ls, type_spec, ...) \
+	zend_parse_method_parameters_ex(flags, num_args, tsrm_ls, NULL, type_spec, ## __VA_ARGS__)
 ZEND_API char *zend_zval_type_name(const zval *arg);
 
-ZEND_API int zend_parse_method_parameters(int num_args, TSRMLS_D, zval *this_ptr, const char *type_spec, ...);
+#define zend_parse_method_parameters(num_args, tsrm_ls, this_ptr, type_spec, ...) \
+	zend_parse_method_parameters_ex(0, num_args, tsrm_ls, this_ptr, type_spec, ## __VA_ARGS__)
 ZEND_API int zend_parse_method_parameters_ex(int flags, int num_args, TSRMLS_D, zval *this_ptr, const char *type_spec, ...);
 
 ZEND_API int zend_parse_parameter(int flags, int arg_num, TSRMLS_D, zval **arg, const char *spec, ...);
