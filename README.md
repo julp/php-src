@@ -178,7 +178,7 @@ PHPAPI EncodingPtr mysql_enc_to_php(unsigned int charsetnr)
 {
     EncodingPtr enc = null_or_a_default_encoding;
 
-    if (63 == charset) {
+    if (63 == charsetnr) {
         return BINARY_ENCODING; // binary (for a field of type *BLOB or (VAR)BINARY)
     } else {
 #ifdef MYSQLI_USE_MYSQLND
@@ -198,9 +198,9 @@ PHPAPI EncodingPtr mysql_enc_to_php(unsigned int charsetnr)
         } else {
             // do our own mapping from name
 #ifdef MYSQLI_USE_MYSQLND
-            if (NULL == (enc = enc_get_by_name(charset->name))) {
+            if (NULL == (enc = enc_by_name(charset->name))) {
 #else
-            if (NULL == (enc = enc_get_by_name(charset))) {
+            if (NULL == (enc = enc_by_name(charset))) {
 #endif /* MYSQLI_USE_MYSQLND */
                 return null_or_a_default_encoding; // no match, return default encoding
             } else {
