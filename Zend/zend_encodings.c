@@ -144,7 +144,6 @@ ZEND_API EncodingPtr enc_ascii = &__enc_ascii;
 ZEND_API EncodingPtr enc_iso_8859_1 = &__enc_iso_8859_1;
 ZEND_API EncodingPtr enc_utf8 = &__enc_utf8;
 ZEND_API EncodingPtr enc_binary = &__enc_binary;
-ZEND_API EncodingPtr enc_php_identifier = &__enc_ascii;
 
 static EncodingPtr known_encodings[] = {
     &__enc_ascii,

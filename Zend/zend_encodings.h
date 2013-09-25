@@ -7,7 +7,6 @@ typedef const Encoding * EncodingPtr;
 
 extern EncodingPtr enc_unassociated;
 extern EncodingPtr enc_ascii;
-extern EncodingPtr enc_php_identifier;
 extern EncodingPtr enc_iso_8859_1;
 extern EncodingPtr enc_utf8;
 extern EncodingPtr enc_binary;
