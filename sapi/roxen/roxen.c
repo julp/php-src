@@ -211,7 +211,7 @@ INLINE static int lookup_integer_header(char *headername, int default_value)
  */
 
 static int
-php_roxen_low_ub_write(const char *str, uint str_length TSRMLS_DC) {
+php_roxen_low_ub_write(const char *str, uint str_length, TSRMLS_D) {
   int sent_bytes = 0;
   struct pike_string *to_write = NULL;
 #ifdef ROXEN_USE_ZTS
@@ -242,7 +242,7 @@ php_roxen_low_ub_write(const char *str, uint str_length TSRMLS_DC) {
  */
 
 static int
-php_roxen_sapi_ub_write(const char *str, uint str_length TSRMLS_DC)
+php_roxen_sapi_ub_write(const char *str, uint str_length, TSRMLS_D)
 {
 #ifdef ROXEN_USE_ZTS
   GET_THIS();
@@ -274,7 +274,7 @@ php_roxen_sapi_ub_write(const char *str, uint str_length TSRMLS_DC)
       }
     }
   } else {
-    THREAD_SAFE_RUN(sent_bytes = php_roxen_low_ub_write(str, str_length TSRMLS_CC),
+    THREAD_SAFE_RUN(sent_bytes = php_roxen_low_ub_write(str, str_length, TSRMLS_C),
 		    "write");
   }
   return sent_bytes;
@@ -324,7 +324,7 @@ static void php_roxen_set_header(char *header_name, char *value, char *p)
  */
 static int
 php_roxen_sapi_header_handler(sapi_header_struct *sapi_header,
-			      sapi_headers_struct *sapi_headers TSRMLS_DC)
+			      sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
   char *header_name, *header_content, *p;
   header_name = sapi_header->header;
@@ -346,7 +346,7 @@ php_roxen_sapi_header_handler(sapi_header_struct *sapi_header,
  */
 
 static int
-php_roxen_low_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
+php_roxen_low_send_headers(sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
   struct pike_string *ind;
   struct svalue *s_headermap;
@@ -375,10 +375,10 @@ php_roxen_low_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
 }
 
 static int
-php_roxen_sapi_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
+php_roxen_sapi_send_headers(sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
   int res = 0;
-  THREAD_SAFE_RUN(res = php_roxen_low_send_headers(sapi_headers TSRMLS_CC), "send headers");
+  THREAD_SAFE_RUN(res = php_roxen_low_send_headers(sapi_headers, TSRMLS_C), "send headers");
   return res;
 }
 
@@ -414,7 +414,7 @@ INLINE static int php_roxen_low_read_post(char *buf, uint count_bytes)
 }
 
 static int
-php_roxen_sapi_read_post(char *buf, uint count_bytes TSRMLS_DC)
+php_roxen_sapi_read_post(char *buf, uint count_bytes, TSRMLS_D)
 {
   uint total_read = 0;
   THREAD_SAFE_RUN(total_read = php_roxen_low_read_post(buf, count_bytes), "read post");
@@ -593,7 +593,7 @@ static int php_roxen_module_main(TSRMLS_D)
   }
   php_roxen_hash_environment(TSRMLS_C);
   THREADS_ALLOW();
-  php_execute_script(&file_handle TSRMLS_CC);
+  php_execute_script(&file_handle, TSRMLS_C);
   php_request_shutdown(NULL);
   THREADS_DISALLOW();
   return 1;

@@ -26,7 +26,7 @@
 #include "zend_interfaces.h"
 #include "zend_exceptions.h"
 
-ZEND_API void zend_object_std_init(zend_object *object, zend_class_entry *ce TSRMLS_DC)
+ZEND_API void zend_object_std_init(zend_object *object, zend_class_entry *ce, TSRMLS_D)
 {
 	object->ce = ce;
 	object->properties = NULL;
@@ -34,7 +34,7 @@ ZEND_API void zend_object_std_init(zend_object *object, zend_class_entry *ce TSR
 	object->guards = NULL;
 }
 
-ZEND_API void zend_object_std_dtor(zend_object *object TSRMLS_DC)
+ZEND_API void zend_object_std_dtor(zend_object *object, TSRMLS_D)
 {
 	if (object->guards) {
 		zend_hash_destroy(object->guards);
@@ -58,7 +58,7 @@ ZEND_API void zend_object_std_dtor(zend_object *object TSRMLS_DC)
 	}
 }
 
-ZEND_API void zend_objects_destroy_object(zend_object *object, zend_object_handle handle TSRMLS_DC)
+ZEND_API void zend_objects_destroy_object(zend_object *object, zend_object_handle handle, TSRMLS_D)
 {
 	zend_function *destructor = object ? object->ce->destructor : NULL;
 
@@ -123,7 +123,7 @@ ZEND_API void zend_objects_destroy_object(zend_object *object, zend_object_handl
 		zend_call_method_with_0_params(&obj, object->ce, &destructor, ZEND_DESTRUCTOR_FUNC_NAME, NULL);
 		if (old_exception) {
 			if (EG(exception)) {
-				zend_exception_set_previous(EG(exception), old_exception TSRMLS_CC);
+				zend_exception_set_previous(EG(exception), old_exception, TSRMLS_C);
 			} else {
 				EG(exception) = old_exception;
 			}
@@ -132,13 +132,13 @@ ZEND_API void zend_objects_destroy_object(zend_object *object, zend_object_handl
 	}
 }
 
-ZEND_API void zend_objects_free_object_storage(zend_object *object TSRMLS_DC)
+ZEND_API void zend_objects_free_object_storage(zend_object *object, TSRMLS_D)
 {
-	zend_object_std_dtor(object TSRMLS_CC);
+	zend_object_std_dtor(object, TSRMLS_C);
 	efree(object);
 }
 
-ZEND_API zend_object_value zend_objects_new(zend_object **object, zend_class_entry *class_type TSRMLS_DC)
+ZEND_API zend_object_value zend_objects_new(zend_object **object, zend_class_entry *class_type, TSRMLS_D)
 {
 	zend_object_value retval;
 
@@ -147,17 +147,17 @@ ZEND_API zend_object_value zend_objects_new(zend_object **object, zend_class_ent
 	(*object)->properties = NULL;
 	(*object)->properties_table = NULL;
 	(*object)->guards = NULL;
-	retval.handle = zend_objects_store_put(*object, (zend_objects_store_dtor_t) zend_objects_destroy_object, (zend_objects_free_object_storage_t) zend_objects_free_object_storage, NULL TSRMLS_CC);
+	retval.handle = zend_objects_store_put(*object, (zend_objects_store_dtor_t) zend_objects_destroy_object, (zend_objects_free_object_storage_t) zend_objects_free_object_storage, NULL, TSRMLS_C);
 	retval.handlers = &std_object_handlers;
 	return retval;
 }
 
-ZEND_API zend_object *zend_objects_get_address(const zval *zobject TSRMLS_DC)
+ZEND_API zend_object *zend_objects_get_address(const zval *zobject, TSRMLS_D)
 {
-	return (zend_object *)zend_object_store_get_object(zobject TSRMLS_CC);
+	return (zend_object *)zend_object_store_get_object(zobject, TSRMLS_C);
 }
 
-ZEND_API void zend_objects_clone_members(zend_object *new_object, zend_object_value new_obj_val, zend_object *old_object, zend_object_handle handle TSRMLS_DC)
+ZEND_API void zend_objects_clone_members(zend_object *new_object, zend_object_value new_obj_val, zend_object *old_object, zend_object_handle handle, TSRMLS_D)
 {
 	int i;
 
@@ -215,7 +215,7 @@ ZEND_API void zend_objects_clone_members(zend_object *new_object, zend_object_va
 	}
 }
 
-ZEND_API zend_object_value zend_objects_clone_obj(zval *zobject TSRMLS_DC)
+ZEND_API zend_object_value zend_objects_clone_obj(zval *zobject, TSRMLS_D)
 {
 	zend_object_value new_obj_val;
 	zend_object *old_object;
@@ -224,10 +224,10 @@ ZEND_API zend_object_value zend_objects_clone_obj(zval *zobject TSRMLS_DC)
 
 	/* assume that create isn't overwritten, so when clone depends on the
 	 * overwritten one then it must itself be overwritten */
-	old_object = zend_objects_get_address(zobject TSRMLS_CC);
-	new_obj_val = zend_objects_new(&new_object, old_object->ce TSRMLS_CC);
+	old_object = zend_objects_get_address(zobject, TSRMLS_C);
+	new_obj_val = zend_objects_new(&new_object, old_object->ce, TSRMLS_C);
 
-	zend_objects_clone_members(new_object, new_obj_val, old_object, handle TSRMLS_CC);
+	zend_objects_clone_members(new_object, new_obj_val, old_object, handle, TSRMLS_C);
 
 	return new_obj_val;
 }

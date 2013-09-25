@@ -35,11 +35,11 @@
 
 BEGIN_EXTERN_C()
 void php_startup_auto_globals(TSRMLS_D);
-extern PHPAPI void (*php_import_environment_variables)(zval *array_ptr TSRMLS_DC);
-PHPAPI void php_register_variable(char *var, char *val, zval *track_vars_array TSRMLS_DC);
+extern PHPAPI void (*php_import_environment_variables)(zval *array_ptr, TSRMLS_D);
+PHPAPI void php_register_variable(char *var, char *val, zval *track_vars_array, TSRMLS_D);
 /* binary-safe version */
-PHPAPI void php_register_variable_safe(char *var, char *val, int val_len, zval *track_vars_array TSRMLS_DC);
-PHPAPI void php_register_variable_ex(char *var, zval *val, zval *track_vars_array TSRMLS_DC);
+PHPAPI void php_register_variable_safe(char *var, char *val, int val_len, zval *track_vars_array, TSRMLS_D);
+PHPAPI void php_register_variable_ex(char *var, zval *val, zval *track_vars_array, TSRMLS_D);
 
 int php_hash_environment(TSRMLS_D);
 END_EXTERN_C()

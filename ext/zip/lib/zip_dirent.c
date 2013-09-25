@@ -178,7 +178,7 @@ _zip_dirent_init(struct zip_dirent *de)
 {
     de->version_madeby = 0;
     de->version_needed = 20; /* 2.0 */
-    de->bitflags = 0;
+    de->bitflags = 0x0800;
     de->comp_method = 0;
     de->last_mod = 0;
     de->crc = 0;
@@ -392,7 +392,7 @@ _zip_dirent_torrent_normalize(struct zip_dirent *de)
     
     de->version_madeby = 0;
     de->version_needed = 20; /* 2.0 */
-    de->bitflags = 2; /* maximum compression */
+    de->bitflags = 2 | 0x0800; /* maximum compression */
     de->comp_method = ZIP_CM_DEFLATE;
     de->last_mod = last_mod;
 

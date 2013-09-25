@@ -66,7 +66,7 @@ file_magwarn(struct magic_set *ms, const char *f, ...)
 	if (vasprintf(&expanded_format, f, va)); /* silence */
 	va_end(va);
 	
-	php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Warning: %s", expanded_format);
+	php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Warning: %s", expanded_format);
 
 	free(expanded_format);
 }

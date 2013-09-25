@@ -65,7 +65,7 @@ mysqlnd_minfo_print_hash(zval *values)
 
 /* {{{ mysqlnd_minfo_dump_plugin_stats */
 static int
-mysqlnd_minfo_dump_plugin_stats(void *pDest, void * argument TSRMLS_DC)
+mysqlnd_minfo_dump_plugin_stats(void *pDest, void * argument, TSRMLS_D)
 {
 	struct st_mysqlnd_plugin_header * plugin_header = *(struct st_mysqlnd_plugin_header **) pDest;
 	if (plugin_header->plugin_stats.values) {
@@ -73,7 +73,7 @@ mysqlnd_minfo_dump_plugin_stats(void *pDest, void * argument TSRMLS_DC)
 		zval values;
 		snprintf(buf, sizeof(buf), "%s statistics", plugin_header->plugin_name);
 
-		mysqlnd_fill_stats_hash(plugin_header->plugin_stats.values, plugin_header->plugin_stats.names, &values TSRMLS_CC ZEND_FILE_LINE_CC); 
+		mysqlnd_fill_stats_hash(plugin_header->plugin_stats.values, plugin_header->plugin_stats.names, &values, TSRMLS_C ZEND_FILE_LINE_CC); 
 
 		php_info_print_table_start();
 		php_info_print_table_header(2, buf, "");
@@ -88,7 +88,7 @@ mysqlnd_minfo_dump_plugin_stats(void *pDest, void * argument TSRMLS_DC)
 
 /* {{{ mysqlnd_minfo_dump_loaded_plugins */
 static int 
-mysqlnd_minfo_dump_loaded_plugins(void *pDest, void * buf TSRMLS_DC)
+mysqlnd_minfo_dump_loaded_plugins(void *pDest, void * buf, TSRMLS_D)
 {
 	smart_str * buffer = (smart_str *) buf;
 	struct st_mysqlnd_plugin_header * plugin_header = *(struct st_mysqlnd_plugin_header **) pDest;
@@ -104,7 +104,7 @@ mysqlnd_minfo_dump_loaded_plugins(void *pDest, void * buf TSRMLS_DC)
 
 /* {{{ mysqlnd_minfo_dump_api_plugins */
 static void
-mysqlnd_minfo_dump_api_plugins(smart_str * buffer TSRMLS_DC)
+mysqlnd_minfo_dump_api_plugins(smart_str * buffer, TSRMLS_D)
 {
 	HashTable *ht = mysqlnd_reverse_api_get_api_list(TSRMLS_C);
 	Bucket *p;
@@ -169,7 +169,7 @@ PHP_MINFO_FUNCTION(mysqlnd)
 		php_info_print_table_row(2, "Loaded plugins", tmp_str.c);
 		smart_str_free(&tmp_str);
 
-		mysqlnd_minfo_dump_api_plugins(&tmp_str TSRMLS_CC);
+		mysqlnd_minfo_dump_api_plugins(&tmp_str, TSRMLS_C);
 		smart_str_0(&tmp_str);
 		php_info_print_table_row(2, "API Extensions", tmp_str.c);
 		smart_str_free(&tmp_str);
@@ -284,8 +284,8 @@ static PHP_RINIT_FUNCTION(mysqlnd)
 		struct st_mysqlnd_plugin_trace_log * trace_log_plugin = mysqlnd_plugin_find("debug_trace");
 		MYSQLND_G(dbg) = NULL;
 		if (trace_log_plugin) {
-			MYSQLND_DEBUG * dbg = trace_log_plugin->methods.trace_instance_init(mysqlnd_debug_std_no_trace_funcs TSRMLS_CC);
-			MYSQLND_DEBUG * trace_alloc = trace_log_plugin->methods.trace_instance_init(NULL TSRMLS_CC);
+			MYSQLND_DEBUG * dbg = trace_log_plugin->methods.trace_instance_init(mysqlnd_debug_std_no_trace_funcs, TSRMLS_C);
+			MYSQLND_DEBUG * trace_alloc = trace_log_plugin->methods.trace_instance_init(NULL, TSRMLS_C);
 			if (!dbg || !trace_alloc) {
 				return FAILURE;
 			}

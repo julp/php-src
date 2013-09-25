@@ -64,7 +64,7 @@ ZEND_API void *_safe_erealloc(void *ptr, size_t nmemb, size_t size, size_t offse
 ZEND_API void *_safe_realloc(void *ptr, size_t nmemb, size_t size, size_t offset);
 ZEND_API char *_estrdup(const char *s ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC) ZEND_ATTRIBUTE_MALLOC;
 ZEND_API char *_estrndup(const char *s, unsigned int length ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC) ZEND_ATTRIBUTE_MALLOC;
-ZEND_API size_t _zend_mem_block_size(void *ptr TSRMLS_DC ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
+ZEND_API size_t _zend_mem_block_size(void *ptr, TSRMLS_D ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
 
 /* Standard wrapper macros */
 #define emalloc(size)						_emalloc((size) ZEND_FILE_LINE_CC ZEND_FILE_LINE_EMPTY_CC)
@@ -76,7 +76,7 @@ ZEND_API size_t _zend_mem_block_size(void *ptr TSRMLS_DC ZEND_FILE_LINE_DC ZEND_
 #define erealloc_recoverable(ptr, size)		_erealloc((ptr), (size), 1 ZEND_FILE_LINE_CC ZEND_FILE_LINE_EMPTY_CC)
 #define estrdup(s)							_estrdup((s) ZEND_FILE_LINE_CC ZEND_FILE_LINE_EMPTY_CC)
 #define estrndup(s, length)					_estrndup((s), (length) ZEND_FILE_LINE_CC ZEND_FILE_LINE_EMPTY_CC)
-#define zend_mem_block_size(ptr)			_zend_mem_block_size((ptr) TSRMLS_CC ZEND_FILE_LINE_CC ZEND_FILE_LINE_EMPTY_CC)
+#define zend_mem_block_size(ptr)			_zend_mem_block_size((ptr), TSRMLS_C ZEND_FILE_LINE_CC ZEND_FILE_LINE_EMPTY_CC)
 
 /* Relay wrapper macros */
 #define emalloc_rel(size)						_emalloc((size) ZEND_FILE_LINE_RELAY_CC ZEND_FILE_LINE_CC)
@@ -88,7 +88,7 @@ ZEND_API size_t _zend_mem_block_size(void *ptr TSRMLS_DC ZEND_FILE_LINE_DC ZEND_
 #define safe_erealloc_rel(ptr, nmemb, size, offset)	_safe_erealloc((ptr), (nmemb), (size), (offset) ZEND_FILE_LINE_RELAY_CC ZEND_FILE_LINE_CC)
 #define estrdup_rel(s)							_estrdup((s) ZEND_FILE_LINE_RELAY_CC ZEND_FILE_LINE_CC)
 #define estrndup_rel(s, length)					_estrndup((s), (length) ZEND_FILE_LINE_RELAY_CC ZEND_FILE_LINE_CC)
-#define zend_mem_block_size_rel(ptr)			_zend_mem_block_size((ptr) TSRMLS_CC ZEND_FILE_LINE_RELAY_CC ZEND_FILE_LINE_CC)
+#define zend_mem_block_size_rel(ptr)			_zend_mem_block_size((ptr), TSRMLS_C ZEND_FILE_LINE_RELAY_CC ZEND_FILE_LINE_CC)
 
 inline static void * __zend_malloc(size_t len)
 {
@@ -142,7 +142,7 @@ inline static void * __zend_realloc(void *p, size_t len)
 ZEND_API int zend_set_memory_limit(size_t memory_limit);
 
 ZEND_API void start_memory_manager(TSRMLS_D);
-ZEND_API void shutdown_memory_manager(int silent, int full_shutdown TSRMLS_DC);
+ZEND_API void shutdown_memory_manager(int silent, int full_shutdown, TSRMLS_D);
 ZEND_API int is_zend_mm(TSRMLS_D);
 
 #if ZEND_DEBUG
@@ -156,8 +156,8 @@ void zend_debug_alloc_output(char *format, ...);
 #define full_mem_check(silent)
 #endif
 
-ZEND_API size_t zend_memory_usage(int real_usage TSRMLS_DC);
-ZEND_API size_t zend_memory_peak_usage(int real_usage TSRMLS_DC);
+ZEND_API size_t zend_memory_usage(int real_usage, TSRMLS_D);
+ZEND_API size_t zend_memory_peak_usage(int real_usage, TSRMLS_D);
 
 END_EXTERN_C()
 
@@ -191,7 +191,7 @@ END_EXTERN_C()
 typedef struct _zend_mm_heap zend_mm_heap;
 
 ZEND_API zend_mm_heap *zend_mm_startup(void);
-ZEND_API void zend_mm_shutdown(zend_mm_heap *heap, int full_shutdown, int silent TSRMLS_DC);
+ZEND_API void zend_mm_shutdown(zend_mm_heap *heap, int full_shutdown, int silent, TSRMLS_D);
 ZEND_API void *_zend_mm_alloc(zend_mm_heap *heap, size_t size ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC) ZEND_ATTRIBUTE_MALLOC;
 ZEND_API void _zend_mm_free(zend_mm_heap *heap, void *p ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
 ZEND_API void *_zend_mm_realloc(zend_mm_heap *heap, void *p, size_t size ZEND_FILE_LINE_DC ZEND_FILE_LINE_ORIG_DC);
@@ -231,7 +231,7 @@ struct _zend_mm_storage {
 };
 
 ZEND_API zend_mm_heap *zend_mm_startup_ex(const zend_mm_mem_handlers *handlers, size_t block_size, size_t reserve_size, int internal, void *params);
-ZEND_API zend_mm_heap *zend_mm_set_heap(zend_mm_heap *new_heap TSRMLS_DC);
+ZEND_API zend_mm_heap *zend_mm_set_heap(zend_mm_heap *new_heap, TSRMLS_D);
 ZEND_API zend_mm_storage *zend_mm_get_storage(zend_mm_heap *heap);
 
 ZEND_API void zend_mm_set_custom_handlers(zend_mm_heap *heap,

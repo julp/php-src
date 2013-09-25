@@ -36,7 +36,7 @@
 #define STMT_CALL(name, params)											\
 	do {																\
 		S->last_err = name params;										\
-		S->last_err = _oci_error(S->err, stmt->dbh, stmt, #name, S->last_err, FALSE, __FILE__, __LINE__ TSRMLS_CC); \
+		S->last_err = _oci_error(S->err, stmt->dbh, stmt, #name, S->last_err, FALSE, __FILE__, __LINE__, TSRMLS_C); \
 		if (S->last_err) {												\
 			return 0;													\
 		}																\
@@ -45,15 +45,15 @@
 #define STMT_CALL_MSG(name, msg, params)								\
 	do { 																\
 		S->last_err = name params;										\
-		S->last_err = _oci_error(S->err, stmt->dbh, stmt, #name ": " #msg, S->last_err, FALSE, __FILE__, __LINE__ TSRMLS_CC); \
+		S->last_err = _oci_error(S->err, stmt->dbh, stmt, #name ": " #msg, S->last_err, FALSE, __FILE__, __LINE__, TSRMLS_C); \
 		if (S->last_err) {												\
 			return 0;													\
 		}																\
 	} while(0)
 
-static php_stream *oci_create_lob_stream(pdo_stmt_t *stmt, OCILobLocator *lob TSRMLS_DC);
+static php_stream *oci_create_lob_stream(pdo_stmt_t *stmt, OCILobLocator *lob, TSRMLS_D);
 
-static int oci_stmt_dtor(pdo_stmt_t *stmt TSRMLS_DC) /* {{{ */
+static int oci_stmt_dtor(pdo_stmt_t *stmt, TSRMLS_D) /* {{{ */
 {
 	pdo_oci_stmt *S = (pdo_oci_stmt*)stmt->driver_data;
 	HashTable *BC = stmt->bound_columns;
@@ -116,7 +116,7 @@ static int oci_stmt_dtor(pdo_stmt_t *stmt TSRMLS_DC) /* {{{ */
 	return 1;
 } /* }}} */
 
-static int oci_stmt_execute(pdo_stmt_t *stmt TSRMLS_DC) /* {{{ */
+static int oci_stmt_execute(pdo_stmt_t *stmt, TSRMLS_D) /* {{{ */
 {
 	pdo_oci_stmt *S = (pdo_oci_stmt*)stmt->driver_data;
 	ub4 rowcount;
@@ -191,7 +191,7 @@ static sb4 oci_bind_input_cb(dvoid *ctx, OCIBind *bindp, ub4 iter, ub4 index, dv
 	TSRMLS_FETCH();
 
 	if (!param || !param->parameter) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "param is NULL in oci_bind_input_cb; this should not happen");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "param is NULL in oci_bind_input_cb; this should not happen");
 		return OCI_ERROR;
 	}
 
@@ -223,7 +223,7 @@ static sb4 oci_bind_output_cb(dvoid *ctx, OCIBind *bindp, ub4 iter, ub4 index, d
 	TSRMLS_FETCH();
 
 	if (!param || !param->parameter) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "param is NULL in oci_bind_output_cb; this should not happen");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "param is NULL in oci_bind_output_cb; this should not happen");
 		return OCI_ERROR;
 	}
 
@@ -258,7 +258,7 @@ static sb4 oci_bind_output_cb(dvoid *ctx, OCIBind *bindp, ub4 iter, ub4 index, d
 	return OCI_CONTINUE;
 } /* }}} */
 
-static int oci_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_data *param, enum pdo_param_event event_type TSRMLS_DC) /* {{{ */
+static int oci_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_data *param, enum pdo_param_event event_type, TSRMLS_D) /* {{{ */
 {
 	pdo_oci_stmt *S = (pdo_oci_stmt*)stmt->driver_data;
 
@@ -366,7 +366,7 @@ static int oci_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_data *pa
 						 * wanted to bind a lob locator into it from the query
 						 * */
 
-						stm = oci_create_lob_stream(stmt, (OCILobLocator*)P->thing TSRMLS_CC);
+						stm = oci_create_lob_stream(stmt, (OCILobLocator*)P->thing, TSRMLS_C);
 						if (stm) {
 							OCILobOpen(S->H->svc, S->err, (OCILobLocator*)P->thing, OCI_LOB_READWRITE);
 							php_stream_to_zval(stm, param->parameter);
@@ -431,7 +431,7 @@ static int oci_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_data *pa
 	return 1;
 } /* }}} */
 
-static int oci_stmt_fetch(pdo_stmt_t *stmt, enum pdo_fetch_orientation ori,	long offset TSRMLS_DC) /* {{{ */
+static int oci_stmt_fetch(pdo_stmt_t *stmt, enum pdo_fetch_orientation ori,	long offset, TSRMLS_D) /* {{{ */
 {
 #if HAVE_OCISTMTFETCH2
 	ub4 ociori;
@@ -487,7 +487,7 @@ static sb4 oci_define_callback(dvoid *octxp, OCIDefine *define, ub4 iter, dvoid 
 			break;
 
 		default:
-			php_error_docref(NULL TSRMLS_CC, E_WARNING,
+			php_error_docref(NULL, TSRMLS_C, E_WARNING,
 				"unhandled datatype in oci_define_callback; this should not happen");
 			return OCI_ERROR;
 	}
@@ -495,7 +495,7 @@ static sb4 oci_define_callback(dvoid *octxp, OCIDefine *define, ub4 iter, dvoid 
 	return OCI_CONTINUE;
 }
 
-static int oci_stmt_describe(pdo_stmt_t *stmt, int colno TSRMLS_DC) /* {{{ */
+static int oci_stmt_describe(pdo_stmt_t *stmt, int colno, TSRMLS_D) /* {{{ */
 {
 	pdo_oci_stmt *S = (pdo_oci_stmt*)stmt->driver_data;
 	OCIParam *param = NULL;
@@ -605,7 +605,7 @@ struct oci_lob_self {
 	ub4 offset;
 };
 
-static size_t oci_blob_write(php_stream *stream, const char *buf, size_t count TSRMLS_DC)
+static size_t oci_blob_write(php_stream *stream, const char *buf, size_t count, TSRMLS_D)
 {
 	struct oci_lob_self *self = (struct oci_lob_self*)stream->abstract;
 	ub4 amt;
@@ -625,7 +625,7 @@ static size_t oci_blob_write(php_stream *stream, const char *buf, size_t count T
 	return amt;
 }
 
-static size_t oci_blob_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
+static size_t oci_blob_read(php_stream *stream, char *buf, size_t count, TSRMLS_D)
 {
 	struct oci_lob_self *self = (struct oci_lob_self*)stream->abstract;
 	ub4 amt;
@@ -647,7 +647,7 @@ static size_t oci_blob_read(php_stream *stream, char *buf, size_t count TSRMLS_D
 	return amt;
 }
 
-static int oci_blob_close(php_stream *stream, int close_handle TSRMLS_DC)
+static int oci_blob_close(php_stream *stream, int close_handle, TSRMLS_D)
 {
 	struct oci_lob_self *self = (struct oci_lob_self*)stream->abstract;
 	pdo_stmt_t *stmt = self->stmt;
@@ -657,18 +657,18 @@ static int oci_blob_close(php_stream *stream, int close_handle TSRMLS_DC)
 		efree(self);
 	}
 
-	php_pdo_stmt_delref(stmt TSRMLS_CC);
+	php_pdo_stmt_delref(stmt, TSRMLS_C);
 	return 0;
 }
 
-static int oci_blob_flush(php_stream *stream TSRMLS_DC)
+static int oci_blob_flush(php_stream *stream, TSRMLS_D)
 {
 	struct oci_lob_self *self = (struct oci_lob_self*)stream->abstract;
 	OCILobFlushBuffer(self->S->H->svc, self->S->err, self->lob, 0);
 	return 0;
 }
 
-static int oci_blob_seek(php_stream *stream, off_t offset, int whence, off_t *newoffset TSRMLS_DC)
+static int oci_blob_seek(php_stream *stream, off_t offset, int whence, off_t *newoffset, TSRMLS_D)
 {
 	struct oci_lob_self *self = (struct oci_lob_self*)stream->abstract;
 
@@ -692,7 +692,7 @@ static php_stream_ops oci_blob_stream_ops = {
 	NULL
 };
 
-static php_stream *oci_create_lob_stream(pdo_stmt_t *stmt, OCILobLocator *lob TSRMLS_DC)
+static php_stream *oci_create_lob_stream(pdo_stmt_t *stmt, OCILobLocator *lob, TSRMLS_D)
 {
 	php_stream *stm;
 	struct oci_lob_self *self = ecalloc(1, sizeof(*self));
@@ -704,7 +704,7 @@ static php_stream *oci_create_lob_stream(pdo_stmt_t *stmt, OCILobLocator *lob TS
 	stm = php_stream_alloc(&oci_blob_stream_ops, self, 0, "r+b");
 
 	if (stm) {
-		php_pdo_stmt_addref(stmt TSRMLS_CC);
+		php_pdo_stmt_addref(stmt, TSRMLS_C);
 		return stm;
 	}
 
@@ -712,7 +712,7 @@ static php_stream *oci_create_lob_stream(pdo_stmt_t *stmt, OCILobLocator *lob TS
 	return NULL;
 }
 
-static int oci_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsigned long *len, int *caller_frees TSRMLS_DC) /* {{{ */
+static int oci_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsigned long *len, int *caller_frees, TSRMLS_D) /* {{{ */
 {
 	pdo_oci_stmt *S = (pdo_oci_stmt*)stmt->driver_data;
 	pdo_oci_column *C = &S->cols[colno];
@@ -728,7 +728,7 @@ static int oci_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsigned lo
 
 		if (C->dtype == SQLT_BLOB || C->dtype == SQLT_CLOB) {
 			if (C->data) {
-				*ptr = (char*)oci_create_lob_stream(stmt, (OCILobLocator*)C->data TSRMLS_CC);
+				*ptr = (char*)oci_create_lob_stream(stmt, (OCILobLocator*)C->data, TSRMLS_C);
 				OCILobOpen(S->H->svc, S->err, (OCILobLocator*)C->data, OCI_LOB_READONLY);
 			}
 			*len = 0;
@@ -740,7 +740,7 @@ static int oci_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsigned lo
 		return 1;
 	} else {
 		/* it was truncated */
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "column %d data was too large for buffer and was truncated to fit it", colno);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "column %d data was too large for buffer and was truncated to fit it", colno);
 
 		*ptr = C->data;
 		*len = C->fetched_len;

@@ -32,14 +32,14 @@ static void collator_ctor(INTERNAL_FUNCTION_PARAMETERS)
 	zval*            object;
 	Collator_object* co;
 
-	intl_error_reset( NULL TSRMLS_CC );
+	intl_error_reset( NULL, TSRMLS_C );
 	object = return_value;
 	/* Parse parameters. */
-	if( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "s",
+	if( zend_parse_parameters( ZEND_NUM_ARGS(), TSRMLS_C, "s",
 		&locale, &locale_len ) == FAILURE )
 	{
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"collator_create: unable to parse input params", 0 TSRMLS_CC );
+			"collator_create: unable to parse input params", 0, TSRMLS_C );
 		zval_dtor(return_value);
 		RETURN_NULL();
 	}

@@ -104,9 +104,9 @@ PHP_FUNCTION(array_chunk);
 PHP_FUNCTION(array_combine);
 
 PHPAPI HashTable* php_splice(HashTable *, int, int, zval ***, int, HashTable **);
-PHPAPI int php_array_merge(HashTable *dest, HashTable *src, int recursive TSRMLS_DC);
-PHPAPI int php_array_replace_recursive(HashTable *dest, HashTable *src TSRMLS_DC);
-PHPAPI int php_multisort_compare(const void *a, const void *b TSRMLS_DC);
+PHPAPI int php_array_merge(HashTable *dest, HashTable *src, int recursive, TSRMLS_D);
+PHPAPI int php_array_replace_recursive(HashTable *dest, HashTable *src, TSRMLS_D);
+PHPAPI int php_multisort_compare(const void *a, const void *b, TSRMLS_D);
 
 #define PHP_SORT_REGULAR            0
 #define PHP_SORT_NUMERIC            1
@@ -119,7 +119,7 @@ PHPAPI int php_multisort_compare(const void *a, const void *b TSRMLS_DC);
 
 ZEND_BEGIN_MODULE_GLOBALS(array) 
 	int *multisort_flags[2];
-	int (*compare_func)(zval *result, zval *op1, zval *op2 TSRMLS_DC);
+	int (*compare_func)(zval *result, zval *op1, zval *op2, TSRMLS_D);
 ZEND_END_MODULE_GLOBALS(array) 
 
 #ifdef ZTS

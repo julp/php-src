@@ -101,7 +101,7 @@ static int php_lsapi_startup(sapi_module_struct *sapi_module)
 
 /* {{{ sapi_lsapi_ub_write
  */
-static int sapi_lsapi_ub_write(const char *str, uint str_length TSRMLS_DC)
+static int sapi_lsapi_ub_write(const char *str, uint str_length, TSRMLS_D)
 {
 	int ret;
 	int remain;
@@ -155,7 +155,7 @@ static int sapi_lsapi_deactivate(TSRMLS_D)
 
 /* {{{ sapi_lsapi_getenv
  */
-static char *sapi_lsapi_getenv( char * name, size_t name_len TSRMLS_DC )
+static char *sapi_lsapi_getenv( char * name, size_t name_len, TSRMLS_D )
 {
 	if ( lsapi_mode ) {
 		return LSAPI_GetEnv( name );
@@ -170,7 +170,7 @@ static char *sapi_lsapi_getenv( char * name, size_t name_len TSRMLS_DC )
 static int add_variable( const char * pKey, int keyLen, const char * pValue, int valLen,
 						 void * arg )
 {
-	php_register_variable_safe((char *)pKey, (char *)pValue, valLen, (zval *)arg TSRMLS_CC);
+	php_register_variable_safe((char *)pKey, (char *)pValue, valLen, (zval *)arg, TSRMLS_C);
 	return 1;
 }
 
@@ -178,23 +178,23 @@ static int add_variable( const char * pKey, int keyLen, const char * pValue, int
 
 /* {{{ sapi_lsapi_register_variables
  */
-static void sapi_lsapi_register_variables(zval *track_vars_array TSRMLS_DC)
+static void sapi_lsapi_register_variables(zval *track_vars_array, TSRMLS_D)
 {
 
 	if ( lsapi_mode ) {
 		LSAPI_ForeachHeader( add_variable, track_vars_array );
 		LSAPI_ForeachEnv( add_variable, track_vars_array );
-		php_import_environment_variables(track_vars_array TSRMLS_CC);
+		php_import_environment_variables(track_vars_array, TSRMLS_C);
 
-		php_register_variable("PHP_SELF", (SG(request_info).request_uri ? SG(request_info).request_uri:""), track_vars_array TSRMLS_CC);
+		php_register_variable("PHP_SELF", (SG(request_info).request_uri ? SG(request_info).request_uri:""), track_vars_array, TSRMLS_C);
 	} else {
-		php_import_environment_variables(track_vars_array TSRMLS_CC);
+		php_import_environment_variables(track_vars_array, TSRMLS_C);
 
-		php_register_variable("PHP_SELF", php_self, track_vars_array TSRMLS_CC);
-		php_register_variable("SCRIPT_NAME", php_self, track_vars_array TSRMLS_CC);
-		php_register_variable("SCRIPT_FILENAME", script_filename, track_vars_array TSRMLS_CC);
-		php_register_variable("PATH_TRANSLATED", script_filename, track_vars_array TSRMLS_CC);
-		php_register_variable("DOCUMENT_ROOT", "", track_vars_array TSRMLS_CC);
+		php_register_variable("PHP_SELF", php_self, track_vars_array, TSRMLS_C);
+		php_register_variable("SCRIPT_NAME", php_self, track_vars_array, TSRMLS_C);
+		php_register_variable("SCRIPT_FILENAME", script_filename, track_vars_array, TSRMLS_C);
+		php_register_variable("PATH_TRANSLATED", script_filename, track_vars_array, TSRMLS_C);
+		php_register_variable("DOCUMENT_ROOT", "", track_vars_array, TSRMLS_C);
 
 	}
 }
@@ -203,7 +203,7 @@ static void sapi_lsapi_register_variables(zval *track_vars_array TSRMLS_DC)
 
 /* {{{ sapi_lsapi_read_post
  */
-static int sapi_lsapi_read_post(char *buffer, uint count_bytes TSRMLS_DC)
+static int sapi_lsapi_read_post(char *buffer, uint count_bytes, TSRMLS_D)
 {
 	if ( lsapi_mode ) {
 		return LSAPI_ReadReqBody( buffer, count_bytes );
@@ -231,7 +231,7 @@ static char *sapi_lsapi_read_cookies(TSRMLS_D)
 
 /* {{{ sapi_lsapi_send_headers
  */
-static int sapi_lsapi_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
+static int sapi_lsapi_send_headers(sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
 	sapi_header_struct  *h;
 	zend_llist_position pos;
@@ -268,7 +268,7 @@ static int sapi_lsapi_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
 
 /* {{{ sapi_lsapi_send_headers
  */
-static void sapi_lsapi_log_message(char *message TSRMLS_DC)
+static void sapi_lsapi_log_message(char *message, TSRMLS_D)
 {
 	int len = strlen( message );
 	LSAPI_Write_Stderr( message, len);
@@ -336,10 +336,10 @@ static int init_request_info( TSRMLS_D )
 	SG(sapi_headers).http_response_code = 0;
 	
 	pAuth = LSAPI_GetHeader( H_AUTHORIZATION );
-	php_handle_auth_data(pAuth TSRMLS_CC);
+	php_handle_auth_data(pAuth, TSRMLS_C);
 }
 
-static int lsapi_module_main(int show_source TSRMLS_DC)
+static int lsapi_module_main(int show_source, TSRMLS_D)
 {
 	zend_file_handle file_handle = {0};
 
@@ -350,7 +350,7 @@ static int lsapi_module_main(int show_source TSRMLS_DC)
 		zend_syntax_highlighter_ini syntax_highlighter_ini;
 
 		php_get_highlight_struct(&syntax_highlighter_ini);
-		highlight_file(SG(request_info).path_translated, &syntax_highlighter_ini TSRMLS_CC);
+		highlight_file(SG(request_info).path_translated, &syntax_highlighter_ini, TSRMLS_C);
 	} else {
 		file_handle.type = ZEND_HANDLE_FILENAME;
 		file_handle.handle.fd = 0;
@@ -358,7 +358,7 @@ static int lsapi_module_main(int show_source TSRMLS_DC)
 		file_handle.free_filename = 0;
 		file_handle.opened_path = NULL;
 
-		php_execute_script(&file_handle TSRMLS_CC);
+		php_execute_script(&file_handle, TSRMLS_C);
 	}
 	zend_try {
 		php_request_shutdown(NULL);
@@ -404,7 +404,7 @@ static int processReq( TSRMLS_D )
 
 		override_ini();
 
-		if ( lsapi_module_main( source_highlight TSRMLS_CC ) == -1 ) {
+		if ( lsapi_module_main( source_highlight, TSRMLS_C ) == -1 ) {
 			ret = -1;
 		}
 	} zend_end_try();
@@ -435,7 +435,7 @@ static void cli_usage( TSRMLS_D )
 #ifdef PHP_OUTPUT_NEWAPI
     php_output_end_all(TSRMLS_C);
 #else
-    php_end_ob_buffers(1 TSRMLS_CC);
+    php_end_ob_buffers(1, TSRMLS_C);
 #endif
 }
 
@@ -534,11 +534,11 @@ static int cli_main( int argc, char * argv[] )
 				break;
 			case 'i':
 				if (php_request_startup(TSRMLS_C) != FAILURE) {
-					php_print_info(0xFFFFFFFF TSRMLS_CC);
+					php_print_info(0xFFFFFFFF, TSRMLS_C);
 #ifdef PHP_OUTPUT_NEWAPI
                     php_output_end_all(TSRMLS_C);
 #else
-                    php_end_ob_buffers(1 TSRMLS_CC);
+                    php_end_ob_buffers(1, TSRMLS_C);
 #endif
 					php_request_shutdown( NULL );
 				}
@@ -554,7 +554,7 @@ static int cli_main( int argc, char * argv[] )
 #ifdef PHP_OUTPUT_NEWAPI
                     php_output_end_all(TSRMLS_C);
 #else
-                    php_end_ob_buffers(1 TSRMLS_CC);
+                    php_end_ob_buffers(1, TSRMLS_C);
 #endif
 					php_request_shutdown( NULL );
 				}
@@ -598,13 +598,13 @@ static int cli_main( int argc, char * argv[] )
 							zend_syntax_highlighter_ini syntax_highlighter_ini;
 					
 							php_get_highlight_struct(&syntax_highlighter_ini);
-							highlight_file(SG(request_info).path_translated, &syntax_highlighter_ini TSRMLS_CC);
+							highlight_file(SG(request_info).path_translated, &syntax_highlighter_ini, TSRMLS_C);
 						} else {
 							file_handle.filename = *p;
 							file_handle.free_filename = 0;
 							file_handle.opened_path = NULL;
 
-							php_execute_script(&file_handle TSRMLS_CC);
+							php_execute_script(&file_handle, TSRMLS_C);
 						}
 
 						php_request_shutdown( NULL );

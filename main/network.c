@@ -166,7 +166,7 @@ PHPAPI void php_network_freeaddresses(struct sockaddr **sal)
 /* {{{ php_network_getaddresses
  * Returns number of addresses, 0 for none/error
  */
-PHPAPI int php_network_getaddresses(const char *host, int socktype, struct sockaddr ***sal, char **error_string TSRMLS_DC)
+PHPAPI int php_network_getaddresses(const char *host, int socktype, struct sockaddr ***sal, char **error_string, TSRMLS_D)
 {
 	struct sockaddr **sap;
 	int n;
@@ -213,17 +213,17 @@ PHPAPI int php_network_getaddresses(const char *host, int socktype, struct socka
 	if ((n = getaddrinfo(host, NULL, &hints, &res))) {
 		if (error_string) {
 			spprintf(error_string, 0, "php_network_getaddresses: getaddrinfo failed: %s", PHP_GAI_STRERROR(n));
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s", *error_string);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "%s", *error_string);
 		} else {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "php_network_getaddresses: getaddrinfo failed: %s", PHP_GAI_STRERROR(n));
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "php_network_getaddresses: getaddrinfo failed: %s", PHP_GAI_STRERROR(n));
 		}
 		return 0;
 	} else if (res == NULL) {
 		if (error_string) {
 			spprintf(error_string, 0, "php_network_getaddresses: getaddrinfo failed (null result pointer) errno=%d", errno);
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s", *error_string);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "%s", *error_string);
 		} else {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "php_network_getaddresses: getaddrinfo failed (null result pointer)");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "php_network_getaddresses: getaddrinfo failed (null result pointer)");
 		}
 		return 0;
 	}
@@ -250,9 +250,9 @@ PHPAPI int php_network_getaddresses(const char *host, int socktype, struct socka
 		if (host_info == NULL) {
 			if (error_string) {
 				spprintf(error_string, 0, "php_network_getaddresses: gethostbyname failed. errno=%d", errno);
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s", *error_string);
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "%s", *error_string);
 			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "php_network_getaddresses: gethostbyname failed");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "php_network_getaddresses: gethostbyname failed");
 			}
 			return 0;
 		}
@@ -388,7 +388,7 @@ ok:
 	return ret;
 #else
 	if (asynchronous) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Asynchronous connect() not supported on this platform");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Asynchronous connect() not supported on this platform");
 	}
 	return (connect(sockfd, addr, addrlen) == 0) ? 0 : -1;
 #endif
@@ -417,14 +417,14 @@ static inline void sub_times(struct timeval a, struct timeval b, struct timeval 
 /* {{{ php_network_bind_socket_to_local_addr */
 php_socket_t php_network_bind_socket_to_local_addr(const char *host, unsigned port,
 		int socktype, char **error_string, int *error_code
-		TSRMLS_DC)
+		,TSRMLS_D)
 {
 	int num_addrs, n, err = 0;
 	php_socket_t sock;
 	struct sockaddr **sal, **psal, *sa;
 	socklen_t socklen;
 
-	num_addrs = php_network_getaddresses(host, socktype, &psal, error_string TSRMLS_CC);
+	num_addrs = php_network_getaddresses(host, socktype, &psal, error_string, TSRMLS_C);
 
 	if (num_addrs == 0) {
 		/* could not resolve address(es) */
@@ -499,7 +499,7 @@ bound:
 }
 /* }}} */
 
-PHPAPI int php_network_parse_network_address_with_port(const char *addr, long addrlen, struct sockaddr *sa, socklen_t *sl TSRMLS_DC)
+PHPAPI int php_network_parse_network_address_with_port(const char *addr, long addrlen, struct sockaddr *sa, socklen_t *sl, TSRMLS_D)
 {
 	char *colon;
 	char *tmp;
@@ -550,11 +550,11 @@ PHPAPI int php_network_parse_network_address_with_port(const char *addr, long ad
 	}
 
 	/* looks like we'll need to resolve it */
-	n = php_network_getaddresses(tmp, SOCK_DGRAM, &psal, &errstr TSRMLS_CC);
+	n = php_network_getaddresses(tmp, SOCK_DGRAM, &psal, &errstr, TSRMLS_C);
 
 	if (n == 0) {
 		if (errstr) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to resolve `%s': %s", tmp, errstr);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Failed to resolve `%s': %s", tmp, errstr);
 			STR_FREE(errstr);
 		}
 		goto out;
@@ -594,7 +594,7 @@ PHPAPI void php_network_populate_name_from_sockaddr(
 		/* output address */
 		struct sockaddr **addr,
 		socklen_t *addrlen
-		TSRMLS_DC)
+		,TSRMLS_D)
 {
 	if (addr) {
 		*addr = emalloc(sl);
@@ -658,7 +658,7 @@ PHPAPI int php_network_get_peer_name(php_socket_t sock,
 		char **textaddr, long *textaddrlen,
 		struct sockaddr **addr,
 		socklen_t *addrlen
-		TSRMLS_DC)
+		,TSRMLS_D)
 {
 	php_sockaddr_storage sa;
 	socklen_t sl = sizeof(sa);
@@ -668,7 +668,7 @@ PHPAPI int php_network_get_peer_name(php_socket_t sock,
 		php_network_populate_name_from_sockaddr((struct sockaddr*)&sa, sl,
 				textaddr, textaddrlen,
 				addr, addrlen
-				TSRMLS_CC);
+				,TSRMLS_C);
 		return 0;
 	}
 	return -1;
@@ -678,7 +678,7 @@ PHPAPI int php_network_get_sock_name(php_socket_t sock,
 		char **textaddr, long *textaddrlen,
 		struct sockaddr **addr,
 		socklen_t *addrlen
-		TSRMLS_DC)
+		,TSRMLS_D)
 {
 	php_sockaddr_storage sa;
 	socklen_t sl = sizeof(sa);
@@ -688,7 +688,7 @@ PHPAPI int php_network_get_sock_name(php_socket_t sock,
 		php_network_populate_name_from_sockaddr((struct sockaddr*)&sa, sl,
 				textaddr, textaddrlen,
 				addr, addrlen
-				TSRMLS_CC);
+				,TSRMLS_C);
 		return 0;
 	}
 	return -1;
@@ -712,7 +712,7 @@ PHPAPI php_socket_t php_network_accept_incoming(php_socket_t srvsock,
 		struct timeval *timeout,
 		char **error_string,
 		int *error_code
-		TSRMLS_DC)
+		,TSRMLS_D)
 {
 	php_socket_t clisock = -1;
 	int error = 0, n;
@@ -734,7 +734,7 @@ PHPAPI php_socket_t php_network_accept_incoming(php_socket_t srvsock,
 			php_network_populate_name_from_sockaddr((struct sockaddr*)&sa, sl,
 					textaddr, textaddrlen,
 					addr, addrlen
-					TSRMLS_CC);
+					,TSRMLS_C);
 		} else {
 			error = php_socket_errno();
 		}
@@ -763,7 +763,7 @@ PHPAPI php_socket_t php_network_accept_incoming(php_socket_t srvsock,
 php_socket_t php_network_connect_socket_to_host(const char *host, unsigned short port,
 		int socktype, int asynchronous, struct timeval *timeout, char **error_string,
 		int *error_code, char *bindto, unsigned short bindport
-		TSRMLS_DC)
+		,TSRMLS_D)
 {
 	int num_addrs, n, fatal = 0;
 	php_socket_t sock;
@@ -774,7 +774,7 @@ php_socket_t php_network_connect_socket_to_host(const char *host, unsigned short
 	struct timeval limit_time, time_now;
 #endif
 
-	num_addrs = php_network_getaddresses(host, socktype, &psal, error_string TSRMLS_CC);
+	num_addrs = php_network_getaddresses(host, socktype, &psal, error_string, TSRMLS_C);
 
 	if (num_addrs == 0) {
 		/* could not resolve address(es) */
@@ -844,7 +844,7 @@ php_socket_t php_network_connect_socket_to_host(const char *host, unsigned short
 					in4->sin_family = sa->sa_family;
 					in4->sin_port = htons(bindport);
 					if (!inet_aton(bindto, &in4->sin_addr)) {
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid IP Address: %s", bindto);
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid IP Address: %s", bindto);
 						goto skip_bind;
 					}
 					memset(&(in4->sin_zero), 0, sizeof(in4->sin_zero));
@@ -859,13 +859,13 @@ php_socket_t php_network_connect_socket_to_host(const char *host, unsigned short
 					in6->sin6_family = sa->sa_family;
 					in6->sin6_port = htons(bindport);
 					if (inet_pton(AF_INET6, bindto, &in6->sin6_addr) < 1) {
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid IP Address: %s", bindto);
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid IP Address: %s", bindto);
 						goto skip_bind;
 					}
 				}
 #endif
 				if (!local_address || bind(sock, local_address, local_address_len)) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to bind to '%s:%d', system said: %s", bindto, bindport, strerror(errno));
+					php_error_docref(NULL, TSRMLS_C, E_WARNING, "failed to bind to '%s:%d', system said: %s", bindto, bindport, strerror(errno));
 				}
 skip_bind:
 				if (local_address) {
@@ -1028,7 +1028,7 @@ PHPAPI char *php_socket_strerror(long err, char *buf, size_t bufsize)
 /* }}} */
 
 /* deprecated */
-PHPAPI php_stream *_php_stream_sock_open_from_socket(php_socket_t socket, const char *persistent_id STREAMS_DC TSRMLS_DC)
+PHPAPI php_stream *_php_stream_sock_open_from_socket(php_socket_t socket, const char *persistent_id STREAMS_DC, TSRMLS_D)
 {
 	php_stream *stream;
 	php_netstream_data_t *sock;
@@ -1053,7 +1053,7 @@ PHPAPI php_stream *_php_stream_sock_open_from_socket(php_socket_t socket, const 
 }
 
 PHPAPI php_stream *_php_stream_sock_open_host(const char *host, unsigned short port,
-		int socktype, struct timeval *timeout, const char *persistent_id STREAMS_DC TSRMLS_DC)
+		int socktype, struct timeval *timeout, const char *persistent_id STREAMS_DC, TSRMLS_D)
 {
 	char *res;
 	long reslen;
@@ -1069,7 +1069,7 @@ PHPAPI php_stream *_php_stream_sock_open_host(const char *host, unsigned short p
 	return stream;
 }
 
-PHPAPI int php_set_sock_blocking(int socketd, int block TSRMLS_DC)
+PHPAPI int php_set_sock_blocking(int socketd, int block, TSRMLS_D)
 {
 	int ret = SUCCESS;
 	int flags;
@@ -1105,7 +1105,7 @@ PHPAPI void _php_emit_fd_setsize_warning(int max_fd)
 	TSRMLS_FETCH();
 
 #ifdef PHP_WIN32
-	php_error_docref(NULL TSRMLS_CC, E_WARNING,
+	php_error_docref(NULL, TSRMLS_C, E_WARNING,
 		"PHP needs to be recompiled with a larger value of FD_SETSIZE.\n"
 		"If this binary is from an official www.php.net package, file a bug report\n"
 		"at http://bugs.php.net, including the following information:\n"
@@ -1115,7 +1115,7 @@ PHPAPI void _php_emit_fd_setsize_warning(int max_fd)
 		"one time, in order to avoid seeing this error again at a later date.",
 		FD_SETSIZE, max_fd, (max_fd + 128) & ~127);
 #else
-	php_error_docref(NULL TSRMLS_CC, E_WARNING,
+	php_error_docref(NULL, TSRMLS_C, E_WARNING,
 		"You MUST recompile PHP with a larger value of FD_SETSIZE.\n"
 		"It is set to %d, but you have descriptors numbered at least as high as %d.\n"
 		" --enable-fd-setsize=%d is recommended, but you may want to set it\n"

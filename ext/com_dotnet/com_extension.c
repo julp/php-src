@@ -307,9 +307,9 @@ static PHP_INI_MH(OnTypeLibFileUpdate)
 			ptr--;
 		}
 
-		if ((pTL = php_com_load_typelib_via_cache(typelib_name, COMG(code_page), &cached TSRMLS_CC)) != NULL) {
+		if ((pTL = php_com_load_typelib_via_cache(typelib_name, COMG(code_page), &cached, TSRMLS_C)) != NULL) {
 			if (!cached) {
-				php_com_import_typelib(pTL, mode, COMG(code_page) TSRMLS_CC);
+				php_com_import_typelib(pTL, mode, COMG(code_page), TSRMLS_C);
 			}
 			ITypeLib_Release(pTL);
 		}
@@ -350,24 +350,24 @@ PHP_MINIT_FUNCTION(com_dotnet)
 	php_com_persist_minit(INIT_FUNC_ARGS_PASSTHRU);
 
 	INIT_CLASS_ENTRY(ce, "com_exception", NULL);
-	php_com_exception_class_entry = zend_register_internal_class_ex(&ce, zend_exception_get_default(TSRMLS_C), NULL TSRMLS_CC);
+	php_com_exception_class_entry = zend_register_internal_class_ex(&ce, zend_exception_get_default(TSRMLS_C), NULL, TSRMLS_C);
 	php_com_exception_class_entry->ce_flags |= ZEND_ACC_FINAL;
 /*	php_com_exception_class_entry->constructor->common.fn_flags |= ZEND_ACC_PROTECTED; */
 
 	INIT_CLASS_ENTRY(ce, "com_safearray_proxy", NULL);
-	php_com_saproxy_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
+	php_com_saproxy_class_entry = zend_register_internal_class(&ce, TSRMLS_C);
 	php_com_saproxy_class_entry->ce_flags |= ZEND_ACC_FINAL;
 /*	php_com_saproxy_class_entry->constructor->common.fn_flags |= ZEND_ACC_PROTECTED; */
 	php_com_saproxy_class_entry->get_iterator = php_com_saproxy_iter_get;
 	
 	INIT_CLASS_ENTRY(ce, "variant", NULL);
 	ce.create_object = php_com_object_new;
-	php_com_variant_class_entry = zend_register_internal_class(&ce TSRMLS_CC);
+	php_com_variant_class_entry = zend_register_internal_class(&ce, TSRMLS_C);
 	php_com_variant_class_entry->get_iterator = php_com_iter_get;
 
 	INIT_CLASS_ENTRY(ce, "com", NULL);
 	ce.create_object = php_com_object_new;
-	tmp = zend_register_internal_class_ex(&ce, php_com_variant_class_entry, "variant" TSRMLS_CC);
+	tmp = zend_register_internal_class_ex(&ce, php_com_variant_class_entry, "variant", TSRMLS_C);
 	tmp->get_iterator = php_com_iter_get;
 
 	zend_ts_hash_init(&php_com_typelibraries, 0, NULL, php_com_typelibrary_dtor, 1);
@@ -375,7 +375,7 @@ PHP_MINIT_FUNCTION(com_dotnet)
 #if HAVE_MSCOREE_H
 	INIT_CLASS_ENTRY(ce, "dotnet", NULL);
 	ce.create_object = php_com_object_new;
-	tmp = zend_register_internal_class_ex(&ce, php_com_variant_class_entry, "variant" TSRMLS_CC);
+	tmp = zend_register_internal_class_ex(&ce, php_com_variant_class_entry, "variant", TSRMLS_C);
 	tmp->get_iterator = php_com_iter_get;
 #endif
 

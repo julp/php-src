@@ -23,14 +23,14 @@
 
 #define PS_SANITY_CHECK						\
 	if (PS(default_mod) == NULL) {				\
-		php_error_docref(NULL TSRMLS_CC, E_CORE_ERROR, "Cannot call default session handler"); \
+		php_error_docref(NULL, TSRMLS_C, E_CORE_ERROR, "Cannot call default session handler"); \
 		RETURN_FALSE;						\
 	}							
 
 #define PS_SANITY_CHECK_IS_OPEN				\
 	PS_SANITY_CHECK; \
 	if (!PS(mod_user_is_open)) {			\
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Parent session handler is not open");	\
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Parent session handler is not open");	\
 		RETURN_FALSE;						\
 	}							
 
@@ -43,12 +43,12 @@ PHP_METHOD(SessionHandler, open)
 
 	PS_SANITY_CHECK;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &save_path, &save_path_len, &session_name, &session_name_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss", &save_path, &save_path_len, &session_name, &session_name_len) == FAILURE) {
 		return;
 	}
 
 	PS(mod_user_is_open) = 1;
-	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_open(&PS(mod_data), save_path, session_name TSRMLS_CC));
+	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_open(&PS(mod_data), save_path, session_name, TSRMLS_C));
 }
 /* }}} */
 
@@ -63,7 +63,7 @@ PHP_METHOD(SessionHandler, close)
 	zend_parse_parameters_none();
 	
 	PS(mod_user_is_open) = 0;
-	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_close(&PS(mod_data) TSRMLS_CC));
+	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_close(&PS(mod_data), TSRMLS_C));
 }
 /* }}} */
 
@@ -76,11 +76,11 @@ PHP_METHOD(SessionHandler, read)
 
 	PS_SANITY_CHECK_IS_OPEN;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &key, &key_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &key, &key_len) == FAILURE) {
 		return;
 	}
 
-	if (PS(default_mod)->s_read(&PS(mod_data), key, &val, &val_len TSRMLS_CC) == FAILURE) {
+	if (PS(default_mod)->s_read(&PS(mod_data), key, &val, &val_len, TSRMLS_C) == FAILURE) {
 		RETVAL_FALSE;
 		return;
 	}
@@ -100,11 +100,11 @@ PHP_METHOD(SessionHandler, write)
 
 	PS_SANITY_CHECK_IS_OPEN;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &key, &key_len, &val, &val_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss", &key, &key_len, &val, &val_len) == FAILURE) {
 		return;
 	}
 
-	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_write(&PS(mod_data), key, val, val_len TSRMLS_CC));
+	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_write(&PS(mod_data), key, val, val_len, TSRMLS_C));
 }
 /* }}} */
 
@@ -117,11 +117,11 @@ PHP_METHOD(SessionHandler, destroy)
 
 	PS_SANITY_CHECK_IS_OPEN;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &key, &key_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &key, &key_len) == FAILURE) {
 		return;
 	}
 	
-	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_destroy(&PS(mod_data), key TSRMLS_CC));
+	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_destroy(&PS(mod_data), key, TSRMLS_C));
 }
 /* }}} */
 
@@ -134,10 +134,10 @@ PHP_METHOD(SessionHandler, gc)
 
 	PS_SANITY_CHECK_IS_OPEN;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &maxlifetime) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &maxlifetime) == FAILURE) {
 		return;
 	}
 	
-	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_gc(&PS(mod_data), maxlifetime, &nrdels TSRMLS_CC));
+	RETVAL_BOOL(SUCCESS == PS(default_mod)->s_gc(&PS(mod_data), maxlifetime, &nrdels, TSRMLS_C));
 }
 /* }}} */

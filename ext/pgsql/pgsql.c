@@ -81,7 +81,7 @@
 #define PQ_SETNONBLOCKING(pg_link, flag) 0
 #endif
 
-#define CHECK_DEFAULT_LINK(x) if ((x) == -1) { php_error_docref(NULL TSRMLS_CC, E_WARNING, "No PostgreSQL link opened yet"); }
+#define CHECK_DEFAULT_LINK(x) if ((x) == -1) { php_error_docref(NULL, TSRMLS_C, E_WARNING, "No PostgreSQL link opened yet"); }
 
 #ifndef HAVE_PQFREEMEM
 #define PQfreemem free
@@ -771,13 +771,13 @@ static inline char * _php_pgsql_trim_result(PGconn * pgsql, char **buf)
 
 #define PHP_PQ_ERROR(text, pgsql) { \
 	char *msgbuf = _php_pgsql_trim_message(PQerrorMessage(pgsql), NULL);	\
-	php_error_docref(NULL TSRMLS_CC, E_WARNING, text, msgbuf);	\
+	php_error_docref(NULL, TSRMLS_C, E_WARNING, text, msgbuf);	\
 	efree(msgbuf);	\
 } \
 
 /* {{{ php_pgsql_set_default_link
  */
-static void php_pgsql_set_default_link(int id TSRMLS_DC)
+static void php_pgsql_set_default_link(int id, TSRMLS_D)
 {   
 	zend_list_addref(id);
 
@@ -791,7 +791,7 @@ static void php_pgsql_set_default_link(int id TSRMLS_DC)
 
 /* {{{ _close_pgsql_link
  */
-static void _close_pgsql_link(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+static void _close_pgsql_link(zend_rsrc_list_entry *rsrc, TSRMLS_D)
 {
 	PGconn *link = (PGconn *)rsrc->ptr;
 	PGresult *res;
@@ -806,7 +806,7 @@ static void _close_pgsql_link(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 
 /* {{{ _close_pgsql_plink
  */
-static void _close_pgsql_plink(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+static void _close_pgsql_plink(zend_rsrc_list_entry *rsrc, TSRMLS_D)
 {
 	PGconn *link = (PGconn *)rsrc->ptr;
 	PGresult *res;
@@ -831,7 +831,7 @@ static void _php_pgsql_notice_handler(void *resource_id, const char *message)
 		notice = (php_pgsql_notice *)emalloc(sizeof(php_pgsql_notice));
 		notice->message = _php_pgsql_trim_message(message, (int *)&notice->len);
 		if (PGG(log_notices)) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "%s", notice->message);
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "%s", notice->message);
 		}
 		zend_hash_index_update(&PGG(notices), (ulong)resource_id, (void **)&notice, sizeof(php_pgsql_notice *), NULL);
 	}
@@ -855,7 +855,7 @@ static void _php_pgsql_notice_ptr_dtor(void **ptr)
 
 /* {{{ _rollback_transactions
  */
-static int _rollback_transactions(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+static int _rollback_transactions(zend_rsrc_list_entry *rsrc, TSRMLS_D)
 {
 	PGconn *link;
 	PGresult *res;
@@ -867,7 +867,7 @@ static int _rollback_transactions(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 	link = (PGconn *) rsrc->ptr;
 
 	if (PQ_SETNONBLOCKING(link, 0)) {
-		php_error_docref("ref.pgsql" TSRMLS_CC, E_NOTICE, "Cannot set connection to blocking mode");
+		php_error_docref("ref.pgsql", TSRMLS_C, E_NOTICE, "Cannot set connection to blocking mode");
 		return -1;
 	}
 	
@@ -897,7 +897,7 @@ static int _rollback_transactions(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 
 /* {{{ _free_ptr
  */
-static void _free_ptr(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+static void _free_ptr(zend_rsrc_list_entry *rsrc, TSRMLS_D)
 {
 	pgLofp *lofp = (pgLofp *)rsrc->ptr;
 	efree(lofp);
@@ -906,7 +906,7 @@ static void _free_ptr(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 
 /* {{{ _free_result
  */
-static void _free_result(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+static void _free_result(zend_rsrc_list_entry *rsrc, TSRMLS_D)
 {
 	pgsql_result_handle *pg_result = (pgsql_result_handle *)rsrc->ptr;
 
@@ -1052,7 +1052,7 @@ PHP_RSHUTDOWN_FUNCTION(pgsql)
 	/* clean up notice messages */
 	zend_hash_clean(&PGG(notices));
 	/* clean up persistent connection */
-	zend_hash_apply(&EG(persistent_list), (apply_func_t) _rollback_transactions TSRMLS_CC);
+	zend_hash_apply(&EG(persistent_list), (apply_func_t) _rollback_transactions, TSRMLS_C);
 	return SUCCESS;
 }
 /* }}} */
@@ -1155,12 +1155,12 @@ static void php_pgsql_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent)
 			zend_rsrc_list_entry new_le;
 			
 			if (PGG(max_links)!=-1 && PGG(num_links)>=PGG(max_links)) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING,
+				php_error_docref(NULL, TSRMLS_C, E_WARNING,
 								 "Cannot create new link. Too many open links (%ld)", PGG(num_links));
 				goto err;
 			}
 			if (PGG(max_persistent)!=-1 && PGG(num_persistent)>=PGG(max_persistent)) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING,
+				php_error_docref(NULL, TSRMLS_C, E_WARNING,
 								 "Cannot create new link. Too many open persistent links (%ld)", PGG(num_persistent));
 				goto err;
 			}
@@ -1211,7 +1211,7 @@ static void php_pgsql_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent)
 					PQreset(le->ptr);
 				}
 				if (le->ptr==NULL || PQstatus(le->ptr)==CONNECTION_BAD) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING,"PostgreSQL link lost, unable to reconnect");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING,"PostgreSQL link lost, unable to reconnect");
 					zend_hash_del(&EG(persistent_list),str.c,str.len+1);
 					goto err;
 				}
@@ -1249,7 +1249,7 @@ static void php_pgsql_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent)
 			if (ptr && (type==le_link || type==le_plink)) {
 				Z_LVAL_P(return_value) = link;
 				zend_list_addref(link);
-				php_pgsql_set_default_link(link TSRMLS_CC);
+				php_pgsql_set_default_link(link, TSRMLS_C);
 				Z_TYPE_P(return_value) = IS_RESOURCE;
 				goto cleanup;
 			} else {
@@ -1257,7 +1257,7 @@ static void php_pgsql_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent)
 			}
 		}
 		if (PGG(max_links)!=-1 && PGG(num_links)>=PGG(max_links)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create new link. Too many open links (%ld)", PGG(num_links));
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot create new link. Too many open links (%ld)", PGG(num_links));
 			goto err;
 		}
 		if (connstring) {
@@ -1288,7 +1288,7 @@ static void php_pgsql_do_connect(INTERNAL_FUNCTION_PARAMETERS, int persistent)
 	if (! PGG(ignore_notices) && Z_TYPE_P(return_value) == IS_RESOURCE) {
 		PQsetNoticeProcessor(pgsql, _php_pgsql_notice_handler, (void*)Z_RESVAL_P(return_value));
 	}
-	php_pgsql_set_default_link(Z_LVAL_P(return_value) TSRMLS_CC);
+	php_pgsql_set_default_link(Z_LVAL_P(return_value), TSRMLS_C);
 	
 cleanup:
 	smart_str_free(&str);
@@ -1338,7 +1338,7 @@ PHP_FUNCTION(pg_close)
 	int id = -1, argc = ZEND_NUM_ARGS();
 	PGconn *pgsql;
 	
-	if (zend_parse_parameters(argc TSRMLS_CC, "|r", &pgsql_link) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "|r", &pgsql_link) == FAILURE) {
 		return;
 	}
 	
@@ -1385,7 +1385,7 @@ static void php_pgsql_get_link_info(INTERNAL_FUNCTION_PARAMETERS, int entry_type
 	PGconn *pgsql;
 	char *msgbuf;
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "|r", &pgsql_link) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "|r", &pgsql_link) == FAILURE) {
 		return;
 	}
 	
@@ -1512,9 +1512,9 @@ PHP_FUNCTION(pg_parameter_status)
 	char *param;
 	int len;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "rs", &pgsql_link, &param, &len) == SUCCESS) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "rs", &pgsql_link, &param, &len) == SUCCESS) {
 		id = -1;
-	} else if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &param, &len) == SUCCESS) {
+	} else if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &param, &len) == SUCCESS) {
 		pgsql_link = NULL;
 		id = PGG(default_link);
 	} else {
@@ -1545,7 +1545,7 @@ PHP_FUNCTION(pg_ping)
 	PGconn *pgsql;
 	PGresult *res;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r", &pgsql_link) == SUCCESS) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r", &pgsql_link) == SUCCESS) {
 		id = -1;
 	} else {
 		pgsql_link = NULL;
@@ -1588,13 +1588,13 @@ PHP_FUNCTION(pg_query)
 	pgsql_result_handle *pg_result;
 
 	if (argc == 1) {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &query, &query_len) == FAILURE) {
 			return;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	} else {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &pgsql_link, &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs", &pgsql_link, &query, &query_len) == FAILURE) {
 			return;
 		}
 	}
@@ -1606,7 +1606,7 @@ PHP_FUNCTION(pg_query)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE,"Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE,"Cannot set connection to blocking mode");
 		RETURN_FALSE;
 	}
 	while ((pgsql_result = PQgetResult(pgsql))) {
@@ -1614,7 +1614,7 @@ PHP_FUNCTION(pg_query)
 		leftover = 1;
 	}
 	if (leftover) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Found results on this connection. Use pg_get_result() to get these results first");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Found results on this connection. Use pg_get_result() to get these results first");
 	}
 	pgsql_result = PQexec(pgsql, query);
 	if ((PGG(auto_reset_persistent) & 2) && PQstatus(pgsql) != CONNECTION_OK) {
@@ -1690,13 +1690,13 @@ PHP_FUNCTION(pg_query_params)
 	pgsql_result_handle *pg_result;
 	
 	if (argc == 2) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "sa", &query, &query_len, &pv_param_arr) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "sa", &query, &query_len, &pv_param_arr) == FAILURE) {
 			return;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	} else {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rsa", &pgsql_link, &query, &query_len, &pv_param_arr) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rsa", &pgsql_link, &query, &query_len, &pv_param_arr) == FAILURE) {
 			return;
 		}
 	}
@@ -1708,7 +1708,7 @@ PHP_FUNCTION(pg_query_params)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE,"Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE,"Cannot set connection to blocking mode");
 		RETURN_FALSE;
 	}
 	while ((pgsql_result = PQgetResult(pgsql))) {
@@ -1716,7 +1716,7 @@ PHP_FUNCTION(pg_query_params)
 		leftover = 1;
 	}
 	if (leftover) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Found results on this connection. Use pg_get_result() to get these results first");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Found results on this connection. Use pg_get_result() to get these results first");
 	}
 
 	zend_hash_internal_pointer_reset(Z_ARRVAL_P(pv_param_arr));
@@ -1727,7 +1727,7 @@ PHP_FUNCTION(pg_query_params)
 		
 		for(i = 0; i < num_params; i++) {
 			if (zend_hash_get_current_data(Z_ARRVAL_P(pv_param_arr), (void **) &tmp) == FAILURE) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING,"Error getting parameter");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING,"Error getting parameter");
 				_php_pgsql_free_params(params, num_params);
 				RETURN_FALSE;
 			}
@@ -1739,7 +1739,7 @@ PHP_FUNCTION(pg_query_params)
 				zval_copy_ctor(&tmp_val);
 				convert_to_cstring(&tmp_val);
 				if (Z_TYPE(tmp_val) != IS_STRING) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING,"Error converting parameter");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING,"Error converting parameter");
 					zval_dtor(&tmp_val);
 					_php_pgsql_free_params(params, num_params);
 					RETURN_FALSE;
@@ -1811,13 +1811,13 @@ PHP_FUNCTION(pg_prepare)
 	pgsql_result_handle *pg_result;
 
 	if (argc == 2) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "ss", &stmtname, &stmtname_len, &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "ss", &stmtname, &stmtname_len, &query, &query_len) == FAILURE) {
 			return;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	} else {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rss", &pgsql_link, &stmtname, &stmtname_len, &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rss", &pgsql_link, &stmtname, &stmtname_len, &query, &query_len) == FAILURE) {
 			return;
 		}
 	}
@@ -1829,7 +1829,7 @@ PHP_FUNCTION(pg_prepare)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE,"Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE,"Cannot set connection to blocking mode");
 		RETURN_FALSE;
 	}
 	while ((pgsql_result = PQgetResult(pgsql))) {
@@ -1837,7 +1837,7 @@ PHP_FUNCTION(pg_prepare)
 		leftover = 1;
 	}
 	if (leftover) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Found results on this connection. Use pg_get_result() to get these results first");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Found results on this connection. Use pg_get_result() to get these results first");
 	}
 	pgsql_result = PQprepare(pgsql, stmtname, query, 0, NULL);
 	if ((PGG(auto_reset_persistent) & 2) && PQstatus(pgsql) != CONNECTION_OK) {
@@ -1897,13 +1897,13 @@ PHP_FUNCTION(pg_execute)
 	pgsql_result_handle *pg_result;
 
 	if (argc == 2) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "sa/", &stmtname, &stmtname_len, &pv_param_arr)==FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "sa/", &stmtname, &stmtname_len, &pv_param_arr)==FAILURE) {
 			return;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	} else {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rsa/", &pgsql_link, &stmtname, &stmtname_len, &pv_param_arr) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rsa/", &pgsql_link, &stmtname, &stmtname_len, &pv_param_arr) == FAILURE) {
 			return;
 		}
 	}
@@ -1915,7 +1915,7 @@ PHP_FUNCTION(pg_execute)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE,"Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE,"Cannot set connection to blocking mode");
 		RETURN_FALSE;
 	}
 	while ((pgsql_result = PQgetResult(pgsql))) {
@@ -1923,7 +1923,7 @@ PHP_FUNCTION(pg_execute)
 		leftover = 1;
 	}
 	if (leftover) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Found results on this connection. Use pg_get_result() to get these results first");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Found results on this connection. Use pg_get_result() to get these results first");
 	}
 
 	zend_hash_internal_pointer_reset(Z_ARRVAL_P(pv_param_arr));
@@ -1934,7 +1934,7 @@ PHP_FUNCTION(pg_execute)
 		
 		for(i = 0; i < num_params; i++) {
 			if (zend_hash_get_current_data(Z_ARRVAL_P(pv_param_arr), (void **) &tmp) == FAILURE) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING,"Error getting parameter");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING,"Error getting parameter");
 				_php_pgsql_free_params(params, num_params);
 				RETURN_FALSE;
 			}
@@ -1946,7 +1946,7 @@ PHP_FUNCTION(pg_execute)
 				zval_copy_ctor(&tmp_val);
 				convert_to_string(&tmp_val);
 				if (Z_TYPE(tmp_val) != IS_STRING) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING,"Error converting parameter");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING,"Error converting parameter");
 					zval_dtor(&tmp_val);
 					_php_pgsql_free_params(params, num_params);
 					RETURN_FALSE;
@@ -2015,7 +2015,7 @@ static void php_pgsql_get_result_info(INTERNAL_FUNCTION_PARAMETERS, int entry_ty
 	PGresult *pgsql_result;
 	pgsql_result_handle *pg_result;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &result) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &result) == FAILURE) {
 		return;
 	}
 	
@@ -2034,7 +2034,7 @@ static void php_pgsql_get_result_info(INTERNAL_FUNCTION_PARAMETERS, int entry_ty
 #if HAVE_PQCMDTUPLES
 			Z_LVAL_P(return_value) = atoi(PQcmdTuples(pgsql_result));
 #else
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Not supported under this build");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Not supported under this build");
 			Z_LVAL_P(return_value) = 0;
 #endif
 			break;
@@ -2080,7 +2080,7 @@ PHP_FUNCTION(pg_last_notice)
 	int id = -1;
 	php_pgsql_notice **notice;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &pgsql_link) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &pgsql_link) == FAILURE) {
 		return;
 	}
 	/* Just to check if user passed valid resoruce */
@@ -2095,7 +2095,7 @@ PHP_FUNCTION(pg_last_notice)
 
 /* {{{ get_field_name
  */
-static char *get_field_name(PGconn *pgsql, Oid oid, HashTable *list TSRMLS_DC)
+static char *get_field_name(PGconn *pgsql, Oid oid, HashTable *list, TSRMLS_D)
 {
 	PGresult *result;
 	smart_str str = {0};
@@ -2168,14 +2168,14 @@ PHP_FUNCTION(pg_field_table)
 	char *table_name;
 	zend_rsrc_list_entry *field_table;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl|b", &result, &fnum, &return_oid) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rl|b", &result, &fnum, &return_oid) == FAILURE) {
 		return;
 	}
 
 	ZEND_FETCH_RESOURCE(pg_result, pgsql_result_handle *, &result, -1, "PostgreSQL result", le_result);
 
 	if (fnum < 0 || fnum >= PQnfields(pg_result->result)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Bad field offset specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Bad field offset specified");
 		RETURN_FALSE;
 	}
 
@@ -2261,7 +2261,7 @@ static void php_pgsql_get_field_info(INTERNAL_FUNCTION_PARAMETERS, int entry_typ
 	pgsql_result_handle *pg_result;
 	Oid oid;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &result, &field) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rl", &result, &field) == FAILURE) {
 		return;
 	}
 	
@@ -2270,7 +2270,7 @@ static void php_pgsql_get_field_info(INTERNAL_FUNCTION_PARAMETERS, int entry_typ
 	pgsql_result = pg_result->result;
 	
 	if (field < 0 || field >= PQnfields(pgsql_result)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Bad field offset specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Bad field offset specified");
 		RETURN_FALSE;
 	}
 	
@@ -2286,7 +2286,7 @@ static void php_pgsql_get_field_info(INTERNAL_FUNCTION_PARAMETERS, int entry_typ
 			Z_TYPE_P(return_value) = IS_LONG;
 			break;
 		case PHP_PG_FIELD_TYPE:
-			Z_STRVAL_P(return_value) = get_field_name(pg_result->conn, PQftype(pgsql_result, field), &EG(regular_list) TSRMLS_CC);
+			Z_STRVAL_P(return_value) = get_field_name(pg_result->conn, PQftype(pgsql_result, field), &EG(regular_list), TSRMLS_C);
 			Z_STRLEN_P(return_value) = strlen(Z_STRVAL_P(return_value));
 			Z_TYPE_P(return_value) = IS_STRING;
 			break;
@@ -2357,7 +2357,7 @@ PHP_FUNCTION(pg_field_num)
 	PGresult *pgsql_result;
 	pgsql_result_handle *pg_result;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &result, &field, &field_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs", &result, &field, &field_len) == FAILURE) {
 		return;
 	}
 	
@@ -2433,11 +2433,11 @@ PHP_FUNCTION(pg_fetch_result)
 	int field_offset, pgsql_row, argc = ZEND_NUM_ARGS();
 	
 	if (argc == 2) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rZ", &result, &field) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rZ", &result, &field) == FAILURE) {
 			return;
 		}
 	} else {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rlZ", &result, &row, &field) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rlZ", &result, &row, &field) == FAILURE) {
 			return;
 		}
 	}
@@ -2456,7 +2456,7 @@ PHP_FUNCTION(pg_fetch_result)
 	} else {
 		pgsql_row = row;
 		if (pgsql_row < 0 || pgsql_row >= PQntuples(pgsql_result)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to jump to row %ld on PostgreSQL result index %ld",
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to jump to row %ld on PostgreSQL result index %ld",
 							row, Z_LVAL_P(result));
 			RETURN_FALSE;
 		}
@@ -2471,7 +2471,7 @@ PHP_FUNCTION(pg_fetch_result)
 			break;
 	}
 	if (field_offset<0 || field_offset>=PQnfields(pgsql_result)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Bad column offset specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Bad column offset specified");
 		RETURN_FALSE;
 	}
 	
@@ -2510,21 +2510,21 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 		char *class_name = NULL;
 		int class_name_len;
 
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|z!sz", &result, &zrow, &class_name, &class_name_len, &ctor_params) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r|z!sz", &result, &zrow, &class_name, &class_name_len, &ctor_params) == FAILURE) {
 			return;
 		}
 		if (!class_name) {
 			ce = zend_standard_class_def;
 		} else {
-			ce = zend_fetch_class(class_name, class_name_len, ZEND_FETCH_CLASS_AUTO TSRMLS_CC);
+			ce = zend_fetch_class(class_name, class_name_len, ZEND_FETCH_CLASS_AUTO, TSRMLS_C);
 		}
 		if (!ce) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not find class '%s'", class_name);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Could not find class '%s'", class_name);
 			return;
 		}
 		result_type = PGSQL_ASSOC;
 	} else {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|z!l", &result, &zrow, &result_type) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r|z!l", &result, &zrow, &result_type) == FAILURE) {
 			return;
 		}
 	}
@@ -2534,14 +2534,14 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 		convert_to_long(zrow);
 		row = Z_LVAL_P(zrow);
 		if (row < 0) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "The row parameter must be greater or equal to zero");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "The row parameter must be greater or equal to zero");
 			RETURN_FALSE;
 		}
 	}
 	use_row = ZEND_NUM_ARGS() > 1 && row != -1;
 
 	if (!(result_type & PGSQL_BOTH)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid result type");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid result type");
 		RETURN_FALSE;
 	}
 	
@@ -2556,7 +2556,7 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 		pgsql_row = row;
 		pg_result->row = pgsql_row;
 		if (pgsql_row < 0 || pgsql_row >= PQntuples(pgsql_result)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to jump to row %ld on PostgreSQL result index %ld",
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to jump to row %ld on PostgreSQL result index %ld",
 							row, Z_LVAL_P(result));
 			RETURN_FALSE;
 		}
@@ -2618,7 +2618,7 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 		zval *retval_ptr; 
 	
 		object_and_properties_init(return_value, ce, NULL);
-		zend_merge_properties(return_value, Z_ARRVAL(dataset), 1 TSRMLS_CC);
+		zend_merge_properties(return_value, Z_ARRVAL(dataset), 1, TSRMLS_C);
 	
 		if (ce->constructor) {
 			fci.size = sizeof(fci);
@@ -2646,7 +2646,7 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 					 * single value is an array. Also we'd have to make that one
 					 * argument passed by reference.
 					 */
-					zend_throw_exception(zend_exception_get_default(TSRMLS_C), "Parameter ctor_params must be an array", 0 TSRMLS_CC);
+					zend_throw_exception(zend_exception_get_default(TSRMLS_C), "Parameter ctor_params must be an array", 0, TSRMLS_C);
 					return;
 				}
 			} else {
@@ -2661,8 +2661,8 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 			fcc.called_scope = Z_OBJCE_P(return_value);
 			fcc.object_ptr = return_value;
 		
-			if (zend_call_function(&fci, &fcc TSRMLS_CC) == FAILURE) {
-				zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "Could not execute %s::%s()", ce->name, ce->constructor->common.function_name);
+			if (zend_call_function(&fci, &fcc, TSRMLS_C) == FAILURE) {
+				zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0, TSRMLS_C, "Could not execute %s::%s()", ce->name, ce->constructor->common.function_name);
 			} else {
 				if (retval_ptr) {
 					zval_ptr_dtor(&retval_ptr);
@@ -2672,7 +2672,7 @@ static void php_pgsql_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, long result_type,
 				efree(fci.params);
 			}
 		} else if (ctor_params) {
-			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0 TSRMLS_CC, "Class %s does not have a constructor hence you cannot use ctor_params", ce->name);
+			zend_throw_exception_ex(zend_exception_get_default(TSRMLS_C), 0, TSRMLS_C, "Class %s does not have a constructor hence you cannot use ctor_params", ce->name);
 		}
 	}
 }
@@ -2724,7 +2724,7 @@ PHP_FUNCTION(pg_fetch_all)
 	PGresult *pgsql_result;
 	pgsql_result_handle *pg_result;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &result) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &result) == FAILURE) {
 		return;
 	}
 
@@ -2732,7 +2732,7 @@ PHP_FUNCTION(pg_fetch_all)
 
 	pgsql_result = pg_result->result;
 	array_init(return_value);
-	if (php_pgsql_result2array(pgsql_result, return_value TSRMLS_CC) == FAILURE) {
+	if (php_pgsql_result2array(pgsql_result, return_value, TSRMLS_C) == FAILURE) {
 		zval_dtor(return_value);
 		RETURN_FALSE;
 	}
@@ -2750,7 +2750,7 @@ PHP_FUNCTION(pg_fetch_all_columns)
 	int pg_numrows, pg_row;
 	size_t num_fields;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|l", &result, &colno) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r|l", &result, &colno) == FAILURE) {
 		RETURN_FALSE;
 	}
 
@@ -2760,7 +2760,7 @@ PHP_FUNCTION(pg_fetch_all_columns)
 
 	num_fields = PQnfields(pgsql_result);
 	if (colno >= num_fields || colno < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid column number '%ld'", colno);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid column number '%ld'", colno);
 		RETURN_FALSE;
 	}
 
@@ -2788,7 +2788,7 @@ PHP_FUNCTION(pg_result_seek)
 	long row;
 	pgsql_result_handle *pg_result;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &result, &row) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rl", &result, &row) == FAILURE) {
 		return;
 	}
 
@@ -2819,11 +2819,11 @@ static void php_pgsql_data_info(INTERNAL_FUNCTION_PARAMETERS, int entry_type)
 	int field_offset, pgsql_row, argc = ZEND_NUM_ARGS();
 
 	if (argc == 2) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rZ", &result, &field) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rZ", &result, &field) == FAILURE) {
 			return;
 		}
 	} else {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rlZ", &result, &row, &field) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rlZ", &result, &row, &field) == FAILURE) {
 			return;
 		}
 	}
@@ -2842,7 +2842,7 @@ static void php_pgsql_data_info(INTERNAL_FUNCTION_PARAMETERS, int entry_type)
 	} else {
 		pgsql_row = row;
 		if (pgsql_row < 0 || pgsql_row >= PQntuples(pgsql_result)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to jump to row %ld on PostgreSQL result index %ld",
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to jump to row %ld on PostgreSQL result index %ld",
 							row, Z_LVAL_P(result));
 			RETURN_FALSE;
 		}
@@ -2859,7 +2859,7 @@ static void php_pgsql_data_info(INTERNAL_FUNCTION_PARAMETERS, int entry_type)
 			break;
 	}
 	if (field_offset < 0 || field_offset >= PQnfields(pgsql_result)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Bad column offset specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Bad column offset specified");
 		RETURN_FALSE;
 	}
 	
@@ -2898,7 +2898,7 @@ PHP_FUNCTION(pg_free_result)
 	zval *result;
 	pgsql_result_handle *pg_result;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &result) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &result) == FAILURE) {
 		return;
 	}
 
@@ -2922,7 +2922,7 @@ PHP_FUNCTION(pg_last_oid)
 	Oid oid;
 #endif
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &result) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &result) == FAILURE) {
 		return;
 	}
 	
@@ -2957,7 +2957,7 @@ PHP_FUNCTION(pg_trace)
 	php_stream *stream;
 	id = PGG(default_link);
 	
-	if (zend_parse_parameters(argc TSRMLS_CC, "s|sr", &z_filename, &z_filename_len, &mode, &mode_len, &pgsql_link) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "s|sr", &z_filename, &z_filename_len, &mode, &mode_len, &pgsql_link) == FAILURE) {
 		return;
 	}
 
@@ -2995,7 +2995,7 @@ PHP_FUNCTION(pg_untrace)
 	int id = -1, argc = ZEND_NUM_ARGS();
 	PGconn *pgsql;
 	
-	if (zend_parse_parameters(argc TSRMLS_CC, "|r", &pgsql_link) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "|r", &pgsql_link) == FAILURE) {
 		return;
 	}
 
@@ -3023,7 +3023,7 @@ PHP_FUNCTION(pg_lo_create)
   	Oid pgsql_oid, wanted_oid = InvalidOid;
   	int id = -1, argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "|zz", &pgsql_link, &oid) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "|zz", &pgsql_link, &oid) == FAILURE) {
 		return;
 	}
 
@@ -3044,7 +3044,7 @@ PHP_FUNCTION(pg_lo_create)
 	
 	if (oid) {
 #ifndef HAVE_PG_LO_CREATE	
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "OID value passing not supported");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "OID value passing not supported");
 #else
 		switch (Z_TYPE_P(oid)) {
 		case IS_STRING:
@@ -3053,24 +3053,24 @@ PHP_FUNCTION(pg_lo_create)
 				wanted_oid = (Oid)strtoul(Z_STRVAL_P(oid), &end_ptr, 10);
 				if ((Z_STRVAL_P(oid)+Z_STRLEN_P(oid)) != end_ptr) {
 				/* wrong integer format */
-				php_error_docref(NULL TSRMLS_CC, E_NOTICE, "invalid OID value passed");
+				php_error_docref(NULL, TSRMLS_C, E_NOTICE, "invalid OID value passed");
 				RETURN_FALSE;
 				}
 			}
 			break;
 		case IS_LONG:
 			if (Z_LVAL_P(oid) < (long)InvalidOid) {
-				php_error_docref(NULL TSRMLS_CC, E_NOTICE, "invalid OID value passed");
+				php_error_docref(NULL, TSRMLS_C, E_NOTICE, "invalid OID value passed");
 				RETURN_FALSE;
 			}
 			wanted_oid = (Oid)Z_LVAL_P(oid);
 			break;
 		default:
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "invalid OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "invalid OID value passed");
 			RETURN_FALSE;
         }
 		if ((pgsql_oid = lo_create(pgsql, wanted_oid)) == InvalidOid) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to create PostgreSQL large object");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to create PostgreSQL large object");
 			RETURN_FALSE;
 		}
 
@@ -3079,7 +3079,7 @@ PHP_FUNCTION(pg_lo_create)
 	}
 
 	if ((pgsql_oid = lo_creat(pgsql, INV_READ|INV_WRITE)) == InvalidOid) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to create PostgreSQL large object");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to create PostgreSQL large object");
 		RETURN_FALSE;
 	}
 
@@ -3101,38 +3101,38 @@ PHP_FUNCTION(pg_lo_unlink)
 	int argc = ZEND_NUM_ARGS();
 
 	/* accept string type since Oid type is unsigned int */
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "rs", &pgsql_link, &oid_string, &oid_strlen) == SUCCESS) {
 		oid = (Oid)strtoul(oid_string, &end_ptr, 10);
 		if ((oid_string+oid_strlen) != end_ptr) {
 			/* wrong integer format */
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Wrong OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Wrong OID value passed");
 			RETURN_FALSE;
 		}
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "rl", &pgsql_link, &oid_long) == SUCCESS) {
 		if (oid_long <= InvalidOid) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Invalid OID specified");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Invalid OID specified");
 			RETURN_FALSE;
 		}
 		oid = (Oid)oid_long;
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "s", &oid_string, &oid_strlen) == SUCCESS) {
 		oid = (Oid)strtoul(oid_string, &end_ptr, 10);
 		if ((oid_string+oid_strlen) != end_ptr) {
 			/* wrong integer format */
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Wrong OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Wrong OID value passed");
 			RETURN_FALSE;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "l", &oid_long) == SUCCESS) {
 		if (oid_long <= InvalidOid) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Invalid OID is specified");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Invalid OID is specified");
 			RETURN_FALSE;
 		}
 		oid = (Oid)oid_long;
@@ -3140,7 +3140,7 @@ PHP_FUNCTION(pg_lo_unlink)
 		CHECK_DEFAULT_LINK(id);
 	}
 	else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Requires 1 or 2 arguments");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Requires 1 or 2 arguments");
 		RETURN_FALSE;
 	}
 	if (pgsql_link == NULL && id == -1) {
@@ -3150,7 +3150,7 @@ PHP_FUNCTION(pg_lo_unlink)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (lo_unlink(pgsql, oid) == -1) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to delete PostgreSQL large object %u", oid);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to delete PostgreSQL large object %u", oid);
 		RETURN_FALSE;
 	}
 	RETURN_TRUE;
@@ -3173,38 +3173,38 @@ PHP_FUNCTION(pg_lo_open)
 	int argc = ZEND_NUM_ARGS();
 
 	/* accept string type since Oid is unsigned int */
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "rss", &pgsql_link, &oid_string, &oid_strlen, &mode_string, &mode_strlen) == SUCCESS) {
 		oid = (Oid)strtoul(oid_string, &end_ptr, 10);
 		if ((oid_string+oid_strlen) != end_ptr) {
 			/* wrong integer format */
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Wrong OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Wrong OID value passed");
 			RETURN_FALSE;
 		}
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "rls", &pgsql_link, &oid_long, &mode_string, &mode_strlen) == SUCCESS) {
 		if (oid_long <= InvalidOid) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Invalid OID specified");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Invalid OID specified");
 			RETURN_FALSE;
 		}
 		oid = (Oid)oid_long;
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "ss", &oid_string, &oid_strlen, &mode_string, &mode_strlen) == SUCCESS) {
 		oid = (Oid)strtoul(oid_string, &end_ptr, 10);
 		if ((oid_string+oid_strlen) != end_ptr) {
 			/* wrong integer format */
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Wrong OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Wrong OID value passed");
 			RETURN_FALSE;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "ls", &oid_long, &mode_string, &mode_strlen) == SUCCESS) {
 		if (oid_long <= InvalidOid) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Invalid OID specified");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Invalid OID specified");
 			RETURN_FALSE;
 		}
 		oid = (Oid)oid_long;
@@ -3212,7 +3212,7 @@ PHP_FUNCTION(pg_lo_open)
 		CHECK_DEFAULT_LINK(id);
 	}
 	else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Requires 1 or 2 arguments");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Requires 1 or 2 arguments");
 		RETURN_FALSE;
 	}
 	if (pgsql_link == NULL && id == -1) {
@@ -3246,28 +3246,28 @@ PHP_FUNCTION(pg_lo_open)
 		if (create) {
 			if ((oid = lo_creat(pgsql, INV_READ|INV_WRITE)) == 0) {
 				efree(pgsql_lofp);
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to create PostgreSQL large object");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to create PostgreSQL large object");
 				RETURN_FALSE;
 			} else {
 				if ((pgsql_lofd = lo_open(pgsql, oid, pgsql_mode)) == -1) {
 					if (lo_unlink(pgsql, oid) == -1) {
 						efree(pgsql_lofp);
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Something is really messed up! Your database is badly corrupted in a way NOT related to PHP");
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "Something is really messed up! Your database is badly corrupted in a way NOT related to PHP");
 						RETURN_FALSE;
 					}
 					efree(pgsql_lofp);
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to open PostgreSQL large object");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to open PostgreSQL large object");
 					RETURN_FALSE;
 				} else {
 					pgsql_lofp->conn = pgsql;
 					pgsql_lofp->lofd = pgsql_lofd;
-					Z_LVAL_P(return_value) = zend_list_insert(pgsql_lofp, le_lofp TSRMLS_CC);
+					Z_LVAL_P(return_value) = zend_list_insert(pgsql_lofp, le_lofp, TSRMLS_C);
 					Z_TYPE_P(return_value) = IS_LONG;
 				}
 			}
 		} else {
 			efree(pgsql_lofp);
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to open PostgreSQL large object");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to open PostgreSQL large object");
 			RETURN_FALSE;
 		}
 	} else {
@@ -3285,14 +3285,14 @@ PHP_FUNCTION(pg_lo_close)
 	zval *pgsql_lofp;
 	pgLofp *pgsql;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &pgsql_lofp) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &pgsql_lofp) == FAILURE) {
 		return;
 	}
 
 	ZEND_FETCH_RESOURCE(pgsql, pgLofp *, &pgsql_lofp, -1, "PostgreSQL large object", le_lofp);
 	
 	if (lo_close((PGconn *)pgsql->conn, pgsql->lofd) < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to close PostgreSQL large object descriptor %d", pgsql->lofd);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to close PostgreSQL large object descriptor %d", pgsql->lofd);
 		RETVAL_FALSE;
 	} else {
 		RETVAL_TRUE;
@@ -3315,7 +3315,7 @@ PHP_FUNCTION(pg_lo_read)
 	char *buf;
 	pgLofp *pgsql;
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "r|l", &pgsql_id, &len) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "r|l", &pgsql_id, &len) == FAILURE) {
 		return;
 	}
 
@@ -3348,17 +3348,17 @@ PHP_FUNCTION(pg_lo_write)
 	pgLofp *pgsql;
 	int argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "rs|l", &pgsql_id, &str, &str_len, &z_len) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "rs|l", &pgsql_id, &str, &str_len, &z_len) == FAILURE) {
 		return;
 	}
 
 	if (argc > 2) {
 		if (z_len > str_len) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot write more than buffer size %d. Tried to write %ld", str_len, z_len);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot write more than buffer size %d. Tried to write %ld", str_len, z_len);
 			RETURN_FALSE;
 		}
 		if (z_len < 0) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Buffer size must be larger than 0, but %ld was specified", z_len);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Buffer size must be larger than 0, but %ld was specified", z_len);
 			RETURN_FALSE;
 		}
 		len = z_len;
@@ -3387,7 +3387,7 @@ PHP_FUNCTION(pg_lo_read_all)
 	char buf[PGSQL_LO_READ_BUF_SIZE];
 	pgLofp *pgsql;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &pgsql_id) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &pgsql_id) == FAILURE) {
 		return;
 	}
 
@@ -3413,25 +3413,25 @@ PHP_FUNCTION(pg_lo_import)
 	PGconn *pgsql;
 	Oid returned_oid;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "rp|z", &pgsql_link, &file_in, &name_len, &oid) == SUCCESS) {
 		;
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 									  "p|z", &file_in, &name_len, &oid) == SUCCESS) {
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	}
 	/* old calling convention, deprecated since PHP 4.2 */
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 									  "pr", &file_in, &name_len, &pgsql_link ) == SUCCESS) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Old API is used");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Old API is used");
 	}
 	else {
 		WRONG_PARAM_COUNT;
 	}
 	
-	if (php_check_open_basedir(file_in TSRMLS_CC)) {
+	if (php_check_open_basedir(file_in, TSRMLS_C)) {
 		RETURN_FALSE;
 	}
 
@@ -3443,7 +3443,7 @@ PHP_FUNCTION(pg_lo_import)
 
 	if (oid) {
 #ifndef HAVE_PG_LO_IMPORT_WITH_OID
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "OID value passing not supported");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "OID value passing not supported");
 #else
 		Oid wanted_oid;
 		switch (Z_TYPE_P(oid)) {
@@ -3453,20 +3453,20 @@ PHP_FUNCTION(pg_lo_import)
 				wanted_oid = (Oid)strtoul(Z_STRVAL_P(oid), &end_ptr, 10);
 				if ((Z_STRVAL_P(oid)+Z_STRLEN_P(oid)) != end_ptr) {
 				/* wrong integer format */
-				php_error_docref(NULL TSRMLS_CC, E_NOTICE, "invalid OID value passed");
+				php_error_docref(NULL, TSRMLS_C, E_NOTICE, "invalid OID value passed");
 				RETURN_FALSE;
 				}
 			}
 			break;
 		case IS_LONG:
 			if (Z_LVAL_P(oid) < (long)InvalidOid) {
-				php_error_docref(NULL TSRMLS_CC, E_NOTICE, "invalid OID value passed");
+				php_error_docref(NULL, TSRMLS_C, E_NOTICE, "invalid OID value passed");
 				RETURN_FALSE;
 			}
 			wanted_oid = (Oid)Z_LVAL_P(oid);
 			break;
 		default:
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "invalid OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "invalid OID value passed");
 			RETURN_FALSE;
         }
 
@@ -3503,68 +3503,68 @@ PHP_FUNCTION(pg_lo_export)
 	int argc = ZEND_NUM_ARGS();
 
 	/* allow string to handle large OID value correctly */
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "rlp", &pgsql_link, &oid_long, &file_out, &name_len) == SUCCESS) {
 		if (oid_long <= InvalidOid) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Invalid OID specified");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Invalid OID specified");
 			RETURN_FALSE;
 		}
 		oid = (Oid)oid_long;
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "rss", &pgsql_link, &oid_string, &oid_strlen, &file_out, &name_len) == SUCCESS) {
 		oid = (Oid)strtoul(oid_string, &end_ptr, 10);
 		if ((oid_string+oid_strlen) != end_ptr) {
 			/* wrong integer format */
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Wrong OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Wrong OID value passed");
 			RETURN_FALSE;
 		}
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 									  "lp",  &oid_long, &file_out, &name_len) == SUCCESS) {
 		if (oid_long <= InvalidOid) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Invalid OID specified");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Invalid OID specified");
 			RETURN_FALSE;
 		}
 		oid = (Oid)oid_long;
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "sp", &oid_string, &oid_strlen, &file_out, &name_len) == SUCCESS) {
 		oid = (Oid)strtoul(oid_string, &end_ptr, 10);
 		if ((oid_string+oid_strlen) != end_ptr) {
 			/* wrong integer format */
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Wrong OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Wrong OID value passed");
 			RETURN_FALSE;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 								 "spr", &oid_string, &oid_strlen, &file_out, &name_len, &pgsql_link) == SUCCESS) {
 		oid = (Oid)strtoul(oid_string, &end_ptr, 10);
 		if ((oid_string+oid_strlen) != end_ptr) {
 			/* wrong integer format */
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Wrong OID value passed");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Wrong OID value passed");
 			RETURN_FALSE;
 		}
 	}
-	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc TSRMLS_CC,
+	else if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, argc, TSRMLS_C,
 									  "lpr", &oid_long, &file_out, &name_len, &pgsql_link) == SUCCESS) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Old API is used");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Old API is used");
 		if (oid_long <= InvalidOid) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Invalid OID specified");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Invalid OID specified");
 			RETURN_FALSE;
 		}
 		oid = (Oid)oid_long;
 	}
 	else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Requires 2 or 3 arguments");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Requires 2 or 3 arguments");
 		RETURN_FALSE;
 	}
 	
-	if (php_check_open_basedir(file_out TSRMLS_CC)) {
+	if (php_check_open_basedir(file_out, TSRMLS_C)) {
 		RETURN_FALSE;
 	}
 
@@ -3590,11 +3590,11 @@ PHP_FUNCTION(pg_lo_seek)
 	pgLofp *pgsql;
 	int argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "rl|l", &pgsql_id, &offset, &whence) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "rl|l", &pgsql_id, &offset, &whence) == FAILURE) {
 		return;
 	}
 	if (whence != SEEK_SET && whence != SEEK_CUR && whence != SEEK_END) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid whence parameter");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid whence parameter");
 		return;
 	}
 
@@ -3617,7 +3617,7 @@ PHP_FUNCTION(pg_lo_tell)
 	pgLofp *pgsql;
 	int argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "r", &pgsql_id) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "r", &pgsql_id) == FAILURE) {
 		return;
 	}
 
@@ -3639,13 +3639,13 @@ PHP_FUNCTION(pg_set_error_verbosity)
 	PGconn *pgsql;
 
 	if (argc == 1) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "l", &verbosity) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "l", &verbosity) == FAILURE) {
 			return;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	} else {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rl", &pgsql_link, &verbosity) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rl", &pgsql_link, &verbosity) == FAILURE) {
 			return;
 		}
 	}
@@ -3678,13 +3678,13 @@ PHP_FUNCTION(pg_set_client_encoding)
 	PGconn *pgsql;
 
 	if (argc == 1) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "s", &encoding, &encoding_len) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "s", &encoding, &encoding_len) == FAILURE) {
 			return;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	} else {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rs", &pgsql_link, &encoding, &encoding_len) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rs", &pgsql_link, &encoding, &encoding_len) == FAILURE) {
 			return;
 		}
 	}
@@ -3708,7 +3708,7 @@ PHP_FUNCTION(pg_client_encoding)
 	int id = -1, argc = ZEND_NUM_ARGS();
 	PGconn *pgsql;
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "|r", &pgsql_link) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "|r", &pgsql_link) == FAILURE) {
 		return;
 	}
 	
@@ -3750,7 +3750,7 @@ PHP_FUNCTION(pg_end_copy)
 	PGconn *pgsql;
 	int result = 0;
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "|r", &pgsql_link) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "|r", &pgsql_link) == FAILURE) {
 		return;
 	}
 	
@@ -3787,13 +3787,13 @@ PHP_FUNCTION(pg_put_line)
 	int result = 0, argc = ZEND_NUM_ARGS();
 
 	if (argc == 1) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "s", &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "s", &query, &query_len) == FAILURE) {
 			return;
 		}
 		id = PGG(default_link);
 		CHECK_DEFAULT_LINK(id);
 	} else {
-		if (zend_parse_parameters(argc TSRMLS_CC, "rs", &pgsql_link, &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "rs", &pgsql_link, &query, &query_len) == FAILURE) {
 			return;
 		}
 	}
@@ -3833,7 +3833,7 @@ PHP_FUNCTION(pg_copy_to)
 	int ret;
 	int argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "rs|ss",
+	if (zend_parse_parameters(argc, TSRMLS_C, "rs|ss",
 							  &pgsql_link, &table_name, &table_name_len,
 							  &pg_delim, &pg_delim_len, &pg_null_as, &pg_null_as_len) == FAILURE) {
 		return;
@@ -3966,7 +3966,7 @@ PHP_FUNCTION(pg_copy_from)
 	ExecStatusType status;
 	int argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "rsa|ss",
+	if (zend_parse_parameters(argc, TSRMLS_C, "rsa|ss",
 							  &pgsql_link, &table_name, &table_name_len, &pg_rows,
 							  &pg_delim, &pg_delim_len, &pg_null_as, &pg_null_as_len) == FAILURE) {
 		return;
@@ -4090,7 +4090,7 @@ PHP_FUNCTION(pg_escape_string)
 
 	switch (ZEND_NUM_ARGS()) {
 		case 1:
-			if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &from, &from_len) == FAILURE) {
+			if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &from, &from_len) == FAILURE) {
 				return;
 			}
 			pgsql_link = NULL;
@@ -4098,7 +4098,7 @@ PHP_FUNCTION(pg_escape_string)
 			break;
 
 		default:
-			if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &pgsql_link, &from, &from_len) == FAILURE) {
+			if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs", &pgsql_link, &from, &from_len) == FAILURE) {
 				return;
 			}
 			break;
@@ -4132,7 +4132,7 @@ PHP_FUNCTION(pg_escape_bytea)
 
 	switch (ZEND_NUM_ARGS()) {
 		case 1:
-			if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &from, &from_len) == FAILURE) {
+			if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &from, &from_len) == FAILURE) {
 				return;
 			}
 			pgsql_link = NULL;
@@ -4140,7 +4140,7 @@ PHP_FUNCTION(pg_escape_bytea)
 			break;
 
 		default:
-			if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &pgsql_link, &from, &from_len) == FAILURE) {
+			if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs", &pgsql_link, &from, &from_len) == FAILURE) {
 				return;
 			}
 			break;
@@ -4272,7 +4272,7 @@ PHP_FUNCTION(pg_unescape_bytea)
 	char *from = NULL, *to = NULL, *tmp = NULL;
 	size_t to_len;
 	int from_len;
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s",
 							  &from, &from_len) == FAILURE) {
 		return;
 	}
@@ -4352,7 +4352,7 @@ static void php_pgsql_escape_internal(INTERNAL_FUNCTION_PARAMETERS, int escape_l
 
 	switch (ZEND_NUM_ARGS()) {
 		case 1:
-			if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &from, &from_len) == FAILURE) {
+			if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &from, &from_len) == FAILURE) {
 				return;
 			}
 			pgsql_link = NULL;
@@ -4360,7 +4360,7 @@ static void php_pgsql_escape_internal(INTERNAL_FUNCTION_PARAMETERS, int escape_l
 			break;
 
 		default:
-			if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &pgsql_link, &from, &from_len) == FAILURE) {
+			if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs", &pgsql_link, &from, &from_len) == FAILURE) {
 				return;
 			}
 			break;
@@ -4372,7 +4372,7 @@ static void php_pgsql_escape_internal(INTERNAL_FUNCTION_PARAMETERS, int escape_l
 
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 	if (pgsql == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,"Cannot get default pgsql link");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,"Cannot get default pgsql link");
 		RETURN_FALSE;
 	}
 #ifdef HAVE_PQESCAPELITERAL
@@ -4382,7 +4382,7 @@ static void php_pgsql_escape_internal(INTERNAL_FUNCTION_PARAMETERS, int escape_l
 		tmp = PQescapeIdentifier(pgsql, from, (size_t)from_len);
 	}
 	if (!tmp) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,"Failed to escape");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,"Failed to escape");
 		RETURN_FALSE;
 	}
 	to = estrdup(tmp);
@@ -4390,7 +4390,7 @@ static void php_pgsql_escape_internal(INTERNAL_FUNCTION_PARAMETERS, int escape_l
 #else 
 	to = php_pgsql_PQescapeInternal(pgsql, from, (size_t)from_len, escape_literal);
 	if (!to) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,"Failed to escape");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,"Failed to escape");
 		RETURN_FALSE;
 	}
 #endif
@@ -4425,7 +4425,7 @@ PHP_FUNCTION(pg_result_error)
 	pgsql_result_handle *pg_result;
 	char *err = NULL;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r",
 								 &result) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -4452,7 +4452,7 @@ PHP_FUNCTION(pg_result_error_field)
 	pgsql_result_handle *pg_result;
 	char *field = NULL;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "rl",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "rl",
 								 &result, &fieldcode) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -4494,7 +4494,7 @@ PHP_FUNCTION(pg_connection_status)
 	int id = -1;
 	PGconn *pgsql;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r",
 								 &pgsql_link) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -4515,7 +4515,7 @@ PHP_FUNCTION(pg_transaction_status)
 	int id = -1;
 	PGconn *pgsql;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r",
 								 &pgsql_link) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -4536,7 +4536,7 @@ PHP_FUNCTION(pg_connection_reset)
 	int id = -1;
 	PGconn *pgsql;
 	
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r",
 								 &pgsql_link) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -4557,13 +4557,13 @@ PHP_FUNCTION(pg_connection_reset)
 														  
 /* {{{ php_pgsql_flush_query
  */
-static int php_pgsql_flush_query(PGconn *pgsql TSRMLS_DC) 
+static int php_pgsql_flush_query(PGconn *pgsql, TSRMLS_D) 
 {
 	PGresult *res;
 	int leftover = 0;
 	
 	if (PQ_SETNONBLOCKING(pgsql, 1)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE,"Cannot set connection to nonblocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE,"Cannot set connection to nonblocking mode");
 		return -1;
 	}
 	while ((res = PQgetResult(pgsql))) {
@@ -4584,7 +4584,7 @@ static void php_pgsql_do_async(INTERNAL_FUNCTION_PARAMETERS, int entry_type)
 	PGconn *pgsql;
 	PGresult *pgsql_result;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r",
 								 &pgsql_link) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -4592,7 +4592,7 @@ static void php_pgsql_do_async(INTERNAL_FUNCTION_PARAMETERS, int entry_type)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 1)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to nonblocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to nonblocking mode");
 		RETURN_FALSE;
 	}
 	switch(entry_type) {
@@ -4609,11 +4609,11 @@ static void php_pgsql_do_async(INTERNAL_FUNCTION_PARAMETERS, int entry_type)
 			}
 			break;
 		default:
-			php_error_docref(NULL TSRMLS_CC, E_ERROR, "PostgreSQL module error, please report this error");
+			php_error_docref(NULL, TSRMLS_C, E_ERROR, "PostgreSQL module error, please report this error");
 			break;
 	}
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to blocking mode");
 	}
 	convert_to_boolean_ex(&return_value);
 }
@@ -4647,7 +4647,7 @@ PHP_FUNCTION(pg_send_query)
 	PGresult *res;
 	int leftover = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs",
 							  &pgsql_link, &query, &len) == FAILURE) {
 		return;
 	}
@@ -4655,7 +4655,7 @@ PHP_FUNCTION(pg_send_query)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 1)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to nonblocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to nonblocking mode");
 		RETURN_FALSE;
 	}
 	while ((res = PQgetResult(pgsql))) {
@@ -4663,7 +4663,7 @@ PHP_FUNCTION(pg_send_query)
 		leftover = 1;
 	}
 	if (leftover) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "There are results on this connection. Call pg_get_result() until it returns FALSE");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "There are results on this connection. Call pg_get_result() until it returns FALSE");
 	}
 	if (!PQsendQuery(pgsql, query)) {
 		if ((PGG(auto_reset_persistent) & 2) && PQstatus(pgsql) != CONNECTION_OK) {
@@ -4674,7 +4674,7 @@ PHP_FUNCTION(pg_send_query)
 		}
 	}
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to blocking mode");
 	}
 	RETURN_TRUE;
 }
@@ -4694,7 +4694,7 @@ PHP_FUNCTION(pg_send_query_params)
 	PGresult *res;
 	int leftover = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa/", &pgsql_link, &query, &query_len, &pv_param_arr) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rsa/", &pgsql_link, &query, &query_len, &pv_param_arr) == FAILURE) {
 		return;
 	}
 
@@ -4705,7 +4705,7 @@ PHP_FUNCTION(pg_send_query_params)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 1)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to nonblocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to nonblocking mode");
 		RETURN_FALSE;
 	}
 	while ((res = PQgetResult(pgsql))) {
@@ -4713,7 +4713,7 @@ PHP_FUNCTION(pg_send_query_params)
 		leftover = 1;
 	}
 	if (leftover) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "There are results on this connection. Call pg_get_result() until it returns FALSE");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "There are results on this connection. Call pg_get_result() until it returns FALSE");
 	}
 
 	zend_hash_internal_pointer_reset(Z_ARRVAL_P(pv_param_arr));
@@ -4724,7 +4724,7 @@ PHP_FUNCTION(pg_send_query_params)
 		
 		for(i = 0; i < num_params; i++) {
 			if (zend_hash_get_current_data(Z_ARRVAL_P(pv_param_arr), (void **) &tmp) == FAILURE) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING,"Error getting parameter");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING,"Error getting parameter");
 				_php_pgsql_free_params(params, num_params);
 				RETURN_FALSE;
 			}
@@ -4736,7 +4736,7 @@ PHP_FUNCTION(pg_send_query_params)
 				zval_copy_ctor(&tmp_val);
 				convert_to_string(&tmp_val);
 				if (Z_TYPE(tmp_val) != IS_STRING) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING,"Error converting parameter");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING,"Error converting parameter");
 					zval_dtor(&tmp_val);
 					_php_pgsql_free_params(params, num_params);
 					RETURN_FALSE;
@@ -4760,7 +4760,7 @@ PHP_FUNCTION(pg_send_query_params)
 	}
 	_php_pgsql_free_params(params, num_params);
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to blocking mode");
 	}
 	RETURN_TRUE;
 }
@@ -4779,7 +4779,7 @@ PHP_FUNCTION(pg_send_prepare)
 	PGresult *res;
 	int leftover = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rss", &pgsql_link, &stmtname, &stmtname_len, &query, &query_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rss", &pgsql_link, &stmtname, &stmtname_len, &query, &query_len) == FAILURE) {
 		return;
 	}
 
@@ -4790,7 +4790,7 @@ PHP_FUNCTION(pg_send_prepare)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 1)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to nonblocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to nonblocking mode");
 		RETURN_FALSE;
 	}
 	while ((res = PQgetResult(pgsql))) {
@@ -4798,7 +4798,7 @@ PHP_FUNCTION(pg_send_prepare)
 		leftover = 1;
 	}
 	if (leftover) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "There are results on this connection. Call pg_get_result() until it returns FALSE");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "There are results on this connection. Call pg_get_result() until it returns FALSE");
 	}
 	if (!PQsendPrepare(pgsql, stmtname, query, 0, NULL)) {
 		if ((PGG(auto_reset_persistent) & 2) && PQstatus(pgsql) != CONNECTION_OK) {
@@ -4809,7 +4809,7 @@ PHP_FUNCTION(pg_send_prepare)
 		}
 	}
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to blocking mode");
 	}
 	RETURN_TRUE;
 }
@@ -4831,7 +4831,7 @@ PHP_FUNCTION(pg_send_execute)
 	PGresult *res;
 	int leftover = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rsa", &pgsql_link, &stmtname, &stmtname_len, &pv_param_arr) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rsa", &pgsql_link, &stmtname, &stmtname_len, &pv_param_arr) == FAILURE) {
 		return;
 	}
 
@@ -4842,7 +4842,7 @@ PHP_FUNCTION(pg_send_execute)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (PQ_SETNONBLOCKING(pgsql, 1)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to nonblocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to nonblocking mode");
 		RETURN_FALSE;
 	}
 	while ((res = PQgetResult(pgsql))) {
@@ -4850,7 +4850,7 @@ PHP_FUNCTION(pg_send_execute)
 		leftover = 1;
 	}
 	if (leftover) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "There are results on this connection. Call pg_get_result() until it returns FALSE");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "There are results on this connection. Call pg_get_result() until it returns FALSE");
 	}
 
 	zend_hash_internal_pointer_reset(Z_ARRVAL_P(pv_param_arr));
@@ -4861,7 +4861,7 @@ PHP_FUNCTION(pg_send_execute)
 		
 		for(i = 0; i < num_params; i++) {
 			if (zend_hash_get_current_data(Z_ARRVAL_P(pv_param_arr), (void **) &tmp) == FAILURE) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING,"Error getting parameter");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING,"Error getting parameter");
 				_php_pgsql_free_params(params, num_params);
 				RETURN_FALSE;
 			}
@@ -4873,7 +4873,7 @@ PHP_FUNCTION(pg_send_execute)
 				zval_copy_ctor(&tmp_val);
 				convert_to_string(&tmp_val);
 				if (Z_TYPE(tmp_val) != IS_STRING) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING,"Error converting parameter");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING,"Error converting parameter");
 					zval_dtor(&tmp_val);
 					_php_pgsql_free_params(params, num_params);
 					RETURN_FALSE;
@@ -4897,7 +4897,7 @@ PHP_FUNCTION(pg_send_execute)
 	}
 	_php_pgsql_free_params(params, num_params);
 	if (PQ_SETNONBLOCKING(pgsql, 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot set connection to blocking mode");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot set connection to blocking mode");
 	}
 	RETURN_TRUE;
 }
@@ -4914,7 +4914,7 @@ PHP_FUNCTION(pg_get_result)
 	PGresult *pgsql_result;
 	pgsql_result_handle *pg_result;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r", &pgsql_link) == FAILURE) {
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r", &pgsql_link) == FAILURE) {
 		RETURN_FALSE;
 	}
 
@@ -4943,7 +4943,7 @@ PHP_FUNCTION(pg_result_status)
 	PGresult *pgsql_result;
 	pgsql_result_handle *pg_result;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r|l",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r|l",
 								 &result, &result_type) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -4959,7 +4959,7 @@ PHP_FUNCTION(pg_result_status)
 		RETURN_STRING(PQcmdStatus(pgsql_result), 1);
 	}
 	else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Optional 2nd parameter should be PGSQL_STATUS_LONG or PGSQL_STATUS_STRING");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Optional 2nd parameter should be PGSQL_STATUS_LONG or PGSQL_STATUS_STRING");
 		RETURN_FALSE;
 	}
 }
@@ -4976,7 +4976,7 @@ PHP_FUNCTION(pg_get_notify)
 	PGconn *pgsql;
 	PGnotify *pgsql_notify;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r|l",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r|l",
 								 &pgsql_link, &result_type) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -4984,7 +4984,7 @@ PHP_FUNCTION(pg_get_notify)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
 	if (!(result_type & PGSQL_BOTH)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid result type");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid result type");
 		RETURN_FALSE;
 	}
 
@@ -5033,7 +5033,7 @@ PHP_FUNCTION(pg_get_pid)
 	int id = -1;
 	PGconn *pgsql;
 
-	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS() TSRMLS_CC, "r",
+	if (zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS(), TSRMLS_C, "r",
 								 &pgsql_link) == FAILURE) {
 		RETURN_FALSE;
 	}
@@ -5047,7 +5047,7 @@ PHP_FUNCTION(pg_get_pid)
 /* {{{ php_pgsql_meta_data
  * TODO: Add meta_data cache for better performance
  */
-PHP_PGSQL_API int php_pgsql_meta_data(PGconn *pg_link, const char *table_name, zval *meta TSRMLS_DC) 
+PHP_PGSQL_API int php_pgsql_meta_data(PGconn *pg_link, const char *table_name, zval *meta, TSRMLS_D) 
 {
 	PGresult *pg_result;
 	char *src, *tmp_name, *tmp_name2 = NULL;
@@ -5057,7 +5057,7 @@ PHP_PGSQL_API int php_pgsql_meta_data(PGconn *pg_link, const char *table_name, z
 	zval *elem;
 	
 	if (!*table_name) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "The table name must be specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "The table name must be specified");
 		return FAILURE;
 	}
 
@@ -5074,11 +5074,11 @@ PHP_PGSQL_API int php_pgsql_meta_data(PGconn *pg_link, const char *table_name, z
 			"SELECT a.attname, a.attnum, t.typname, a.attlen, a.attnotnull, a.atthasdef, a.attndims, t.typtype = 'e' "
 			"FROM pg_class as c, pg_attribute a, pg_type t, pg_namespace n "
 			"WHERE a.attnum > 0 AND a.attrelid = c.oid AND c.relname = '");
-	tmp_name2 = php_addslashes(tmp_name2, strlen(tmp_name2), &new_len, 0 TSRMLS_CC);
+	tmp_name2 = php_addslashes(tmp_name2, strlen(tmp_name2), &new_len, 0, TSRMLS_C);
 	smart_str_appendl(&querystr, tmp_name2, new_len);
 	
 	smart_str_appends(&querystr, "' AND c.relnamespace = n.oid AND n.nspname = '");
-	tmp_name = php_addslashes(tmp_name, strlen(tmp_name), &new_len, 0 TSRMLS_CC);
+	tmp_name = php_addslashes(tmp_name, strlen(tmp_name), &new_len, 0, TSRMLS_C);
 	smart_str_appendl(&querystr, tmp_name, new_len);
 
 	smart_str_appends(&querystr, "' AND a.atttypid = t.oid ORDER BY a.attnum;");
@@ -5090,7 +5090,7 @@ PHP_PGSQL_API int php_pgsql_meta_data(PGconn *pg_link, const char *table_name, z
 	
 	pg_result = PQexec(pg_link, querystr.c);
 	if (PQresultStatus(pg_result) != PGRES_TUPLES_OK || (num_rows = PQntuples(pg_result)) == 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Table '%s' doesn't exists", table_name);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Table '%s' doesn't exists", table_name);
 		smart_str_free(&querystr);
 		PQclear(pg_result);
 		return FAILURE;
@@ -5144,7 +5144,7 @@ PHP_FUNCTION(pg_meta_data)
 	PGconn *pgsql;
 	int id = -1;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs",
 							  &pgsql_link, &table_name, &table_name_len) == FAILURE) {
 		return;
 	}
@@ -5152,7 +5152,7 @@ PHP_FUNCTION(pg_meta_data)
 	ZEND_FETCH_RESOURCE2(pgsql, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 	
 	array_init(return_value);
-	if (php_pgsql_meta_data(pgsql, table_name, return_value TSRMLS_CC) == FAILURE) {
+	if (php_pgsql_meta_data(pgsql, table_name, return_value, TSRMLS_C) == FAILURE) {
 		zval_dtor(return_value); /* destroy array */
 		RETURN_FALSE;
 	}
@@ -5263,7 +5263,7 @@ static php_pgsql_data_type php_pgsql_get_data_type(const char *type_name, size_t
 /* {{{ php_pgsql_convert_match
  * test field value with regular expression specified.  
  */
-static int php_pgsql_convert_match(const char *str, const char *regex , int icase TSRMLS_DC)
+static int php_pgsql_convert_match(const char *str, const char *regex , int icase, TSRMLS_D)
 {
 	regex_t re;	
 	regmatch_t *subs;
@@ -5276,7 +5276,7 @@ static int php_pgsql_convert_match(const char *str, const char *regex , int icas
 	
 	regerr = regcomp(&re, regex, regopt);
 	if (regerr) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot compile regex");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot compile regex");
 		regfree(&re);
 		return FAILURE;
 	}
@@ -5285,12 +5285,12 @@ static int php_pgsql_convert_match(const char *str, const char *regex , int icas
 	regerr = regexec(&re, str, re.re_nsub+1, subs, 0);
 	if (regerr == REG_NOMATCH) {
 #ifdef PHP_DEBUG		
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "'%s' does not match with '%s'", str, regex);
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "'%s' does not match with '%s'", str, regex);
 #endif
 		ret = FAILURE;
 	}
 	else if (regerr) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot exec regex");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot exec regex");
 		ret = FAILURE;
 	}
 	regfree(&re);
@@ -5303,7 +5303,7 @@ static int php_pgsql_convert_match(const char *str, const char *regex , int icas
 /* {{{ php_pgsql_add_quote
  * add quotes around string.
  */
-static int php_pgsql_add_quotes(zval *src, zend_bool should_free TSRMLS_DC) 
+static int php_pgsql_add_quotes(zval *src, zend_bool should_free, TSRMLS_D) 
 {
 	smart_str str = {0};
 	
@@ -5335,7 +5335,7 @@ static int php_pgsql_add_quotes(zval *src, zend_bool should_free TSRMLS_DC)
 					} \
 					/* raise error if it's not null and cannot be ignored */ \
 					else if (!(opt & PGSQL_CONV_IGNORE_NOT_NULL) && Z_BVAL_PP(not_null)) { \
-						php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected NULL for 'NOT NULL' field '%s'", field ); \
+						php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected NULL for 'NOT NULL' field '%s'", field ); \
 						err = 1; \
 					} \
 				} 		
@@ -5343,7 +5343,7 @@ static int php_pgsql_add_quotes(zval *src, zend_bool should_free TSRMLS_DC)
 /* {{{ php_pgsql_convert
  * check and convert array values (fieldname=>vlaue pair) for sql
  */
-PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, const zval *values, zval *result, ulong opt TSRMLS_DC) 
+PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, const zval *values, zval *result, ulong opt, TSRMLS_D) 
 {
 	HashPosition pos;
 	char *field = NULL;
@@ -5363,7 +5363,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 	}
 	MAKE_STD_ZVAL(meta);
 	array_init(meta);
-	if (php_pgsql_meta_data(pg_link, table_name, meta TSRMLS_CC) == FAILURE) {
+	if (php_pgsql_meta_data(pg_link, table_name, meta, TSRMLS_C) == FAILURE) {
 		zval_dtor(meta);
 		FREE_ZVAL(meta);
 		return FAILURE;
@@ -5375,41 +5375,41 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 		new_val = NULL;
 		
 		if ((key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(values), &field, &field_len, &num_idx, 0, &pos)) == HASH_KEY_NON_EXISTANT) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to get array key type");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Failed to get array key type");
 			err = 1;
 		}
 		if (!err && key_type == HASH_KEY_IS_LONG) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Accepts only string key for values");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Accepts only string key for values");
 			err = 1;
 		}
 		if (!err && key_type == HASH_KEY_NON_EXISTANT) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Accepts only string key for values");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Accepts only string key for values");
 			err = 1;
 		}
 		if (!err && zend_hash_find(Z_ARRVAL_P(meta), field, field_len, (void **)&def) == FAILURE) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Invalid field name (%s) in values", field);
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Invalid field name (%s) in values", field);
 			err = 1;
 		}
 		if (!err && zend_hash_find(Z_ARRVAL_PP(def), "type", sizeof("type"), (void **)&type) == FAILURE) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected broken meta data. Missing 'type'");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected broken meta data. Missing 'type'");
 			err = 1;
 		}
 		if (!err && zend_hash_find(Z_ARRVAL_PP(def), "not null", sizeof("not null"), (void **)&not_null) == FAILURE) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected broken meta data. Missing 'not null'");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected broken meta data. Missing 'not null'");
 			err = 1;
 		}
 		if (!err && zend_hash_find(Z_ARRVAL_PP(def), "has default", sizeof("has default"), (void **)&has_default) == FAILURE) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected broken meta data. Missing 'has default'");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected broken meta data. Missing 'has default'");
 			err = 1;
 		}
 		if (!err && zend_hash_find(Z_ARRVAL_PP(def), "is enum", sizeof("is enum"), (void **)&is_enum) == FAILURE) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected broken meta data. Missing 'is enum'");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected broken meta data. Missing 'is enum'");
 			err = 1;
 		}
 		if (!err && (Z_TYPE_PP(val) == IS_ARRAY ||
 			 Z_TYPE_PP(val) == IS_OBJECT ||
 			 Z_TYPE_PP(val) == IS_CONSTANT_ARRAY)) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects scalar values as field values");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects scalar values as field values");
 			err = 1;
 		}
 		if (err) {
@@ -5449,7 +5449,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 								ZVAL_STRING(new_val, "'f'", 1);
 							}
 							else {
-								php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected invalid value (%s) for PostgreSQL %s field (%s)", Z_STRVAL_PP(val), Z_STRVAL_PP(type), field);
+								php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected invalid value (%s) for PostgreSQL %s field (%s)", Z_STRVAL_PP(val), Z_STRVAL_PP(type), field);
 								err = 1;
 							}
 						}
@@ -5474,7 +5474,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects string, null, long or boolelan value for PostgreSQL '%s' (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects string, null, long or boolelan value for PostgreSQL '%s' (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 					
@@ -5489,7 +5489,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 						}
 						else {
 							/* FIXME: better regex must be used */
-							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([+-]{0,1}[0-9]+)$", 0 TSRMLS_CC) == FAILURE) {
+							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([+-]{0,1}[0-9]+)$", 0, TSRMLS_C) == FAILURE) {
 								err = 1;
 							}
 							else {
@@ -5516,7 +5516,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL, string, long or double value for pgsql '%s' (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL, string, long or double value for pgsql '%s' (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 
@@ -5531,7 +5531,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 						}
 						else {
 							/* FIXME: better regex must be used */
-							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([+-]{0,1}[0-9]+)|([+-]{0,1}[0-9]*[\\.][0-9]+)|([+-]{0,1}[0-9]+[\\.][0-9]*)$", 0 TSRMLS_CC) == FAILURE) {
+							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([+-]{0,1}[0-9]+)|([+-]{0,1}[0-9]*[\\.][0-9]+)|([+-]{0,1}[0-9]+[\\.][0-9]*)$", 0, TSRMLS_C) == FAILURE) {
 								err = 1;
 							}
 							else {
@@ -5557,7 +5557,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL, string, long or double value for PostgreSQL '%s' (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL, string, long or double value for PostgreSQL '%s' (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 
@@ -5583,9 +5583,9 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 								Z_STRVAL_P(new_val) = tmp;
 							}
 #else					
-							Z_STRVAL_P(new_val) = php_addslashes(Z_STRVAL_PP(val), Z_STRLEN_PP(val), &Z_STRLEN_P(new_val), 0 TSRMLS_CC);
+							Z_STRVAL_P(new_val) = php_addslashes(Z_STRVAL_PP(val), Z_STRLEN_PP(val), &Z_STRLEN_P(new_val), 0, TSRMLS_C);
 #endif
-							php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
+							php_pgsql_add_quotes(new_val, 1, TSRMLS_C);
 						}
 						break;
 						
@@ -5608,7 +5608,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL, string, long or double value for PostgreSQL '%s' (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL, string, long or double value for PostgreSQL '%s' (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 					
@@ -5622,7 +5622,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 						}
 						else {
 							/* FIXME: Better regex must be used */
-							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^[0-9]+$", 0 TSRMLS_CC) == FAILURE) {
+							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^[0-9]+$", 0, TSRMLS_C) == FAILURE) {
 								err = 1;
 							} 
 							else {
@@ -5650,7 +5650,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL, string, long or double value for '%s' (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL, string, long or double value for '%s' (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 				
@@ -5663,12 +5663,12 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 						}
 						else {
 							/* FIXME: Better regex must be used */
-							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([0-9]{1,3}\\.){3}[0-9]{1,3}(/[0-9]{1,2}){0,1}$", 0 TSRMLS_CC) == FAILURE) {
+							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([0-9]{1,3}\\.){3}[0-9]{1,3}(/[0-9]{1,2}){0,1}$", 0, TSRMLS_C) == FAILURE) {
 								err = 1;
 							}
 							else {
 								ZVAL_STRING(new_val, Z_STRVAL_PP(val), 1);
-								php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
+								php_pgsql_add_quotes(new_val, 1, TSRMLS_C);
 							}
 						}
 						break;
@@ -5682,7 +5682,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}				
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL or string for '%s' (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL or string for '%s' (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 				
@@ -5697,11 +5697,11 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 							ZVAL_STRINGL(new_val, "NOW()", sizeof("NOW()")-1, 1);
 						} else {
 							/* FIXME: better regex must be used */
-							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})([ \\t]+(([0-9]{1,2}:[0-9]{1,2}){1}(:[0-9]{1,2}){0,1}(\\.[0-9]+){0,1}([ \\t]*([+-][0-9]{1,4}(:[0-9]{1,2}){0,1}|[-a-zA-Z_/+]{1,50})){0,1})){0,1}$", 1 TSRMLS_CC) == FAILURE) {
+							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})([ \\t]+(([0-9]{1,2}:[0-9]{1,2}){1}(:[0-9]{1,2}){0,1}(\\.[0-9]+){0,1}([ \\t]*([+-][0-9]{1,4}(:[0-9]{1,2}){0,1}|[-a-zA-Z_/+]{1,50})){0,1})){0,1}$", 1, TSRMLS_C) == FAILURE) {
 								err = 1;
 							} else {
 								ZVAL_STRING(new_val, Z_STRVAL_PP(val), 1);
-								php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
+								php_pgsql_add_quotes(new_val, 1, TSRMLS_C);
 							}
 						}
 						break;
@@ -5715,7 +5715,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 				
@@ -5727,12 +5727,12 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 						}
 						else {
 							/* FIXME: better regex must be used */
-							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})$", 1 TSRMLS_CC) == FAILURE) {
+							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([0-9]{4}[/-][0-9]{1,2}[/-][0-9]{1,2})$", 1, TSRMLS_C) == FAILURE) {
 								err = 1;
 							}
 							else {
 								ZVAL_STRING(new_val, Z_STRVAL_PP(val), 1);
-								php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
+								php_pgsql_add_quotes(new_val, 1, TSRMLS_C);
 							}
 						}
 						break;
@@ -5746,7 +5746,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 
@@ -5758,12 +5758,12 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 						}
 						else {
 							/* FIXME: better regex must be used */
-							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^(([0-9]{1,2}:[0-9]{1,2}){1}(:[0-9]{1,2}){0,1})){0,1}$", 1 TSRMLS_CC) == FAILURE) {
+							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^(([0-9]{1,2}:[0-9]{1,2}){1}(:[0-9]{1,2}){0,1})){0,1}$", 1, TSRMLS_C) == FAILURE) {
 								err = 1;
 							}
 							else {
 								ZVAL_STRING(new_val, Z_STRVAL_PP(val), 1);
-								php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
+								php_pgsql_add_quotes(new_val, 1, TSRMLS_C);
 							}
 						}
 						break;
@@ -5777,7 +5777,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 
@@ -5837,12 +5837,12 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 														"(([0-9]{1,2}:){0,2}[0-9]{0,2})" /* hh:[mm:[ss]] */
 														")?))"
 														"([ \\t]+ago)?$",
-														1 TSRMLS_CC) == FAILURE) {
+														1, TSRMLS_C) == FAILURE) {
 								err = 1;
 							}
 							else {
 								ZVAL_STRING(new_val, Z_STRVAL_PP(val), 1);
-								php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
+								php_pgsql_add_quotes(new_val, 1, TSRMLS_C);
 							}
 						}	
 						break;
@@ -5856,7 +5856,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 #ifdef HAVE_PQESCAPE
@@ -5879,7 +5879,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 							Z_STRVAL_P(new_val) = emalloc(to_len);
 							memcpy(Z_STRVAL_P(new_val), tmp, to_len);
 							PQfreemem(tmp);
-							php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
+							php_pgsql_add_quotes(new_val, 1, TSRMLS_C);
 								
 						}
 						break;
@@ -5903,7 +5903,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL, string, long or double value for PostgreSQL '%s' (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL, string, long or double value for PostgreSQL '%s' (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 				
@@ -5915,12 +5915,12 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 							ZVAL_STRING(new_val, "NULL", 1);
 						}
 						else {
-							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([0-9a-f]{2,2}:){5,5}[0-9a-f]{2,2}$", 1 TSRMLS_CC) == FAILURE) {
+							if (php_pgsql_convert_match(Z_STRVAL_PP(val), "^([0-9a-f]{2,2}:){5,5}[0-9a-f]{2,2}$", 1, TSRMLS_C) == FAILURE) {
 								err = 1;
 							}
 							else {
 								ZVAL_STRING(new_val, Z_STRVAL_PP(val), 1);
-								php_pgsql_add_quotes(new_val, 1 TSRMLS_CC);
+								php_pgsql_add_quotes(new_val, 1, TSRMLS_C);
 							}
 						}
 						break;
@@ -5934,7 +5934,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 				}
 				PGSQL_CONV_CHECK_IGNORE();
 				if (err) {
-					php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
+					php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects NULL or string for PostgreSQL %s field (%s)", Z_STRVAL_PP(type), field);
 				}
 				break;
 
@@ -5949,13 +5949,13 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 			case PG_PATH:
 			case PG_POLYGON:
 			case PG_CIRCLE:
-				php_error_docref(NULL TSRMLS_CC, E_NOTICE, "PostgreSQL '%s' type (%s) is not supported", Z_STRVAL_PP(type), field);
+				php_error_docref(NULL, TSRMLS_C, E_NOTICE, "PostgreSQL '%s' type (%s) is not supported", Z_STRVAL_PP(type), field);
 				err = 1;
 				break;
 				
 			case PG_UNKNOWN:
 			default:
-				php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Unknown or system data type '%s' for '%s'", Z_STRVAL_PP(type), field);
+				php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Unknown or system data type '%s' for '%s'", Z_STRVAL_PP(type), field);
 				err = 1;
 				break;
 		} /* switch */
@@ -5967,7 +5967,7 @@ PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, con
 		}
 		if (!skip_field) {
 			/* If field is NULL and HAS DEFAULT, should be skipped */
-			field = php_addslashes(field, strlen(field), &new_len, 0 TSRMLS_CC);
+			field = php_addslashes(field, strlen(field), &new_len, 0, TSRMLS_C);
 			add_assoc_zval(result, field, new_val);
 			efree(field);
 		}
@@ -5995,33 +5995,33 @@ PHP_FUNCTION(pg_convert)
 	PGconn *pg_link;
 	int id = -1;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 							  "rsa|l", &pgsql_link, &table_name, &table_name_len, &values, &option) == FAILURE) {
 		return;
 	}
 	if (option & ~PGSQL_CONV_OPTS) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid option is specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid option is specified");
 		RETURN_FALSE;
 	}
 	if (!table_name_len) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Table name is invalid");
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Table name is invalid");
 		RETURN_FALSE;
 	}
 
 	ZEND_FETCH_RESOURCE2(pg_link, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
-	if (php_pgsql_flush_query(pg_link TSRMLS_CC)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected unhandled result(s) in connection");
+	if (php_pgsql_flush_query(pg_link, TSRMLS_C)) {
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected unhandled result(s) in connection");
 	}
 	array_init(return_value);
-	if (php_pgsql_convert(pg_link, table_name, values, return_value, option TSRMLS_CC) == FAILURE) {
+	if (php_pgsql_convert(pg_link, table_name, values, return_value, option, TSRMLS_C) == FAILURE) {
 		zval_dtor(return_value);
 		RETURN_FALSE;
 	}
 }
 /* }}} */
 
-static int do_exec(smart_str *querystr, int expect, PGconn *pg_link, ulong opt TSRMLS_DC)
+static int do_exec(smart_str *querystr, int expect, PGconn *pg_link, ulong opt, TSRMLS_D)
 {
 	if (opt & PGSQL_DML_ASYNC) {
 		if (PQsendQuery(pg_link, querystr->c)) {
@@ -6036,7 +6036,7 @@ static int do_exec(smart_str *querystr, int expect, PGconn *pg_link, ulong opt T
 			PQclear(pg_result);
 			return 0;
 		} else {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s", PQresultErrorMessage(pg_result));
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "%s", PQresultErrorMessage(pg_result));
 			PQclear(pg_result);
 		}
 	}
@@ -6046,7 +6046,7 @@ static int do_exec(smart_str *querystr, int expect, PGconn *pg_link, ulong opt T
 
 /* {{{ php_pgsql_insert
  */
-PHP_PGSQL_API int php_pgsql_insert(PGconn *pg_link, const char *table, zval *var_array, ulong opt, char **sql TSRMLS_DC)
+PHP_PGSQL_API int php_pgsql_insert(PGconn *pg_link, const char *table, zval *var_array, ulong opt, char **sql, TSRMLS_D)
 {
 	zval **val, *converted = NULL;
 	char buf[256];
@@ -6073,7 +6073,7 @@ PHP_PGSQL_API int php_pgsql_insert(PGconn *pg_link, const char *table, zval *var
 	if (!(opt & PGSQL_DML_NO_CONV)) {
 		MAKE_STD_ZVAL(converted);
 		array_init(converted);
-		if (php_pgsql_convert(pg_link, table, var_array, converted, (opt & PGSQL_CONV_OPTS) TSRMLS_CC) == FAILURE) {
+		if (php_pgsql_convert(pg_link, table, var_array, converted, (opt & PGSQL_CONV_OPTS), TSRMLS_C) == FAILURE) {
 			goto cleanup;
 		}
 		var_array = converted;
@@ -6087,7 +6087,7 @@ PHP_PGSQL_API int php_pgsql_insert(PGconn *pg_link, const char *table, zval *var
 	while ((key_type = zend_hash_get_current_key_ex(Z_ARRVAL_P(var_array), &fld,
 					&fld_len, &num_idx, 0, &pos)) != HASH_KEY_NON_EXISTANT) {
 		if (key_type == HASH_KEY_IS_LONG) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects associative array for values to be inserted");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects associative array for values to be inserted");
 			goto cleanup;
 		}
 		smart_str_appendl(&querystr, fld, fld_len - 1);
@@ -6115,7 +6115,7 @@ PHP_PGSQL_API int php_pgsql_insert(PGconn *pg_link, const char *table, zval *var
 				break;
 			default:
 				/* should not happen */
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Report this error to php-dev@lists.php.net, type = %d", Z_TYPE_PP(val));
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Report this error to php-dev@lists.php.net, type = %d", Z_TYPE_PP(val));
 				goto cleanup;
 				break;
 		}
@@ -6130,7 +6130,7 @@ no_values:
 	smart_str_0(&querystr);
 
 	if ((opt & (PGSQL_DML_EXEC|PGSQL_DML_ASYNC)) &&
-		do_exec(&querystr, PGRES_COMMAND_OK, pg_link, (opt & PGSQL_CONV_OPTS) TSRMLS_CC) == 0) {
+		do_exec(&querystr, PGRES_COMMAND_OK, pg_link, (opt & PGSQL_CONV_OPTS), TSRMLS_C) == 0) {
 		ret = SUCCESS;
 	}
 	else if (opt & PGSQL_DML_STRING) {
@@ -6163,21 +6163,21 @@ PHP_FUNCTION(pg_insert)
 	PGconn *pg_link;
 	int id = -1, argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "rsa|l",
+	if (zend_parse_parameters(argc, TSRMLS_C, "rsa|l",
 							  &pgsql_link, &table, &table_len, &values, &option) == FAILURE) {
 		return;
 	}
 	if (option & ~(PGSQL_CONV_OPTS|PGSQL_DML_NO_CONV|PGSQL_DML_EXEC|PGSQL_DML_ASYNC|PGSQL_DML_STRING)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid option is specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid option is specified");
 		RETURN_FALSE;
 	}
 	
 	ZEND_FETCH_RESOURCE2(pg_link, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
-	if (php_pgsql_flush_query(pg_link TSRMLS_CC)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected unhandled result(s) in connection");
+	if (php_pgsql_flush_query(pg_link, TSRMLS_C)) {
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected unhandled result(s) in connection");
 	}
-	if (php_pgsql_insert(pg_link, table, values, option, &sql TSRMLS_CC) == FAILURE) {
+	if (php_pgsql_insert(pg_link, table, values, option, &sql, TSRMLS_C) == FAILURE) {
 		RETURN_FALSE;
 	}
 	if (option & PGSQL_DML_STRING) {
@@ -6187,7 +6187,7 @@ PHP_FUNCTION(pg_insert)
 }
 /* }}} */
 
-static inline int build_assignment_string(smart_str *querystr, HashTable *ht, int where_cond, const char *pad, int pad_len TSRMLS_DC)
+static inline int build_assignment_string(smart_str *querystr, HashTable *ht, int where_cond, const char *pad, int pad_len, TSRMLS_D)
 {
 	HashPosition pos;
 	uint fld_len;
@@ -6202,7 +6202,7 @@ static inline int build_assignment_string(smart_str *querystr, HashTable *ht, in
 		 zend_hash_move_forward_ex(ht, &pos)) {
 		 key_type = zend_hash_get_current_key_ex(ht, &fld, &fld_len, &num_idx, 0, &pos);		
 		if (key_type == HASH_KEY_IS_LONG) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects associative array for values to be inserted");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects associative array for values to be inserted");
 			return -1;
 		}
 		smart_str_appendl(querystr, fld, fld_len - 1);
@@ -6224,7 +6224,7 @@ static inline int build_assignment_string(smart_str *querystr, HashTable *ht, in
 				break;
 			default:
 				/* should not happen */
-				php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Expects scaler values other than NULL. Need to convert?");
+				php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Expects scaler values other than NULL. Need to convert?");
 				return -1;
 		}
 		smart_str_appendl(querystr, pad, pad_len);
@@ -6236,7 +6236,7 @@ static inline int build_assignment_string(smart_str *querystr, HashTable *ht, in
 
 /* {{{ php_pgsql_update
  */
-PHP_PGSQL_API int php_pgsql_update(PGconn *pg_link, const char *table, zval *var_array, zval *ids_array, ulong opt, char **sql TSRMLS_DC) 
+PHP_PGSQL_API int php_pgsql_update(PGconn *pg_link, const char *table, zval *var_array, zval *ids_array, ulong opt, char **sql, TSRMLS_D) 
 {
 	zval *var_converted = NULL, *ids_converted = NULL;
 	smart_str querystr = {0};
@@ -6256,13 +6256,13 @@ PHP_PGSQL_API int php_pgsql_update(PGconn *pg_link, const char *table, zval *var
 	if (!(opt & PGSQL_DML_NO_CONV)) {
 		MAKE_STD_ZVAL(var_converted);
 		array_init(var_converted);
-		if (php_pgsql_convert(pg_link, table, var_array, var_converted, (opt & PGSQL_CONV_OPTS) TSRMLS_CC) == FAILURE) {
+		if (php_pgsql_convert(pg_link, table, var_array, var_converted, (opt & PGSQL_CONV_OPTS), TSRMLS_C) == FAILURE) {
 			goto cleanup;
 		}
 		var_array = var_converted;
 		MAKE_STD_ZVAL(ids_converted);
 		array_init(ids_converted);
-		if (php_pgsql_convert(pg_link, table, ids_array, ids_converted, (opt & PGSQL_CONV_OPTS) TSRMLS_CC) == FAILURE) {
+		if (php_pgsql_convert(pg_link, table, ids_array, ids_converted, (opt & PGSQL_CONV_OPTS), TSRMLS_C) == FAILURE) {
 			goto cleanup;
 		}
 		ids_array = ids_converted;
@@ -6272,18 +6272,18 @@ PHP_PGSQL_API int php_pgsql_update(PGconn *pg_link, const char *table, zval *var
 	smart_str_appends(&querystr, table);
 	smart_str_appends(&querystr, " SET ");
 
-	if (build_assignment_string(&querystr, Z_ARRVAL_P(var_array), 0, ",", 1 TSRMLS_CC))
+	if (build_assignment_string(&querystr, Z_ARRVAL_P(var_array), 0, ",", 1, TSRMLS_C))
 		goto cleanup;
 	
 	smart_str_appends(&querystr, " WHERE ");
 	
-	if (build_assignment_string(&querystr, Z_ARRVAL_P(ids_array), 1, " AND ", sizeof(" AND ")-1 TSRMLS_CC))
+	if (build_assignment_string(&querystr, Z_ARRVAL_P(ids_array), 1, " AND ", sizeof(" AND ")-1, TSRMLS_C))
 		goto cleanup;
 
 	smart_str_appendc(&querystr, ';');	
 	smart_str_0(&querystr);
 
-	if ((opt & PGSQL_DML_EXEC) && do_exec(&querystr, PGRES_COMMAND_OK, pg_link, opt TSRMLS_CC) == 0) {
+	if ((opt & PGSQL_DML_EXEC) && do_exec(&querystr, PGRES_COMMAND_OK, pg_link, opt, TSRMLS_C) == 0) {
 		ret = SUCCESS;
 	} else if (opt & PGSQL_DML_STRING) {
 		ret = SUCCESS;
@@ -6319,21 +6319,21 @@ PHP_FUNCTION(pg_update)
 	PGconn *pg_link;
 	int id = -1, argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "rsaa|l",
+	if (zend_parse_parameters(argc, TSRMLS_C, "rsaa|l",
 							  &pgsql_link, &table, &table_len, &values, &ids, &option) == FAILURE) {
 		return;
 	}
 	if (option & ~(PGSQL_CONV_OPTS|PGSQL_DML_NO_CONV|PGSQL_DML_EXEC|PGSQL_DML_STRING)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid option is specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid option is specified");
 		RETURN_FALSE;
 	}
 	
 	ZEND_FETCH_RESOURCE2(pg_link, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
-	if (php_pgsql_flush_query(pg_link TSRMLS_CC)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected unhandled result(s) in connection");
+	if (php_pgsql_flush_query(pg_link, TSRMLS_C)) {
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected unhandled result(s) in connection");
 	}
-	if (php_pgsql_update(pg_link, table, values, ids, option, &sql TSRMLS_CC) == FAILURE) {
+	if (php_pgsql_update(pg_link, table, values, ids, option, &sql, TSRMLS_C) == FAILURE) {
 		RETURN_FALSE;
 	}
 	if (option & PGSQL_DML_STRING) {
@@ -6345,7 +6345,7 @@ PHP_FUNCTION(pg_update)
 
 /* {{{ php_pgsql_delete
  */
-PHP_PGSQL_API int php_pgsql_delete(PGconn *pg_link, const char *table, zval *ids_array, ulong opt, char **sql TSRMLS_DC) 
+PHP_PGSQL_API int php_pgsql_delete(PGconn *pg_link, const char *table, zval *ids_array, ulong opt, char **sql, TSRMLS_D) 
 {
 	zval *ids_converted = NULL;
 	smart_str querystr = {0};
@@ -6363,7 +6363,7 @@ PHP_PGSQL_API int php_pgsql_delete(PGconn *pg_link, const char *table, zval *ids
 	if (!(opt & PGSQL_DML_NO_CONV)) {
 		MAKE_STD_ZVAL(ids_converted);
 		array_init(ids_converted);
-		if (php_pgsql_convert(pg_link, table, ids_array, ids_converted, (opt & PGSQL_CONV_OPTS) TSRMLS_CC) == FAILURE) {
+		if (php_pgsql_convert(pg_link, table, ids_array, ids_converted, (opt & PGSQL_CONV_OPTS), TSRMLS_C) == FAILURE) {
 			goto cleanup;
 		}
 		ids_array = ids_converted;
@@ -6373,13 +6373,13 @@ PHP_PGSQL_API int php_pgsql_delete(PGconn *pg_link, const char *table, zval *ids
 	smart_str_appends(&querystr, table);
 	smart_str_appends(&querystr, " WHERE ");
 
-	if (build_assignment_string(&querystr, Z_ARRVAL_P(ids_array), 1, " AND ", sizeof(" AND ")-1 TSRMLS_CC))
+	if (build_assignment_string(&querystr, Z_ARRVAL_P(ids_array), 1, " AND ", sizeof(" AND ")-1, TSRMLS_C))
 		goto cleanup;
 
 	smart_str_appendc(&querystr, ';');
 	smart_str_0(&querystr);
 
-	if ((opt & PGSQL_DML_EXEC) && do_exec(&querystr, PGRES_COMMAND_OK, pg_link, opt TSRMLS_CC) == 0) {
+	if ((opt & PGSQL_DML_EXEC) && do_exec(&querystr, PGRES_COMMAND_OK, pg_link, opt, TSRMLS_C) == 0) {
 		ret = SUCCESS;
 	} else if (opt & PGSQL_DML_STRING) {
 		ret = SUCCESS;
@@ -6411,21 +6411,21 @@ PHP_FUNCTION(pg_delete)
 	PGconn *pg_link;
 	int id = -1, argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "rsa|l",
+	if (zend_parse_parameters(argc, TSRMLS_C, "rsa|l",
 							  &pgsql_link, &table, &table_len, &ids, &option) == FAILURE) {
 		return;
 	}
 	if (option & ~(PGSQL_CONV_FORCE_NULL|PGSQL_DML_NO_CONV|PGSQL_DML_EXEC|PGSQL_DML_STRING)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid option is specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid option is specified");
 		RETURN_FALSE;
 	}
 	
 	ZEND_FETCH_RESOURCE2(pg_link, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
-	if (php_pgsql_flush_query(pg_link TSRMLS_CC)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected unhandled result(s) in connection");
+	if (php_pgsql_flush_query(pg_link, TSRMLS_C)) {
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected unhandled result(s) in connection");
 	}
-	if (php_pgsql_delete(pg_link, table, ids, option, &sql TSRMLS_CC) == FAILURE) {
+	if (php_pgsql_delete(pg_link, table, ids, option, &sql, TSRMLS_C) == FAILURE) {
 		RETURN_FALSE;
 	}
 	if (option & PGSQL_DML_STRING) {
@@ -6437,7 +6437,7 @@ PHP_FUNCTION(pg_delete)
 
 /* {{{ php_pgsql_result2array
  */
-PHP_PGSQL_API int php_pgsql_result2array(PGresult *pg_result, zval *ret_array TSRMLS_DC) 
+PHP_PGSQL_API int php_pgsql_result2array(PGresult *pg_result, zval *ret_array, TSRMLS_D) 
 {
 	zval *row;
 	char *field_name;
@@ -6479,7 +6479,7 @@ PHP_PGSQL_API int php_pgsql_result2array(PGresult *pg_result, zval *ret_array TS
 
 /* {{{ php_pgsql_select
  */
-PHP_PGSQL_API int php_pgsql_select(PGconn *pg_link, const char *table, zval *ids_array, zval *ret_array, ulong opt, char **sql TSRMLS_DC) 
+PHP_PGSQL_API int php_pgsql_select(PGconn *pg_link, const char *table, zval *ids_array, zval *ret_array, ulong opt, char **sql, TSRMLS_D) 
 {
 	zval *ids_converted = NULL;
 	smart_str querystr = {0};
@@ -6499,7 +6499,7 @@ PHP_PGSQL_API int php_pgsql_select(PGconn *pg_link, const char *table, zval *ids
 	if (!(opt & PGSQL_DML_NO_CONV)) {
 		MAKE_STD_ZVAL(ids_converted);
 		array_init(ids_converted);
-		if (php_pgsql_convert(pg_link, table, ids_array, ids_converted, (opt & PGSQL_CONV_OPTS) TSRMLS_CC) == FAILURE) {
+		if (php_pgsql_convert(pg_link, table, ids_array, ids_converted, (opt & PGSQL_CONV_OPTS), TSRMLS_C) == FAILURE) {
 			goto cleanup;
 		}
 		ids_array = ids_converted;
@@ -6509,7 +6509,7 @@ PHP_PGSQL_API int php_pgsql_select(PGconn *pg_link, const char *table, zval *ids
 	smart_str_appends(&querystr, table);
 	smart_str_appends(&querystr, " WHERE ");
 
-	if (build_assignment_string(&querystr, Z_ARRVAL_P(ids_array), 1, " AND ", sizeof(" AND ")-1 TSRMLS_CC))
+	if (build_assignment_string(&querystr, Z_ARRVAL_P(ids_array), 1, " AND ", sizeof(" AND ")-1, TSRMLS_C))
 		goto cleanup;
 
 	smart_str_appendc(&querystr, ';');
@@ -6517,9 +6517,9 @@ PHP_PGSQL_API int php_pgsql_select(PGconn *pg_link, const char *table, zval *ids
 
 	pg_result = PQexec(pg_link, querystr.c);
 	if (PQresultStatus(pg_result) == PGRES_TUPLES_OK) {
-		ret = php_pgsql_result2array(pg_result, ret_array TSRMLS_CC);
+		ret = php_pgsql_result2array(pg_result, ret_array, TSRMLS_C);
 	} else {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Failed to execute '%s'", querystr.c);
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Failed to execute '%s'", querystr.c);
 	}
 	PQclear(pg_result);
 
@@ -6549,22 +6549,22 @@ PHP_FUNCTION(pg_select)
 	PGconn *pg_link;
 	int id = -1, argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "rsa|l",
+	if (zend_parse_parameters(argc, TSRMLS_C, "rsa|l",
 							  &pgsql_link, &table, &table_len, &ids, &option) == FAILURE) {
 		return;
 	}
 	if (option & ~(PGSQL_CONV_FORCE_NULL|PGSQL_DML_NO_CONV|PGSQL_DML_EXEC|PGSQL_DML_ASYNC|PGSQL_DML_STRING)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid option is specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid option is specified");
 		RETURN_FALSE;
 	}
 	
 	ZEND_FETCH_RESOURCE2(pg_link, PGconn *, &pgsql_link, id, "PostgreSQL link", le_link, le_plink);
 
-	if (php_pgsql_flush_query(pg_link TSRMLS_CC)) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected unhandled result(s) in connection");
+	if (php_pgsql_flush_query(pg_link, TSRMLS_C)) {
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected unhandled result(s) in connection");
 	}
 	array_init(return_value);
-	if (php_pgsql_select(pg_link, table, ids, return_value, option, &sql TSRMLS_CC) == FAILURE) {
+	if (php_pgsql_select(pg_link, table, ids, return_value, option, &sql, TSRMLS_C) == FAILURE) {
 		zval_dtor(return_value);
 		RETURN_FALSE;
 	}

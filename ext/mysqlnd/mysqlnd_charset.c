@@ -685,7 +685,7 @@ PHPAPI const MYSQLND_CHARSET * mysqlnd_find_charset_name(const char * const name
 
 /* {{{ mysqlnd_cset_escape_quotes */
 PHPAPI ulong mysqlnd_cset_escape_quotes(const MYSQLND_CHARSET * const cset, char *newstr,
-										const char * escapestr, size_t escapestr_len TSRMLS_DC)
+										const char * escapestr, size_t escapestr_len, TSRMLS_D)
 {
 	const char 	*newstr_s = newstr;
 	const char 	*newstr_e = newstr + 2 * escapestr_len;
@@ -739,7 +739,7 @@ PHPAPI ulong mysqlnd_cset_escape_quotes(const MYSQLND_CHARSET * const cset, char
 
 /* {{{ mysqlnd_cset_escape_slashes */
 PHPAPI ulong mysqlnd_cset_escape_slashes(const MYSQLND_CHARSET * const cset, char *newstr,
-										 const char * escapestr, size_t escapestr_len TSRMLS_DC)
+										 const char * escapestr, size_t escapestr_len, TSRMLS_D)
 {
 	const char 	*newstr_s = newstr;
 	const char 	*newstr_e = newstr + 2 * escapestr_len;
@@ -847,7 +847,7 @@ static struct st_mysqlnd_plugin_charsets mysqlnd_plugin_charsets_plugin =
 void
 mysqlnd_charsets_plugin_register(TSRMLS_D)
 {
-	mysqlnd_plugin_register_ex((struct st_mysqlnd_plugin_header *) &mysqlnd_plugin_charsets_plugin TSRMLS_CC);
+	mysqlnd_plugin_register_ex((struct st_mysqlnd_plugin_header *) &mysqlnd_plugin_charsets_plugin, TSRMLS_C);
 }
 /* }}} */
 

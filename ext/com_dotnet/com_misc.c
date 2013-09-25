@@ -29,21 +29,21 @@
 #include "php_com_dotnet_internal.h"
 #include "Zend/zend_exceptions.h"
 
-void php_com_throw_exception(HRESULT code, char *message TSRMLS_DC)
+void php_com_throw_exception(HRESULT code, char *message, TSRMLS_D)
 {
 	int free_msg = 0;
 	if (message == NULL) {
 		message = php_win32_error_to_msg(code);
 		free_msg = 1;
 	}
-	zend_throw_exception(php_com_exception_class_entry, message, (long)code TSRMLS_CC);
+	zend_throw_exception(php_com_exception_class_entry, message, (long)code, TSRMLS_C);
 	if (free_msg) {
 		LocalFree(message);
 	}
 }
 
 PHP_COM_DOTNET_API void php_com_wrap_dispatch(zval *z, IDispatch *disp,
-		int codepage TSRMLS_DC)
+		int codepage, TSRMLS_D)
 {
 	php_com_dotnet_object *obj;
 
@@ -61,12 +61,12 @@ PHP_COM_DOTNET_API void php_com_wrap_dispatch(zval *z, IDispatch *disp,
 	IDispatch_GetTypeInfo(V_DISPATCH(&obj->v), 0, LANG_NEUTRAL, &obj->typeinfo);
 
 	Z_TYPE_P(z) = IS_OBJECT;
-	z->value.obj.handle = zend_objects_store_put(obj, NULL, php_com_object_free_storage, php_com_object_clone TSRMLS_CC);
+	z->value.obj.handle = zend_objects_store_put(obj, NULL, php_com_object_free_storage, php_com_object_clone, TSRMLS_C);
 	z->value.obj.handlers = &php_com_object_handlers;
 }
 
 PHP_COM_DOTNET_API void php_com_wrap_variant(zval *z, VARIANT *v,
-		int codepage TSRMLS_DC)
+		int codepage, TSRMLS_D)
 {
 	php_com_dotnet_object *obj;
 
@@ -86,13 +86,13 @@ PHP_COM_DOTNET_API void php_com_wrap_variant(zval *z, VARIANT *v,
 
 	Z_TYPE_P(z) = IS_OBJECT;
 	
-	z->value.obj.handle = zend_objects_store_put(obj, NULL, php_com_object_free_storage, php_com_object_clone TSRMLS_CC);
+	z->value.obj.handle = zend_objects_store_put(obj, NULL, php_com_object_free_storage, php_com_object_clone, TSRMLS_C);
 	z->value.obj.handlers = &php_com_object_handlers;
 }
 
 /* this is a convenience function for fetching a particular
  * element from a (possibly multi-dimensional) safe array */
-PHP_COM_DOTNET_API int php_com_safearray_get_elem(VARIANT *array, VARIANT *dest, LONG dim1 TSRMLS_DC)
+PHP_COM_DOTNET_API int php_com_safearray_get_elem(VARIANT *array, VARIANT *dest, LONG dim1, TSRMLS_D)
 {
 	UINT dims;
 	LONG lbound, ubound;
@@ -106,7 +106,7 @@ PHP_COM_DOTNET_API int php_com_safearray_get_elem(VARIANT *array, VARIANT *dest,
 	dims = SafeArrayGetDim(V_ARRAY(array));
 
 	if (dims != 1) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,
 			   "Can only handle single dimension variant arrays (this array has %d)", dims);
 		return 0;
 	}
@@ -121,7 +121,7 @@ PHP_COM_DOTNET_API int php_com_safearray_get_elem(VARIANT *array, VARIANT *dest,
 	
 	/* check bounds */
 	if (dim1 < lbound || dim1 > ubound) {
-		php_com_throw_exception(DISP_E_BADINDEX, "index out of bounds" TSRMLS_CC);
+		php_com_throw_exception(DISP_E_BADINDEX, "index out of bounds", TSRMLS_C);
 		return 0;
 	}
 	

@@ -99,7 +99,7 @@ void locale_register_Locale_class( TSRMLS_D )
 	/* Create and register 'Locale' class. */
 	INIT_CLASS_ENTRY( ce, "Locale", Locale_class_functions );
 	ce.create_object = NULL;
-	Locale_ce_ptr = zend_register_internal_class( &ce TSRMLS_CC );
+	Locale_ce_ptr = zend_register_internal_class( &ce, TSRMLS_C );
 
 	/* Declare 'Locale' class properties. */
 	if( !Locale_ce_ptr )

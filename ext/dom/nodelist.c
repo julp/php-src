@@ -51,7 +51,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-203510337
 Since: 
 */
-int dom_nodelist_length_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_nodelist_length_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	dom_nnodemap_object *objmap;
 	xmlNodePtr nodep, curnode;
@@ -116,12 +116,12 @@ PHP_FUNCTION(dom_nodelist_item)
 	HashTable *nodeht;
 	zval **entry;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ol", &id, dom_nodelist_class_entry, &index) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ol", &id, dom_nodelist_class_entry, &index) == FAILURE) {
 		return;
 	}
 
 	if (index >= 0) {
-		intern = (dom_object *)zend_object_store_get_object(id TSRMLS_CC);
+		intern = (dom_object *)zend_object_store_get_object(id, TSRMLS_C);
 
 		objmap = (dom_nnodemap_object *)intern->ptr;
 		if (objmap != NULL) {

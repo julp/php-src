@@ -124,7 +124,7 @@ bc_copy_num (bc_num num)
 /* Initialize a number NUM by making it a copy of zero. */
 
 void
-bc_init_num (bc_num *num TSRMLS_DC)
+bc_init_num (bc_num *num, TSRMLS_D)
 {
   *num = bc_copy_num (BCG(_zero_));
 }

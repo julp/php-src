@@ -39,7 +39,7 @@
 
 /* {{{ php_srand
  */
-PHPAPI void php_srand(long seed TSRMLS_DC)
+PHPAPI void php_srand(long seed, TSRMLS_D)
 {
 #ifdef ZTS
 	BG(rand_seed) = (unsigned int) seed;
@@ -65,7 +65,7 @@ PHPAPI long php_rand(TSRMLS_D)
 	long ret;
 
 	if (!BG(rand_is_seeded)) {
-		php_srand(GENERATE_SEED() TSRMLS_CC);
+		php_srand(GENERATE_SEED(), TSRMLS_C);
 	}
 
 #ifdef ZTS
@@ -193,7 +193,7 @@ static inline void php_mt_reload(TSRMLS_D)
 
 /* {{{ php_mt_srand
  */
-PHPAPI void php_mt_srand(php_uint32 seed TSRMLS_DC)
+PHPAPI void php_mt_srand(php_uint32 seed, TSRMLS_D)
 {
 	/* Seed the generator with a simple uint32 */
 	php_mt_initialize(seed, BG(state));
@@ -232,13 +232,13 @@ PHP_FUNCTION(srand)
 {
 	long seed = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &seed) == FAILURE)
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|l", &seed) == FAILURE)
 		return;
 
 	if (ZEND_NUM_ARGS() == 0)
 		seed = GENERATE_SEED();
 
-	php_srand(seed TSRMLS_CC);
+	php_srand(seed, TSRMLS_C);
 }
 /* }}} */
 
@@ -248,13 +248,13 @@ PHP_FUNCTION(mt_srand)
 {
 	long seed = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &seed) == FAILURE) 
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|l", &seed) == FAILURE) 
 		return;
 
 	if (ZEND_NUM_ARGS() == 0)
 		seed = GENERATE_SEED();
 
-	php_mt_srand(seed TSRMLS_CC);
+	php_mt_srand(seed, TSRMLS_C);
 }
 /* }}} */
 
@@ -294,7 +294,7 @@ PHP_FUNCTION(rand)
 	long number;
 	int  argc = ZEND_NUM_ARGS();
 
-	if (argc != 0 && zend_parse_parameters(argc TSRMLS_CC, "ll", &min, &max) == FAILURE)
+	if (argc != 0 && zend_parse_parameters(argc, TSRMLS_C, "ll", &min, &max) == FAILURE)
 		return;
 
 	number = php_rand(TSRMLS_C);
@@ -316,16 +316,16 @@ PHP_FUNCTION(mt_rand)
 	int  argc = ZEND_NUM_ARGS();
 
 	if (argc != 0) {
-		if (zend_parse_parameters(argc TSRMLS_CC, "ll", &min, &max) == FAILURE) {
+		if (zend_parse_parameters(argc, TSRMLS_C, "ll", &min, &max) == FAILURE) {
 			return;
 		} else if (max < min) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "max(%ld) is smaller than min(%ld)", max, min);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "max(%ld) is smaller than min(%ld)", max, min);
 			RETURN_FALSE;
 		}
 	}
 
 	if (!BG(mt_rand_is_seeded)) {
-		php_mt_srand(GENERATE_SEED() TSRMLS_CC);
+		php_mt_srand(GENERATE_SEED(), TSRMLS_C);
 	}
 
 	/*

@@ -129,7 +129,7 @@ pthread_mutex_t mtx_res = PTHREAD_MUTEX_INITIALIZER;
 
 static void __attribute__((constructor)) init()
 {
-	php_embed_init(0, NULL PTSRMLS_CC);
+	php_embed_init(0, NULL P,TSRMLS_C);
 }
 
 static void __attribute__((destructor)) fini()
@@ -165,7 +165,7 @@ void exec_php(BLOBCALLBACK b, PARAMDSC *res, ISC_SHORT *init)
 #endif
 			/* feed it to the parser */
 			zend_first_try {
-				result = zend_eval_stringl(code, b->blob_total_length, NULL, "Firebird Embedded PHP engine" TSRMLS_CC);
+				result = zend_eval_stringl(code, b->blob_total_length, NULL, "Firebird Embedded PHP engine", TSRMLS_C);
 			} zend_end_try();
 	}
 	
@@ -195,7 +195,7 @@ static void call_php(char *name, PARAMDSC *r, int argc, PARAMDSC **argv)
 		LOCK();
 		
 		/* check if the requested function exists */
-		if (!zend_is_callable(&callback, 0, NULL TSRMLS_CC)) {
+		if (!zend_is_callable(&callback, 0, NULL, TSRMLS_C)) {
 			break;
 		}
 		
@@ -289,7 +289,7 @@ static void call_php(char *name, PARAMDSC *r, int argc, PARAMDSC **argv)
 
 		/* now call the function */
 		if (FAILURE == call_user_function(EG(function_table), NULL,
-				&callback, &return_value, argc, argp TSRMLS_CC)) {
+				&callback, &return_value, argc, argp, TSRMLS_C)) {
 			UNLOCK();
 			break;
 		}
@@ -347,7 +347,7 @@ static void call_php(char *name, PARAMDSC *r, int argc, PARAMDSC **argv)
 	* that's not possible. We can however report it back to PHP.
 	*/
 	LOCK();
-	php_error_docref(NULL TSRMLS_CC, E_WARNING, "Error calling function '%s' from database", name);
+	php_error_docref(NULL, TSRMLS_C, E_WARNING, "Error calling function '%s' from database", name);
 	UNLOCK();
 }
 

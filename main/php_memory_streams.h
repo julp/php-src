@@ -29,23 +29,23 @@
 #define TEMP_STREAM_READONLY 1
 #define TEMP_STREAM_TAKE_BUFFER 2
 
-#define php_stream_memory_create(mode) _php_stream_memory_create((mode) STREAMS_CC TSRMLS_CC)
-#define php_stream_memory_create_rel(mode) _php_stream_memory_create((mode) STREAMS_REL_CC TSRMLS_CC)
-#define php_stream_memory_open(mode, buf, length) _php_stream_memory_open((mode), (buf), (length) STREAMS_CC TSRMLS_CC)
-#define php_stream_memory_get_buffer(stream, length) _php_stream_memory_get_buffer((stream), (length) STREAMS_CC TSRMLS_CC)
+#define php_stream_memory_create(mode) _php_stream_memory_create((mode) STREAMS_CC, TSRMLS_C)
+#define php_stream_memory_create_rel(mode) _php_stream_memory_create((mode) STREAMS_REL_CC, TSRMLS_C)
+#define php_stream_memory_open(mode, buf, length) _php_stream_memory_open((mode), (buf), (length) STREAMS_CC, TSRMLS_C)
+#define php_stream_memory_get_buffer(stream, length) _php_stream_memory_get_buffer((stream), (length) STREAMS_CC, TSRMLS_C)
 
 #define php_stream_temp_new() php_stream_temp_create(TEMP_STREAM_DEFAULT, PHP_STREAM_MAX_MEM)
-#define php_stream_temp_create(mode, max_memory_usage) _php_stream_temp_create((mode), (max_memory_usage) STREAMS_CC TSRMLS_CC)
-#define php_stream_temp_create_rel(mode, max_memory_usage) _php_stream_temp_create((mode), (max_memory_usage) STREAMS_REL_CC TSRMLS_CC)
-#define php_stream_temp_open(mode, max_memory_usage, buf, length) _php_stream_temp_open((mode), (max_memory_usage), (buf), (length) STREAMS_CC TSRMLS_CC)
+#define php_stream_temp_create(mode, max_memory_usage) _php_stream_temp_create((mode), (max_memory_usage) STREAMS_CC, TSRMLS_C)
+#define php_stream_temp_create_rel(mode, max_memory_usage) _php_stream_temp_create((mode), (max_memory_usage) STREAMS_REL_CC, TSRMLS_C)
+#define php_stream_temp_open(mode, max_memory_usage, buf, length) _php_stream_temp_open((mode), (max_memory_usage), (buf), (length) STREAMS_CC, TSRMLS_C)
 
 BEGIN_EXTERN_C()
-PHPAPI php_stream *_php_stream_memory_create(int mode STREAMS_DC TSRMLS_DC);
-PHPAPI php_stream *_php_stream_memory_open(int mode, char *buf, size_t length STREAMS_DC TSRMLS_DC);
-PHPAPI char *_php_stream_memory_get_buffer(php_stream *stream, size_t *length STREAMS_DC TSRMLS_DC);
+PHPAPI php_stream *_php_stream_memory_create(int mode STREAMS_DC, TSRMLS_D);
+PHPAPI php_stream *_php_stream_memory_open(int mode, char *buf, size_t length STREAMS_DC, TSRMLS_D);
+PHPAPI char *_php_stream_memory_get_buffer(php_stream *stream, size_t *length STREAMS_DC, TSRMLS_D);
 
-PHPAPI php_stream *_php_stream_temp_create(int mode, size_t max_memory_usage STREAMS_DC TSRMLS_DC);
-PHPAPI php_stream *_php_stream_temp_open(int mode, size_t max_memory_usage, char *buf, size_t length STREAMS_DC TSRMLS_DC);
+PHPAPI php_stream *_php_stream_temp_create(int mode, size_t max_memory_usage STREAMS_DC, TSRMLS_D);
+PHPAPI php_stream *_php_stream_temp_open(int mode, size_t max_memory_usage, char *buf, size_t length STREAMS_DC, TSRMLS_D);
 END_EXTERN_C()
 
 extern PHPAPI php_stream_ops php_stream_memory_ops;

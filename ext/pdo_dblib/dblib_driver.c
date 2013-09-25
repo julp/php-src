@@ -35,7 +35,7 @@
 /* Cache of the server supported datatypes, initialized in handle_factory */
 zval* pdo_dblib_datatypes;
 
-static int dblib_fetch_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zval *info TSRMLS_DC)
+static int dblib_fetch_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zval *info, TSRMLS_D)
 {
 	pdo_dblib_db_handle *H = (pdo_dblib_db_handle *)dbh->driver_data;
 	pdo_dblib_err *einfo = &H->err;
@@ -72,7 +72,7 @@ static int dblib_fetch_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zval *info TSRMLS
 }
 
 
-static int dblib_handle_closer(pdo_dbh_t *dbh TSRMLS_DC)
+static int dblib_handle_closer(pdo_dbh_t *dbh, TSRMLS_D)
 {
 	pdo_dblib_db_handle *H = (pdo_dblib_db_handle *)dbh->driver_data;
 
@@ -91,7 +91,7 @@ static int dblib_handle_closer(pdo_dbh_t *dbh TSRMLS_DC)
 	return 0;
 }
 
-static int dblib_handle_preparer(pdo_dbh_t *dbh, const char *sql, long sql_len, pdo_stmt_t *stmt, zval *driver_options TSRMLS_DC)
+static int dblib_handle_preparer(pdo_dbh_t *dbh, const char *sql, long sql_len, pdo_stmt_t *stmt, zval *driver_options, TSRMLS_D)
 {
 	pdo_dblib_db_handle *H = (pdo_dblib_db_handle *)dbh->driver_data;
 	pdo_dblib_stmt *S = ecalloc(1, sizeof(*S));
@@ -105,7 +105,7 @@ static int dblib_handle_preparer(pdo_dbh_t *dbh, const char *sql, long sql_len, 
 	return 1;
 }
 
-static long dblib_handle_doer(pdo_dbh_t *dbh, const char *sql, long sql_len TSRMLS_DC)
+static long dblib_handle_doer(pdo_dbh_t *dbh, const char *sql, long sql_len, TSRMLS_D)
 {
 	pdo_dblib_db_handle *H = (pdo_dblib_db_handle *)dbh->driver_data;
 	RETCODE ret, resret;
@@ -141,7 +141,7 @@ static long dblib_handle_doer(pdo_dbh_t *dbh, const char *sql, long sql_len TSRM
 	return DBCOUNT(H->link);
 }
 
-static int dblib_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquotedlen, char **quoted, int *quotedlen, enum pdo_param_type paramtype TSRMLS_DC)
+static int dblib_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquotedlen, char **quoted, int *quotedlen, enum pdo_param_type paramtype, TSRMLS_D)
 {
 	pdo_dblib_db_handle *H = (pdo_dblib_db_handle *)dbh->driver_data;
 	char *q;
@@ -169,7 +169,7 @@ static int dblib_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquote
 	return 1;
 }
 
-static int pdo_dblib_transaction_cmd(const char *cmd, pdo_dbh_t *dbh TSRMLS_DC)
+static int pdo_dblib_transaction_cmd(const char *cmd, pdo_dbh_t *dbh, TSRMLS_D)
 {
 	pdo_dblib_db_handle *H = (pdo_dblib_db_handle *)dbh->driver_data;
 	RETCODE ret;
@@ -185,22 +185,22 @@ static int pdo_dblib_transaction_cmd(const char *cmd, pdo_dbh_t *dbh TSRMLS_DC)
 	return 1;
 }
 
-static int dblib_handle_begin(pdo_dbh_t *dbh TSRMLS_DC)
+static int dblib_handle_begin(pdo_dbh_t *dbh, TSRMLS_D)
 {
-	return pdo_dblib_transaction_cmd("BEGIN TRANSACTION", dbh TSRMLS_CC);
+	return pdo_dblib_transaction_cmd("BEGIN TRANSACTION", dbh, TSRMLS_C);
 }
 
-static int dblib_handle_commit(pdo_dbh_t *dbh TSRMLS_DC)
+static int dblib_handle_commit(pdo_dbh_t *dbh, TSRMLS_D)
 {
-	return pdo_dblib_transaction_cmd("COMMIT TRANSACTION", dbh TSRMLS_CC);
+	return pdo_dblib_transaction_cmd("COMMIT TRANSACTION", dbh, TSRMLS_C);
 }
 
-static int dblib_handle_rollback(pdo_dbh_t *dbh TSRMLS_DC)
+static int dblib_handle_rollback(pdo_dbh_t *dbh, TSRMLS_D)
 {
-	return pdo_dblib_transaction_cmd("ROLLBACK TRANSACTION", dbh TSRMLS_CC);
+	return pdo_dblib_transaction_cmd("ROLLBACK TRANSACTION", dbh, TSRMLS_C);
 }
 
-char *dblib_handle_last_id(pdo_dbh_t *dbh, const char *name, unsigned int *len TSRMLS_DC) 
+char *dblib_handle_last_id(pdo_dbh_t *dbh, const char *name, unsigned int *len, TSRMLS_D) 
 {
 	pdo_dblib_db_handle *H = (pdo_dblib_db_handle *)dbh->driver_data;
 
@@ -262,7 +262,7 @@ static struct pdo_dbh_methods dblib_methods = {
 	NULL  /* in transaction */
 };
 
-static int pdo_dblib_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
+static int pdo_dblib_handle_factory(pdo_dbh_t *dbh, zval *driver_options, TSRMLS_D)
 {
 	pdo_dblib_db_handle *H;
 	int i, nvars, nvers, ret = 0;
@@ -312,7 +312,7 @@ static int pdo_dblib_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 		for(i=0;i<nvers;i++) {
 			if(strcmp(vars[5].optval,tdsver[i].key) == 0) {
 				if(FAIL==dbsetlversion(H->login, tdsver[i].value)) {
-					pdo_raise_impl_error(dbh, NULL, "HY000", "PDO_DBLIB: Failed to set version specified in connection string." TSRMLS_CC);		
+					pdo_raise_impl_error(dbh, NULL, "HY000", "PDO_DBLIB: Failed to set version specified in connection string.", TSRMLS_C);		
 					goto cleanup;
 				}
 				break;
@@ -321,7 +321,7 @@ static int pdo_dblib_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 		
 		if (i==nvers) {
 			printf("Invalid version '%s'\n", vars[5].optval);
-			pdo_raise_impl_error(dbh, NULL, "HY000", "PDO_DBLIB: Invalid version specified in connection string." TSRMLS_CC);		
+			pdo_raise_impl_error(dbh, NULL, "HY000", "PDO_DBLIB: Invalid version specified in connection string.", TSRMLS_C);		
 			goto cleanup; /* unknown version specified */
 		}
 	}
@@ -397,7 +397,7 @@ cleanup:
 	dbh->driver_data = H;
 
 	if (!ret) {
-		zend_throw_exception_ex(php_pdo_get_exception(), DBLIB_G(err).dberr TSRMLS_CC,
+		zend_throw_exception_ex(php_pdo_get_exception(), DBLIB_G(err).dberr, TSRMLS_C,
 			"SQLSTATE[%s] %s (severity %d)",
 			DBLIB_G(err).sqlstate,
 			DBLIB_G(err).dberrstr,

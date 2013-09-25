@@ -78,9 +78,9 @@ static int reference_levdist(const char *s1, int l1, const char *s2, int l2, int
 
 /* {{{ custom_levdist
  */
-static int custom_levdist(char *str1, char *str2, char *callback_name TSRMLS_DC)
+static int custom_levdist(char *str1, char *str2, char *callback_name, TSRMLS_D)
 {
-	php_error_docref(NULL TSRMLS_CC, E_WARNING, "The general Levenshtein support is not there yet");
+	php_error_docref(NULL, TSRMLS_C, E_WARNING, "The general Levenshtein support is not there yet");
 	/* not there yet */
 
 	return -1;
@@ -100,24 +100,24 @@ PHP_FUNCTION(levenshtein)
 
 	switch (argc) {
 		case 2: /* just two strings: use maximum performance version */
-			if (zend_parse_parameters(2 TSRMLS_CC, "ss", &str1, &str1_len, &str2, &str2_len) == FAILURE) {
+			if (zend_parse_parameters(2, TSRMLS_C, "ss", &str1, &str1_len, &str2, &str2_len) == FAILURE) {
 				return;
 			}
 			distance = reference_levdist(str1, str1_len, str2, str2_len, 1, 1, 1);
 			break;
 
 		case 5: /* more general version: calc cost by ins/rep/del weights */
-			if (zend_parse_parameters(5 TSRMLS_CC, "sslll", &str1, &str1_len, &str2, &str2_len, &cost_ins, &cost_rep, &cost_del) == FAILURE) {
+			if (zend_parse_parameters(5, TSRMLS_C, "sslll", &str1, &str1_len, &str2, &str2_len, &cost_ins, &cost_rep, &cost_del) == FAILURE) {
 				return;
 			}
 			distance = reference_levdist(str1, str1_len, str2, str2_len, cost_ins, cost_rep, cost_del);
 			break;
 
 		case 3: /* most general version: calc cost by user-supplied function */
-			if (zend_parse_parameters(3 TSRMLS_CC, "sss", &str1, &str1_len, &str2, &str2_len, &callback_name, &callback_len) == FAILURE) {
+			if (zend_parse_parameters(3, TSRMLS_C, "sss", &str1, &str1_len, &str2, &str2_len, &callback_name, &callback_len) == FAILURE) {
 				return;
 			}
-			distance = custom_levdist(str1, str2, callback_name TSRMLS_CC);
+			distance = custom_levdist(str1, str2, callback_name, TSRMLS_C);
 			break;
 
 		default:
@@ -125,7 +125,7 @@ PHP_FUNCTION(levenshtein)
 	}
 
 	if (distance < 0 && /* TODO */ ZEND_NUM_ARGS() != 3) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Argument string(s) too long");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Argument string(s) too long");
 	}
 
 	RETURN_LONG(distance);

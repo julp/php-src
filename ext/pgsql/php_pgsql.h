@@ -198,19 +198,19 @@ PHP_FUNCTION(pg_select);
 #define PGSQL_DML_STRING            (1<<11)    /* Return query string */
 
 /* exported functions */
-PHP_PGSQL_API int php_pgsql_meta_data(PGconn *pg_link, const char *table_name, zval *meta TSRMLS_DC);
-PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, const zval *values, zval *result, ulong opt TSRMLS_DC);
-PHP_PGSQL_API int php_pgsql_insert(PGconn *pg_link, const char *table, zval *values, ulong opt, char **sql TSRMLS_DC);
-PHP_PGSQL_API int php_pgsql_update(PGconn *pg_link, const char *table, zval *values, zval *ids, ulong opt , char **sql TSRMLS_DC);
-PHP_PGSQL_API int php_pgsql_delete(PGconn *pg_link, const char *table, zval *ids, ulong opt, char **sql TSRMLS_DC);
-PHP_PGSQL_API int php_pgsql_select(PGconn *pg_link, const char *table, zval *ids, zval *ret_array, ulong opt, char **sql  TSRMLS_DC);
-PHP_PGSQL_API int php_pgsql_result2array(PGresult *pg_result, zval *ret_array TSRMLS_DC);
+PHP_PGSQL_API int php_pgsql_meta_data(PGconn *pg_link, const char *table_name, zval *meta, TSRMLS_D);
+PHP_PGSQL_API int php_pgsql_convert(PGconn *pg_link, const char *table_name, const zval *values, zval *result, ulong opt, TSRMLS_D);
+PHP_PGSQL_API int php_pgsql_insert(PGconn *pg_link, const char *table, zval *values, ulong opt, char **sql, TSRMLS_D);
+PHP_PGSQL_API int php_pgsql_update(PGconn *pg_link, const char *table, zval *values, zval *ids, ulong opt , char **sql, TSRMLS_D);
+PHP_PGSQL_API int php_pgsql_delete(PGconn *pg_link, const char *table, zval *ids, ulong opt, char **sql, TSRMLS_D);
+PHP_PGSQL_API int php_pgsql_select(PGconn *pg_link, const char *table, zval *ids, zval *ret_array, ulong opt, char **sql,  TSRMLS_D);
+PHP_PGSQL_API int php_pgsql_result2array(PGresult *pg_result, zval *ret_array, TSRMLS_D);
 
 /* internal functions */
 static void php_pgsql_do_connect(INTERNAL_FUNCTION_PARAMETERS,int persistent);
 static void php_pgsql_get_link_info(INTERNAL_FUNCTION_PARAMETERS, int entry_type);
 static void php_pgsql_get_result_info(INTERNAL_FUNCTION_PARAMETERS, int entry_type);
-static char *get_field_name(PGconn *pgsql, Oid oid, HashTable *list TSRMLS_DC);
+static char *get_field_name(PGconn *pgsql, Oid oid, HashTable *list, TSRMLS_D);
 static void php_pgsql_get_field_info(INTERNAL_FUNCTION_PARAMETERS, int entry_type);
 static void php_pgsql_data_info(INTERNAL_FUNCTION_PARAMETERS, int entry_type);
 static void php_pgsql_do_async(INTERNAL_FUNCTION_PARAMETERS,int entry_type);

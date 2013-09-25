@@ -24,7 +24,7 @@
 #include "resourcebundle/resourcebundle_class.h"
 
 /* {{{ ResourceBundle_extract_value */
-void resourcebundle_extract_value( zval *return_value, ResourceBundle_object *source TSRMLS_DC ) 
+void resourcebundle_extract_value( zval *return_value, ResourceBundle_object *source, TSRMLS_D ) 
 {
 	UResType               restype;
 	const UChar*           ufield;
@@ -68,14 +68,14 @@ void resourcebundle_extract_value( zval *return_value, ResourceBundle_object *so
 		case URES_ARRAY:
 		case URES_TABLE:
 			object_init_ex( return_value, ResourceBundle_ce_ptr );
-			newrb = (ResourceBundle_object *) zend_object_store_get_object( return_value TSRMLS_CC );
+			newrb = (ResourceBundle_object *) zend_object_store_get_object( return_value, TSRMLS_C );
 			newrb->me = source->child;
 			source->child = NULL;
-			intl_errors_reset(INTL_DATA_ERROR_P(source) TSRMLS_CC);
+			intl_errors_reset(INTL_DATA_ERROR_P(source), TSRMLS_C);
 			break;
 
 		default:
-			intl_errors_set(INTL_DATA_ERROR_P(source), U_ILLEGAL_ARGUMENT_ERROR, "Unknown resource type", 0 TSRMLS_CC);
+			intl_errors_set(INTL_DATA_ERROR_P(source), U_ILLEGAL_ARGUMENT_ERROR, "Unknown resource type", 0, TSRMLS_C);
 			RETURN_FALSE;
 			break;
 	}

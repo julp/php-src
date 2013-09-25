@@ -69,9 +69,9 @@ typedef struct _xsl_object {
 	int securityPrefsSet;
 } xsl_object;
 
-void php_xsl_set_object(zval *wrapper, void *obj TSRMLS_DC);
-void xsl_objects_free_storage(void *object TSRMLS_DC);
-zval *php_xsl_create_object(xsltStylesheetPtr obj, int *found, zval *wrapper_in, zval *return_value  TSRMLS_DC);
+void php_xsl_set_object(zval *wrapper, void *obj, TSRMLS_D);
+void xsl_objects_free_storage(void *object, TSRMLS_D);
+zval *php_xsl_create_object(xsltStylesheetPtr obj, int *found, zval *wrapper_in, zval *return_value,  TSRMLS_D);
 
 void xsl_ext_function_string_php(xmlXPathParserContextPtr ctxt, int nargs);
 void xsl_ext_function_object_php(xmlXPathParserContextPtr ctxt, int nargs);
@@ -79,11 +79,11 @@ void xsl_ext_function_object_php(xmlXPathParserContextPtr ctxt, int nargs);
 #define REGISTER_XSL_CLASS(ce, name, parent_ce, funcs, entry) \
 INIT_CLASS_ENTRY(ce, name, funcs); \
 ce.create_object = xsl_objects_new; \
-entry = zend_register_internal_class_ex(&ce, parent_ce, NULL TSRMLS_CC);
+entry = zend_register_internal_class_ex(&ce, parent_ce, NULL, TSRMLS_C);
 
 #define XSL_DOMOBJ_NEW(zval, obj, ret) \
-	if (NULL == (zval = php_xsl_create_object(obj, ret, zval, return_value TSRMLS_CC))) { \
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create required DOM object"); \
+	if (NULL == (zval = php_xsl_create_object(obj, ret, zval, return_value, TSRMLS_C))) { \
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot create required DOM object"); \
 		RETURN_FALSE; \
 	}
 
@@ -108,9 +108,9 @@ ZEND_END_MODULE_GLOBALS(xsl)
 
 /* In every utility function you add that needs to use variables 
    in php_xsl_globals, call TSRM_FETCH(); after declaring other 
-   variables used by that function, or better yet, pass in TSRMLS_CC
+   variables used by that function, or better yet, pass in, TSRMLS_C
    after the last function argument and declare your utility function
-   with TSRMLS_DC after the last declared argument.  Always refer to
+   with, TSRMLS_D after the last declared argument.  Always refer to
    the globals in your function as XSL_G(variable).  You are 
    encouraged to rename these macros something shorter, see
    examples in any other php module directory.

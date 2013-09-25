@@ -140,7 +140,7 @@ PHP_FUNCTION(confirm_extname_compiled)
 	int arg_len, len;
 	char *strg;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg, &arg_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &arg, &arg_len) == FAILURE) {
 		return;
 	}
 

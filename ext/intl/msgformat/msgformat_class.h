@@ -42,7 +42,7 @@ extern zend_class_entry *MessageFormatter_ce_ptr;
 	MSG_FORMAT_METHOD_FETCH_OBJECT_NO_CHECK;							\
 	if (MSG_FORMAT_OBJECT(mfo) == NULL)	{								\
 		intl_errors_set(&mfo->mf_data.error, U_ILLEGAL_ARGUMENT_ERROR,	\
-				"Found unconstructed MessageFormatter", 0 TSRMLS_CC);	\
+				"Found unconstructed MessageFormatter", 0, TSRMLS_C);	\
 		RETURN_FALSE;													\
 	}
 

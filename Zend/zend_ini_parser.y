@@ -32,13 +32,13 @@
 #define YYERROR_VERBOSE
 #define YYSTYPE zval
 
-#ifdef ZTS
+//#ifdef ZTS
 #define YYPARSE_PARAM tsrm_ls
 #define YYLEX_PARAM tsrm_ls
 int ini_parse(void *arg);
-#else
-int ini_parse(void);
-#endif
+//#else
+//int ini_parse(void);
+//#endif
 
 #define ZEND_INI_PARSER_CB	(CG(ini_parser_param))->ini_parser_cb
 #define ZEND_INI_PARSER_ARG	(CG(ini_parser_param))->arg
@@ -116,13 +116,13 @@ static void zend_ini_add_string(zval *result, zval *op1, zval *op2)
 
 /* {{{ zend_ini_get_constant()
 */
-static void zend_ini_get_constant(zval *result, zval *name TSRMLS_DC)
+static void zend_ini_get_constant(zval *result, zval *name, TSRMLS_D)
 {
 	zval z_constant;
 
 	/* If name contains ':' it is not a constant. Bug #26893. */
 	if (!memchr(Z_STRVAL_P(name), ':', Z_STRLEN_P(name))
-		   	&& zend_get_constant(Z_STRVAL_P(name), Z_STRLEN_P(name), &z_constant TSRMLS_CC)) {
+		   	&& zend_get_constant(Z_STRVAL_P(name), Z_STRLEN_P(name), &z_constant, TSRMLS_C)) {
 		/* z_constant is emalloc()'d */
 		convert_to_string(&z_constant);
 		Z_STRVAL_P(result) = zend_strndup(Z_STRVAL(z_constant), Z_STRLEN(z_constant));
@@ -138,7 +138,7 @@ static void zend_ini_get_constant(zval *result, zval *name TSRMLS_DC)
 
 /* {{{ zend_ini_get_var()
 */
-static void zend_ini_get_var(zval *result, zval *name TSRMLS_DC)
+static void zend_ini_get_var(zval *result, zval *name, TSRMLS_D)
 {
 	zval curval;
 	char *envvar;
@@ -148,7 +148,7 @@ static void zend_ini_get_var(zval *result, zval *name TSRMLS_DC)
 		Z_STRVAL_P(result) = zend_strndup(Z_STRVAL(curval), Z_STRLEN(curval));
 		Z_STRLEN_P(result) = Z_STRLEN(curval);
 	/* ..or if not found, try ENV */
-	} else if ((envvar = zend_getenv(Z_STRVAL_P(name), Z_STRLEN_P(name) TSRMLS_CC)) != NULL ||
+	} else if ((envvar = zend_getenv(Z_STRVAL_P(name), Z_STRLEN_P(name), TSRMLS_C)) != NULL ||
 			   (envvar = getenv(Z_STRVAL_P(name))) != NULL) {
 		Z_STRVAL_P(result) = strdup(envvar);
 		Z_STRLEN_P(result) = strlen(envvar);
@@ -192,7 +192,7 @@ static void ini_error(char *msg)
 
 /* {{{ zend_parse_ini_file()
 */
-ZEND_API int zend_parse_ini_file(zend_file_handle *fh, zend_bool unbuffered_errors, int scanner_mode, zend_ini_parser_cb_t ini_parser_cb, void *arg TSRMLS_DC)
+ZEND_API int zend_parse_ini_file(zend_file_handle *fh, zend_bool unbuffered_errors, int scanner_mode, zend_ini_parser_cb_t ini_parser_cb, void *arg, TSRMLS_D)
 {
 	int retval;
 	zend_ini_parser_param ini_parser_param;
@@ -201,13 +201,13 @@ ZEND_API int zend_parse_ini_file(zend_file_handle *fh, zend_bool unbuffered_erro
 	ini_parser_param.arg = arg;
 	CG(ini_parser_param) = &ini_parser_param;
 
-	if (zend_ini_open_file_for_scanning(fh, scanner_mode TSRMLS_CC) == FAILURE) {
+	if (zend_ini_open_file_for_scanning(fh, scanner_mode, TSRMLS_C) == FAILURE) {
 		return FAILURE;
 	}
 
 	CG(ini_parser_unbuffered_errors) = unbuffered_errors;
 	retval = ini_parse(TSRMLS_C);
-	zend_file_handle_dtor(fh TSRMLS_CC);
+	zend_file_handle_dtor(fh, TSRMLS_C);
 
 	shutdown_ini_scanner(TSRMLS_C);
 	
@@ -221,7 +221,7 @@ ZEND_API int zend_parse_ini_file(zend_file_handle *fh, zend_bool unbuffered_erro
 
 /* {{{ zend_parse_ini_string()
 */
-ZEND_API int zend_parse_ini_string(char *str, zend_bool unbuffered_errors, int scanner_mode, zend_ini_parser_cb_t ini_parser_cb, void *arg TSRMLS_DC)
+ZEND_API int zend_parse_ini_string(char *str, zend_bool unbuffered_errors, int scanner_mode, zend_ini_parser_cb_t ini_parser_cb, void *arg, TSRMLS_D)
 {
 	int retval;
 	zend_ini_parser_param ini_parser_param;
@@ -230,7 +230,7 @@ ZEND_API int zend_parse_ini_string(char *str, zend_bool unbuffered_errors, int s
 	ini_parser_param.arg = arg;
 	CG(ini_parser_param) = &ini_parser_param;
 
-	if (zend_ini_prepare_string_for_scanning(str, scanner_mode TSRMLS_CC) == FAILURE) {
+	if (zend_ini_prepare_string_for_scanning(str, scanner_mode, TSRMLS_C) == FAILURE) {
 		return FAILURE;
 	}
 
@@ -282,14 +282,14 @@ statement:
 #if DEBUG_CFG_PARSER
 			printf("SECTION: [%s]\n", Z_STRVAL($2));
 #endif
-			ZEND_INI_PARSER_CB(&$2, NULL, NULL, ZEND_INI_PARSER_SECTION, ZEND_INI_PARSER_ARG TSRMLS_CC);
+			ZEND_INI_PARSER_CB(&$2, NULL, NULL, ZEND_INI_PARSER_SECTION, ZEND_INI_PARSER_ARG, TSRMLS_C);
 			free(Z_STRVAL($2));
 		}
 	|	TC_LABEL '=' string_or_value {
 #if DEBUG_CFG_PARSER
 			printf("NORMAL: '%s' = '%s'\n", Z_STRVAL($1), Z_STRVAL($3));
 #endif
-			ZEND_INI_PARSER_CB(&$1, &$3, NULL, ZEND_INI_PARSER_ENTRY, ZEND_INI_PARSER_ARG TSRMLS_CC);
+			ZEND_INI_PARSER_CB(&$1, &$3, NULL, ZEND_INI_PARSER_ENTRY, ZEND_INI_PARSER_ARG, TSRMLS_C);
 			free(Z_STRVAL($1));
 			free(Z_STRVAL($3));
 		}
@@ -297,12 +297,12 @@ statement:
 #if DEBUG_CFG_PARSER
 			printf("OFFSET: '%s'[%s] = '%s'\n", Z_STRVAL($1), Z_STRVAL($2), Z_STRVAL($5));
 #endif
-			ZEND_INI_PARSER_CB(&$1, &$5, &$2, ZEND_INI_PARSER_POP_ENTRY, ZEND_INI_PARSER_ARG TSRMLS_CC);
+			ZEND_INI_PARSER_CB(&$1, &$5, &$2, ZEND_INI_PARSER_POP_ENTRY, ZEND_INI_PARSER_ARG, TSRMLS_C);
 			free(Z_STRVAL($1));
 			free(Z_STRVAL($2));
 			free(Z_STRVAL($5));
 		}
-	|	TC_LABEL	{ ZEND_INI_PARSER_CB(&$1, NULL, NULL, ZEND_INI_PARSER_ENTRY, ZEND_INI_PARSER_ARG TSRMLS_CC); free(Z_STRVAL($1)); }
+	|	TC_LABEL	{ ZEND_INI_PARSER_CB(&$1, NULL, NULL, ZEND_INI_PARSER_ENTRY, ZEND_INI_PARSER_ARG, TSRMLS_C); free(Z_STRVAL($1)); }
 	|	END_OF_LINE
 ;
 
@@ -358,7 +358,7 @@ expr:
 ;
 
 cfg_var_ref:
-		TC_DOLLAR_CURLY TC_VARNAME '}'	{ zend_ini_get_var(&$$, &$2 TSRMLS_CC); free(Z_STRVAL($2)); }
+		TC_DOLLAR_CURLY TC_VARNAME '}'	{ zend_ini_get_var(&$$, &$2, TSRMLS_C); free(Z_STRVAL($2)); }
 ;
 
 constant_literal:
@@ -370,7 +370,7 @@ constant_literal:
 ;
 
 constant_string:
-		TC_CONSTANT						{ zend_ini_get_constant(&$$, &$1 TSRMLS_CC); }
+		TC_CONSTANT						{ zend_ini_get_constant(&$$, &$1, TSRMLS_C); }
 	|	TC_RAW							{ $$ = $1; /*printf("TC_RAW: '%s'\n", Z_STRVAL($1));*/ }
 	|	TC_NUMBER						{ $$ = $1; /*printf("TC_NUMBER: '%s'\n", Z_STRVAL($1));*/ }
 	|	TC_STRING						{ $$ = $1; /*printf("TC_STRING: '%s'\n", Z_STRVAL($1));*/ }

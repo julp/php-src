@@ -86,7 +86,7 @@ static void php_ns_config(php_ns_context *ctx, char global);
  */
 
 static int
-php_ns_sapi_ub_write(const char *str, uint str_length TSRMLS_DC)
+php_ns_sapi_ub_write(const char *str, uint str_length, TSRMLS_D)
 {
 	int n;
 	uint sent = 0;
@@ -111,7 +111,7 @@ php_ns_sapi_ub_write(const char *str, uint str_length TSRMLS_DC)
  */
 
 static int
-php_ns_sapi_header_handler(sapi_header_struct *sapi_header, sapi_headers_struct *sapi_headers TSRMLS_DC)
+php_ns_sapi_header_handler(sapi_header_struct *sapi_header, sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
 	char *header_name, *header_content;
 	char *p;
@@ -145,7 +145,7 @@ php_ns_sapi_header_handler(sapi_header_struct *sapi_header, sapi_headers_struct 
  */
 
 static int
-php_ns_sapi_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
+php_ns_sapi_send_headers(sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
 	if(SG(sapi_headers).send_default_content_type) {
 		Ns_ConnSetRequiredHeaders(NSG(conn), "text/html", 0);
@@ -162,7 +162,7 @@ php_ns_sapi_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
  */
 
 static int
-php_ns_sapi_read_post(char *buf, uint count_bytes TSRMLS_DC)
+php_ns_sapi_read_post(char *buf, uint count_bytes, TSRMLS_D)
 {
 	uint max_read;
 	uint total_read = 0;
@@ -295,13 +295,13 @@ php_ns_startup(sapi_module_struct *sapi_module)
  */
 
 #define ADD_STRINGX(name, buf)										\
-	php_register_variable(name, buf, track_vars_array TSRMLS_CC)
+	php_register_variable(name, buf, track_vars_array, TSRMLS_C)
 
 #define ADD_STRING(name)										\
 	ADD_STRINGX(name, buf)
 
 static void
-php_ns_sapi_register_variables(zval *track_vars_array TSRMLS_DC)
+php_ns_sapi_register_variables(zval *track_vars_array, TSRMLS_D)
 {
 	int i;
 	char buf[NS_BUF_SIZE + 1];
@@ -416,7 +416,7 @@ php_ns_module_main(TSRMLS_D)
 		return NS_ERROR;
 	}
 	
-	php_execute_script(&file_handle TSRMLS_CC);
+	php_execute_script(&file_handle, TSRMLS_C);
 	php_request_shutdown(NULL);
 
 	return NS_OK;

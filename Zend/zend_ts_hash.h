@@ -70,11 +70,11 @@ ZEND_API int _zend_ts_hash_index_update_or_next_insert(TsHashTable *ht, ulong h,
 ZEND_API int zend_ts_hash_add_empty_element(TsHashTable *ht, char *arKey, uint nKeyLength);
 
 ZEND_API void zend_ts_hash_graceful_destroy(TsHashTable *ht);
-ZEND_API void zend_ts_hash_apply(TsHashTable *ht, apply_func_t apply_func TSRMLS_DC);
-ZEND_API void zend_ts_hash_apply_with_argument(TsHashTable *ht, apply_func_arg_t apply_func, void * TSRMLS_DC);
-ZEND_API void zend_ts_hash_apply_with_arguments(TsHashTable *ht TSRMLS_DC, apply_func_args_t apply_func, int, ...);
+ZEND_API void zend_ts_hash_apply(TsHashTable *ht, apply_func_t apply_func, TSRMLS_D);
+ZEND_API void zend_ts_hash_apply_with_argument(TsHashTable *ht, apply_func_arg_t apply_func, void *, TSRMLS_D);
+ZEND_API void zend_ts_hash_apply_with_arguments(TsHashTable *ht, TSRMLS_D, apply_func_args_t apply_func, int, ...);
 
-ZEND_API void zend_ts_hash_reverse_apply(TsHashTable *ht, apply_func_t apply_func TSRMLS_DC);
+ZEND_API void zend_ts_hash_reverse_apply(TsHashTable *ht, apply_func_t apply_func, TSRMLS_D);
 
 
 /* Deletes */
@@ -100,9 +100,9 @@ ZEND_API void zend_ts_hash_copy(TsHashTable *target, TsHashTable *source, copy_c
 ZEND_API void zend_ts_hash_copy_to_hash(HashTable *target, TsHashTable *source, copy_ctor_func_t pCopyConstructor, void *tmp, uint size);
 ZEND_API void zend_ts_hash_merge(TsHashTable *target, TsHashTable *source, copy_ctor_func_t pCopyConstructor, void *tmp, uint size, int overwrite);
 ZEND_API void zend_ts_hash_merge_ex(TsHashTable *target, TsHashTable *source, copy_ctor_func_t pCopyConstructor, uint size, merge_checker_func_t pMergeSource, void *pParam);
-ZEND_API int zend_ts_hash_sort(TsHashTable *ht, sort_func_t sort_func, compare_func_t compare_func, int renumber TSRMLS_DC);
-ZEND_API int zend_ts_hash_compare(TsHashTable *ht1, TsHashTable *ht2, compare_func_t compar, zend_bool ordered TSRMLS_DC);
-ZEND_API int zend_ts_hash_minmax(TsHashTable *ht, compare_func_t compar, int flag, void **pData TSRMLS_DC);
+ZEND_API int zend_ts_hash_sort(TsHashTable *ht, sort_func_t sort_func, compare_func_t compare_func, int renumber, TSRMLS_D);
+ZEND_API int zend_ts_hash_compare(TsHashTable *ht1, TsHashTable *ht2, compare_func_t compar, zend_bool ordered, TSRMLS_D);
+ZEND_API int zend_ts_hash_minmax(TsHashTable *ht, compare_func_t compar, int flag, void **pData, TSRMLS_D);
 
 ZEND_API int zend_ts_hash_num_elements(TsHashTable *ht);
 

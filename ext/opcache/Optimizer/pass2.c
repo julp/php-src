@@ -17,7 +17,7 @@ if (ZEND_OPTIMIZER_PASS_2 & OPTIMIZATION_LEVEL) {
 			case ZEND_DIV:
 				if (ZEND_OP1_TYPE(opline) == IS_CONST) {
 					if (ZEND_OP1_LITERAL(opline).type == IS_STRING) {
-						convert_scalar_to_number(&ZEND_OP1_LITERAL(opline) TSRMLS_CC);
+						convert_scalar_to_number(&ZEND_OP1_LITERAL(opline), TSRMLS_C);
 					}
 				}
 				/* break missing *intentionally* - the assign_op's may only optimize op2 */
@@ -31,7 +31,7 @@ if (ZEND_OPTIMIZER_PASS_2 & OPTIMIZATION_LEVEL) {
 				}
 				if (ZEND_OP2_TYPE(opline) == IS_CONST) {
 					if (ZEND_OP2_LITERAL(opline).type == IS_STRING) {
-						convert_scalar_to_number(&ZEND_OP2_LITERAL(opline) TSRMLS_CC);
+						convert_scalar_to_number(&ZEND_OP2_LITERAL(opline), TSRMLS_C);
 					}
 				}
 				break;

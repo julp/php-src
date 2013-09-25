@@ -27,9 +27,9 @@
 ZEND_API zend_class_entry *zend_ce_generator;
 static zend_object_handlers zend_generator_handlers;
 
-static zend_object_value zend_generator_create(zend_class_entry *class_type TSRMLS_DC);
+static zend_object_value zend_generator_create(zend_class_entry *class_type, TSRMLS_D);
 
-ZEND_API void zend_generator_close(zend_generator *generator, zend_bool finished_execution TSRMLS_DC) /* {{{ */
+ZEND_API void zend_generator_close(zend_generator *generator, zend_bool finished_execution, TSRMLS_D) /* {{{ */
 {
 	if (generator->value) {
 		zval_ptr_dtor(&generator->value);
@@ -48,7 +48,7 @@ ZEND_API void zend_generator_close(zend_generator *generator, zend_bool finished
 		if (!execute_data->symbol_table) {
 			zend_free_compiled_variables(execute_data);
 		} else {
-			zend_clean_and_cache_symbol_table(execute_data->symbol_table TSRMLS_CC);
+			zend_clean_and_cache_symbol_table(execute_data->symbol_table, TSRMLS_C);
 		}
 
 		if (execute_data->current_this) {
@@ -134,7 +134,7 @@ ZEND_API void zend_generator_close(zend_generator *generator, zend_bool finished
 
 		/* Free a clone of closure */
 		if (op_array->fn_flags & ZEND_ACC_CLOSURE) {
-			destroy_op_array(op_array TSRMLS_CC);
+			destroy_op_array(op_array, TSRMLS_C);
 			efree(op_array);
 		}
 
@@ -148,7 +148,7 @@ ZEND_API void zend_generator_close(zend_generator *generator, zend_bool finished
 }
 /* }}} */
 
-static void zend_generator_dtor_storage(zend_generator *generator, zend_object_handle handle TSRMLS_DC) /* {{{ */
+static void zend_generator_dtor_storage(zend_generator *generator, zend_object_handle handle, TSRMLS_D) /* {{{ */
 {
 	zend_execute_data *ex = generator->execute_data;
 	zend_uint op_num, finally_op_num;
@@ -182,21 +182,21 @@ static void zend_generator_dtor_storage(zend_generator *generator, zend_object_h
 		ex->opline = &ex->op_array->opcodes[finally_op_num];
 		ex->fast_ret = NULL;
 		generator->flags |= ZEND_GENERATOR_FORCED_CLOSE;
-		zend_generator_resume(generator TSRMLS_CC);
+		zend_generator_resume(generator, TSRMLS_C);
 	}
 }
 /* }}} */
 
-static void zend_generator_free_storage(zend_generator *generator TSRMLS_DC) /* {{{ */
+static void zend_generator_free_storage(zend_generator *generator, TSRMLS_D) /* {{{ */
 {
-	zend_generator_close(generator, 0 TSRMLS_CC);
+	zend_generator_close(generator, 0, TSRMLS_C);
 
-	zend_object_std_dtor(&generator->std TSRMLS_CC);
+	zend_object_std_dtor(&generator->std, TSRMLS_C);
 	efree(generator);
 }
 /* }}} */
 
-static zend_object_value zend_generator_create(zend_class_entry *class_type TSRMLS_DC) /* {{{ */
+static zend_object_value zend_generator_create(zend_class_entry *class_type, TSRMLS_D) /* {{{ */
 {
 	zend_generator *generator;
 	zend_object_value object;
@@ -207,12 +207,12 @@ static zend_object_value zend_generator_create(zend_class_entry *class_type TSRM
 	/* The key will be incremented on first use, so it'll start at 0 */
 	generator->largest_used_integer_key = -1;
 
-	zend_object_std_init(&generator->std, class_type TSRMLS_CC);
+	zend_object_std_init(&generator->std, class_type, TSRMLS_C);
 
 	object.handle = zend_objects_store_put(generator,
 		(zend_objects_store_dtor_t)          zend_generator_dtor_storage,
 		(zend_objects_free_object_storage_t) zend_generator_free_storage,
-		NULL TSRMLS_CC
+		NULL, TSRMLS_C
 	);
 	object.handlers = &zend_generator_handlers;
 
@@ -222,7 +222,7 @@ static zend_object_value zend_generator_create(zend_class_entry *class_type TSRM
 
 /* Requires globals EG(scope), EG(current_scope), EG(This),
  * EG(active_symbol_table) and EG(current_execute_data). */
-ZEND_API zval *zend_generator_create_zval(zend_op_array *op_array TSRMLS_DC) /* {{{ */
+ZEND_API zval *zend_generator_create_zval(zend_op_array *op_array, TSRMLS_D) /* {{{ */
 {
 	zval *return_value;
 	zend_generator *generator;
@@ -247,7 +247,7 @@ ZEND_API zval *zend_generator_create_zval(zend_op_array *op_array TSRMLS_DC) /* 
 	opline_ptr = EG(opline_ptr);
 	current_symbol_table = EG(active_symbol_table);
 	EG(active_symbol_table) = NULL;
-	execute_data = zend_create_execute_data_from_op_array(op_array, 0 TSRMLS_CC);
+	execute_data = zend_create_execute_data_from_op_array(op_array, 0, TSRMLS_C);
 	EG(active_symbol_table) = current_symbol_table;
 	EG(current_execute_data) = current_execute_data;
 	EG(opline_ptr) = opline_ptr;
@@ -266,7 +266,7 @@ ZEND_API zval *zend_generator_create_zval(zend_op_array *op_array TSRMLS_DC) /* 
 	execute_data->current_this = EG(This);
 
 	/* Save execution context in generator object. */
-	generator = (zend_generator *) zend_object_store_get_object(return_value TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(return_value, TSRMLS_C);
 	generator->execute_data = execute_data;
 	generator->stack = EG(argument_stack);
 	EG(argument_stack) = current_stack;
@@ -275,7 +275,7 @@ ZEND_API zval *zend_generator_create_zval(zend_op_array *op_array TSRMLS_DC) /* 
 }
 /* }}} */
 
-static zend_function *zend_generator_get_constructor(zval *object TSRMLS_DC) /* {{{ */
+static zend_function *zend_generator_get_constructor(zval *object, TSRMLS_D) /* {{{ */
 {
 	zend_error(E_RECOVERABLE_ERROR, "The \"Generator\" class is reserved for internal use and cannot be manually instantiated");
 
@@ -283,7 +283,7 @@ static zend_function *zend_generator_get_constructor(zval *object TSRMLS_DC) /* 
 }
 /* }}} */
 
-ZEND_API void zend_generator_resume(zend_generator *generator TSRMLS_DC) /* {{{ */
+ZEND_API void zend_generator_resume(zend_generator *generator, TSRMLS_D) /* {{{ */
 {
 	/* The generator is already closed, thus can't resume */
 	if (!generator->execute_data) {
@@ -333,7 +333,7 @@ ZEND_API void zend_generator_resume(zend_generator *generator TSRMLS_DC) /* {{{ 
 
 		/* Resume execution */
 		generator->flags |= ZEND_GENERATOR_CURRENTLY_RUNNING;
-		zend_execute_ex(generator->execute_data TSRMLS_CC);
+		zend_execute_ex(generator->execute_data, TSRMLS_C);
 		generator->flags &= ~ZEND_GENERATOR_CURRENTLY_RUNNING;
 
 		/* Restore executor globals */
@@ -350,27 +350,27 @@ ZEND_API void zend_generator_resume(zend_generator *generator TSRMLS_DC) /* {{{ 
 		/* If an exception was thrown in the generator we have to internally
 		 * rethrow it in the parent scope. */
 		if (UNEXPECTED(EG(exception) != NULL)) {
-			zend_throw_exception_internal(NULL TSRMLS_CC);
+			zend_throw_exception_internal(NULL, TSRMLS_C);
 		}
 	}
 }
 /* }}} */
 
-static void zend_generator_ensure_initialized(zend_generator *generator TSRMLS_DC) /* {{{ */
+static void zend_generator_ensure_initialized(zend_generator *generator, TSRMLS_D) /* {{{ */
 {
 	if (generator->execute_data && !generator->value) {
-		zend_generator_resume(generator TSRMLS_CC);
+		zend_generator_resume(generator, TSRMLS_C);
 		generator->flags |= ZEND_GENERATOR_AT_FIRST_YIELD;
 	}
 }
 /* }}} */
 
-static void zend_generator_rewind(zend_generator *generator TSRMLS_DC) /* {{{ */
+static void zend_generator_rewind(zend_generator *generator, TSRMLS_D) /* {{{ */
 {
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
 	if (!(generator->flags & ZEND_GENERATOR_AT_FIRST_YIELD)) {
-		zend_throw_exception(NULL, "Cannot rewind a generator that was already run", 0 TSRMLS_CC);
+		zend_throw_exception(NULL, "Cannot rewind a generator that was already run", 0, TSRMLS_C);
 	}
 }
 /* }}} */
@@ -385,9 +385,9 @@ ZEND_METHOD(Generator, rewind)
 		return;
 	}
 
-	generator = (zend_generator *) zend_object_store_get_object(getThis() TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(getThis(), TSRMLS_C);
 
-	zend_generator_rewind(generator TSRMLS_CC);
+	zend_generator_rewind(generator, TSRMLS_C);
 }
 /* }}} */
 
@@ -401,9 +401,9 @@ ZEND_METHOD(Generator, valid)
 		return;
 	}
 
-	generator = (zend_generator *) zend_object_store_get_object(getThis() TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(getThis(), TSRMLS_C);
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
 	RETURN_BOOL(generator->value != NULL);
 }
@@ -419,9 +419,9 @@ ZEND_METHOD(Generator, current)
 		return;
 	}
 
-	generator = (zend_generator *) zend_object_store_get_object(getThis() TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(getThis(), TSRMLS_C);
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
 	if (generator->value) {
 		RETURN_ZVAL(generator->value, 1, 0);
@@ -439,9 +439,9 @@ ZEND_METHOD(Generator, key)
 		return;
 	}
 
-	generator = (zend_generator *) zend_object_store_get_object(getThis() TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(getThis(), TSRMLS_C);
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
 	if (generator->key) {
 		RETURN_ZVAL(generator->key, 1, 0);
@@ -459,11 +459,11 @@ ZEND_METHOD(Generator, next)
 		return;
 	}
 
-	generator = (zend_generator *) zend_object_store_get_object(getThis() TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(getThis(), TSRMLS_C);
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
-	zend_generator_resume(generator TSRMLS_CC);
+	zend_generator_resume(generator, TSRMLS_C);
 }
 /* }}} */
 
@@ -474,13 +474,13 @@ ZEND_METHOD(Generator, send)
 	zval *value;
 	zend_generator *generator;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &value) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "z", &value) == FAILURE) {
 		return;
 	}
 
-	generator = (zend_generator *) zend_object_store_get_object(getThis() TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(getThis(), TSRMLS_C);
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC); 
+	zend_generator_ensure_initialized(generator, TSRMLS_C); 
 
 	/* The generator is already closed, thus can't send anything */
 	if (!generator->execute_data) {
@@ -490,7 +490,7 @@ ZEND_METHOD(Generator, send)
 	/* Put sent value into the TMP_VAR slot */
 	MAKE_COPY_ZVAL(&value, &generator->send_target->tmp_var);
 
-	zend_generator_resume(generator TSRMLS_CC);
+	zend_generator_resume(generator, TSRMLS_C);
 
 	if (generator->value) {
 		RETURN_ZVAL(generator->value, 1, 0);
@@ -505,25 +505,25 @@ ZEND_METHOD(Generator, throw)
 	zval *exception, *exception_copy;
 	zend_generator *generator;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &exception) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "z", &exception) == FAILURE) {
 		return;
 	}
 
 	ALLOC_ZVAL(exception_copy);
 	MAKE_COPY_ZVAL(&exception, exception_copy);
 
-	generator = (zend_generator *) zend_object_store_get_object(getThis() TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(getThis(), TSRMLS_C);
 
 	if (generator->execute_data) {
 		/* Throw the exception in the context of the generator */
 		zend_execute_data *current_execute_data = EG(current_execute_data);
 		EG(current_execute_data) = generator->execute_data;
 
-		zend_throw_exception_object(exception_copy TSRMLS_CC);
+		zend_throw_exception_object(exception_copy, TSRMLS_C);
 
 		EG(current_execute_data) = current_execute_data;
 
-		zend_generator_resume(generator TSRMLS_CC);
+		zend_generator_resume(generator, TSRMLS_C);
 
 		if (generator->value) {
 			RETURN_ZVAL(generator->value, 1, 0);
@@ -531,7 +531,7 @@ ZEND_METHOD(Generator, throw)
 	} else {
 		/* If the generator is already closed throw the exception in the
 		 * current context */
-		zend_throw_exception_object(exception_copy TSRMLS_CC);
+		zend_throw_exception_object(exception_copy, TSRMLS_C);
 	}
 }
 /* }}} */
@@ -548,13 +548,13 @@ ZEND_METHOD(Generator, __wakeup)
 		return;
 	}
 
-	zend_throw_exception(NULL, "Unserialization of 'Generator' is not allowed", 0 TSRMLS_CC);
+	zend_throw_exception(NULL, "Unserialization of 'Generator' is not allowed", 0, TSRMLS_C);
 }
 /* }}} */
 
 /* get_iterator implementation */
 
-static void zend_generator_iterator_dtor(zend_object_iterator *iterator TSRMLS_DC) /* {{{ */
+static void zend_generator_iterator_dtor(zend_object_iterator *iterator, TSRMLS_D) /* {{{ */
 {
 	zval *object = ((zend_generator_iterator *) iterator)->object;
 
@@ -562,21 +562,21 @@ static void zend_generator_iterator_dtor(zend_object_iterator *iterator TSRMLS_D
 }
 /* }}} */
 
-static int zend_generator_iterator_valid(zend_object_iterator *iterator TSRMLS_DC) /* {{{ */
+static int zend_generator_iterator_valid(zend_object_iterator *iterator, TSRMLS_D) /* {{{ */
 {
 	zend_generator *generator = (zend_generator *) iterator->data;
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
 	return generator->value != NULL ? SUCCESS : FAILURE;
 }
 /* }}} */
 
-static void zend_generator_iterator_get_data(zend_object_iterator *iterator, zval ***data TSRMLS_DC) /* {{{ */
+static void zend_generator_iterator_get_data(zend_object_iterator *iterator, zval ***data, TSRMLS_D) /* {{{ */
 {
 	zend_generator *generator = (zend_generator *) iterator->data;
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
 	if (generator->value) {
 		*data = &generator->value;
@@ -586,11 +586,11 @@ static void zend_generator_iterator_get_data(zend_object_iterator *iterator, zva
 }
 /* }}} */
 
-static void zend_generator_iterator_get_key(zend_object_iterator *iterator, zval *key TSRMLS_DC) /* {{{ */
+static void zend_generator_iterator_get_key(zend_object_iterator *iterator, zval *key, TSRMLS_D) /* {{{ */
 {
 	zend_generator *generator = (zend_generator *) iterator->data;
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
 	if (generator->key) {
 		ZVAL_ZVAL(key, generator->key, 1, 0);
@@ -600,21 +600,21 @@ static void zend_generator_iterator_get_key(zend_object_iterator *iterator, zval
 }
 /* }}} */
 
-static void zend_generator_iterator_move_forward(zend_object_iterator *iterator TSRMLS_DC) /* {{{ */
+static void zend_generator_iterator_move_forward(zend_object_iterator *iterator, TSRMLS_D) /* {{{ */
 {
 	zend_generator *generator = (zend_generator *) iterator->data;
 
-	zend_generator_ensure_initialized(generator TSRMLS_CC);
+	zend_generator_ensure_initialized(generator, TSRMLS_C);
 
-	zend_generator_resume(generator TSRMLS_CC);
+	zend_generator_resume(generator, TSRMLS_C);
 }
 /* }}} */
 
-static void zend_generator_iterator_rewind(zend_object_iterator *iterator TSRMLS_DC) /* {{{ */
+static void zend_generator_iterator_rewind(zend_object_iterator *iterator, TSRMLS_D) /* {{{ */
 {
 	zend_generator *generator = (zend_generator *) iterator->data;
 
-	zend_generator_rewind(generator TSRMLS_CC);
+	zend_generator_rewind(generator, TSRMLS_C);
 }
 /* }}} */
 
@@ -627,20 +627,20 @@ static zend_object_iterator_funcs zend_generator_iterator_functions = {
 	zend_generator_iterator_rewind
 };
 
-zend_object_iterator *zend_generator_get_iterator(zend_class_entry *ce, zval *object, int by_ref TSRMLS_DC) /* {{{ */
+zend_object_iterator *zend_generator_get_iterator(zend_class_entry *ce, zval *object, int by_ref, TSRMLS_D) /* {{{ */
 {
 	zend_generator_iterator *iterator;
 	zend_generator *generator;
 
-	generator = (zend_generator *) zend_object_store_get_object(object TSRMLS_CC);
+	generator = (zend_generator *) zend_object_store_get_object(object, TSRMLS_C);
 
 	if (!generator->execute_data) {
-		zend_throw_exception(NULL, "Cannot traverse an already closed generator", 0 TSRMLS_CC);
+		zend_throw_exception(NULL, "Cannot traverse an already closed generator", 0, TSRMLS_C);
 		return NULL;
 	}
 
 	if (by_ref && !(generator->execute_data->op_array->fn_flags & ZEND_ACC_RETURN_REFERENCE)) {
-		zend_throw_exception(NULL, "You can only iterate a generator by-reference if it declared that it yields by-reference", 0 TSRMLS_CC);
+		zend_throw_exception(NULL, "You can only iterate a generator by-reference if it declared that it yields by-reference", 0, TSRMLS_C);
 		return NULL;
 	}
 
@@ -685,14 +685,14 @@ void zend_register_generator_ce(TSRMLS_D) /* {{{ */
 	zend_class_entry ce;
 
 	INIT_CLASS_ENTRY(ce, "Generator", generator_functions);
-	zend_ce_generator = zend_register_internal_class(&ce TSRMLS_CC);
+	zend_ce_generator = zend_register_internal_class(&ce, TSRMLS_C);
 	zend_ce_generator->ce_flags |= ZEND_ACC_FINAL_CLASS;
 	zend_ce_generator->create_object = zend_generator_create;
 	zend_ce_generator->serialize = zend_class_serialize_deny;
 	zend_ce_generator->unserialize = zend_class_unserialize_deny;
 
 	/* get_iterator has to be assigned *after* implementing the inferface */
-	zend_class_implements(zend_ce_generator TSRMLS_CC, 1, zend_ce_iterator);
+	zend_class_implements(zend_ce_generator, TSRMLS_C, 1, zend_ce_iterator);
 	zend_ce_generator->get_iterator = zend_generator_get_iterator;
 	zend_ce_generator->iterator_funcs.funcs = &zend_generator_iterator_functions;
 

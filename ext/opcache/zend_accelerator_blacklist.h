@@ -44,6 +44,6 @@ void zend_accel_blacklist_shutdown(zend_blacklist *blacklist);
 
 void zend_accel_blacklist_load(zend_blacklist *blacklist, char *filename);
 zend_bool zend_accel_blacklist_is_blacklisted(zend_blacklist *blacklist, char *verify_path);
-void zend_accel_blacklist_apply(zend_blacklist *blacklist, apply_func_arg_t func, void *argument TSRMLS_DC);
+void zend_accel_blacklist_apply(zend_blacklist *blacklist, apply_func_arg_t func, void *argument, TSRMLS_D);
 
 #endif /* ZEND_ACCELERATOR_BLACKLIST_H */

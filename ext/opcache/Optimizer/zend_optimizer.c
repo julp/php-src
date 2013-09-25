@@ -29,7 +29,7 @@
 	ZCG(accel_directives).optimization_level
 
 #if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
-int zend_optimizer_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC)
+int zend_optimizer_add_literal(zend_op_array *op_array, const zval *zv, TSRMLS_D)
 {
 	int i = op_array->last_literal;
 	op_array->last_literal++;
@@ -48,13 +48,13 @@ int zend_optimizer_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC
 # define LITERAL_LONG(op, val) do { \
 		zval _c; \
 		ZVAL_LONG(&_c, val); \
-		op.constant = zend_optimizer_add_literal(op_array, &_c TSRMLS_CC); \
+		op.constant = zend_optimizer_add_literal(op_array, &_c, TSRMLS_C); \
 	} while (0)
 
 # define LITERAL_BOOL(op, val) do { \
 		zval _c; \
 		ZVAL_BOOL(&_c, val); \
-		op.constant = zend_optimizer_add_literal(op_array, &_c TSRMLS_CC); \
+		op.constant = zend_optimizer_add_literal(op_array, &_c, TSRMLS_C); \
 	} while (0)
 
 # define literal_dtor(zv) do { \
@@ -85,7 +85,7 @@ int zend_optimizer_add_literal(zend_op_array *op_array, const zval *zv TSRMLS_DC
 #include "Optimizer/block_pass.c"
 #include "Optimizer/optimize_temp_vars_5.c"
 
-void zend_optimizer(zend_op_array *op_array TSRMLS_DC)
+void zend_optimizer(zend_op_array *op_array, TSRMLS_D)
 {
 	if (op_array->type == ZEND_EVAL_CODE ||
 	    (op_array->fn_flags & ZEND_ACC_INTERACTIVE)) {

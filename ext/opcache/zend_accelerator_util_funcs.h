@@ -31,10 +31,10 @@ zend_persistent_script* create_persistent_script(void);
 int compact_persistent_script(zend_persistent_script *script);
 void free_persistent_script(zend_persistent_script *persistent_script, int destroy_elements);
 
-void zend_accel_free_user_functions(HashTable *ht TSRMLS_DC);
-void zend_accel_move_user_functions(HashTable *str, HashTable *dst TSRMLS_DC);
+void zend_accel_free_user_functions(HashTable *ht, TSRMLS_D);
+void zend_accel_move_user_functions(HashTable *str, HashTable *dst, TSRMLS_D);
 
-zend_op_array* zend_accel_load_script(zend_persistent_script *persistent_script, int from_shared_memory TSRMLS_DC);
+zend_op_array* zend_accel_load_script(zend_persistent_script *persistent_script, int from_shared_memory, TSRMLS_D);
 
 #define ADLER32_INIT 1     /* initial Adler-32 value */
 

@@ -32,7 +32,7 @@
  * Only creates a single-dimensional array of variants.
  * The keys of the PHP hash MUST be numeric.  If the array
  * is sparse, then the gaps will be filled with NULL variants */
-static void safe_array_from_zval(VARIANT *v, zval *z, int codepage TSRMLS_DC)
+static void safe_array_from_zval(VARIANT *v, zval *z, int codepage, TSRMLS_D)
 {
 	SAFEARRAY *sa = NULL;
 	SAFEARRAYBOUND bound;
@@ -77,7 +77,7 @@ static void safe_array_from_zval(VARIANT *v, zval *z, int codepage TSRMLS_DC)
 			break;
 		}
 		zend_hash_get_current_key_ex(HASH_OF(z), &strindex, &strindexlen, &intindex, 0, &pos);
-		php_com_variant_from_zval(&va[intindex], *item, codepage TSRMLS_CC);		
+		php_com_variant_from_zval(&va[intindex], *item, codepage, TSRMLS_C);		
 	}
 
 	/* Unlock it and stuff it into our variant */
@@ -88,7 +88,7 @@ static void safe_array_from_zval(VARIANT *v, zval *z, int codepage TSRMLS_DC)
 	return;
 
 bogus:
-	php_error_docref(NULL TSRMLS_CC, E_WARNING, "COM: converting from PHP array to VARIANT array; only arrays with numeric keys are allowed");
+	php_error_docref(NULL, TSRMLS_C, E_WARNING, "COM: converting from PHP array to VARIANT array; only arrays with numeric keys are allowed");
 
 	V_VT(v) = VT_NULL;
 
@@ -98,7 +98,7 @@ bogus:
 	}
 }
 
-PHP_COM_DOTNET_API void php_com_variant_from_zval(VARIANT *v, zval *z, int codepage TSRMLS_DC)
+PHP_COM_DOTNET_API void php_com_variant_from_zval(VARIANT *v, zval *z, int codepage, TSRMLS_D)
 {
 	OLECHAR *olestring;
 	php_com_dotnet_object *obj;
@@ -114,7 +114,7 @@ PHP_COM_DOTNET_API void php_com_variant_from_zval(VARIANT *v, zval *z, int codep
 			break;
 
 		case IS_OBJECT:
-			if (php_com_is_valid_object(z TSRMLS_CC)) {
+			if (php_com_is_valid_object(z, TSRMLS_C)) {
 				obj = CDNO_FETCH(z);
 				if (V_VT(&obj->v) == VT_DISPATCH) {
 					/* pass the underlying object */
@@ -131,13 +131,13 @@ PHP_COM_DOTNET_API void php_com_variant_from_zval(VARIANT *v, zval *z, int codep
 			} else {
 				/* export the PHP object using our COM wrapper */
 				V_VT(v) = VT_DISPATCH;
-				V_DISPATCH(v) = php_com_wrapper_export(z TSRMLS_CC);
+				V_DISPATCH(v) = php_com_wrapper_export(z, TSRMLS_C);
 			}
 			break;
 			
 		case IS_ARRAY:
 			/* map as safe array */
-			safe_array_from_zval(v, z, codepage TSRMLS_CC);
+			safe_array_from_zval(v, z, codepage, TSRMLS_C);
 			break;
 
 		case IS_LONG:
@@ -152,7 +152,7 @@ PHP_COM_DOTNET_API void php_com_variant_from_zval(VARIANT *v, zval *z, int codep
 
 		case IS_STRING:
 			V_VT(v) = VT_BSTR;
-			olestring = php_com_string_to_olestring(Z_STRVAL_P(z), Z_STRLEN_P(z), codepage TSRMLS_CC);
+			olestring = php_com_string_to_olestring(Z_STRVAL_P(z), Z_STRLEN_P(z), codepage, TSRMLS_C);
 			V_BSTR(v) = SysAllocStringByteLen((char*)olestring, Z_STRLEN_P(z) * sizeof(OLECHAR));
 			efree(olestring);
 			break;
@@ -166,7 +166,7 @@ PHP_COM_DOTNET_API void php_com_variant_from_zval(VARIANT *v, zval *z, int codep
 	}
 }
 
-PHP_COM_DOTNET_API int php_com_zval_from_variant(zval *z, VARIANT *v, int codepage TSRMLS_DC)
+PHP_COM_DOTNET_API int php_com_zval_from_variant(zval *z, VARIANT *v, int codepage, TSRMLS_D)
 {
 	OLECHAR *olestring = NULL;
 	int ret = SUCCESS;
@@ -215,7 +215,7 @@ PHP_COM_DOTNET_API int php_com_zval_from_variant(zval *z, VARIANT *v, int codepa
 			if (olestring) {
 				Z_TYPE_P(z) = IS_STRING;
 				Z_STRVAL_P(z) = php_com_olestring_to_string(olestring,
-					&Z_STRLEN_P(z), codepage TSRMLS_CC);
+					&Z_STRLEN_P(z), codepage, TSRMLS_C);
 				olestring = NULL;
 			}
 			break;
@@ -224,7 +224,7 @@ PHP_COM_DOTNET_API int php_com_zval_from_variant(zval *z, VARIANT *v, int codepa
 				IDispatch *disp;
 
 				if (SUCCEEDED(IUnknown_QueryInterface(V_UNKNOWN(v), &IID_IDispatch, &disp))) {
-					php_com_wrap_dispatch(z, disp, codepage TSRMLS_CC);
+					php_com_wrap_dispatch(z, disp, codepage, TSRMLS_C);
 					IDispatch_Release(disp);
 				} else {
 					ret = FAILURE;
@@ -234,16 +234,16 @@ PHP_COM_DOTNET_API int php_com_zval_from_variant(zval *z, VARIANT *v, int codepa
 
 		case VT_DISPATCH:
 			if (V_DISPATCH(v) != NULL) {
-				php_com_wrap_dispatch(z, V_DISPATCH(v), codepage TSRMLS_CC);
+				php_com_wrap_dispatch(z, V_DISPATCH(v), codepage, TSRMLS_C);
 			}
 			break;
 
 		case VT_VARIANT:
 			/* points to another variant */
-			return php_com_zval_from_variant(z, V_VARIANTREF(v), codepage TSRMLS_CC);
+			return php_com_zval_from_variant(z, V_VARIANTREF(v), codepage, TSRMLS_C);
 			
 		default:
-			php_com_wrap_variant(z, v, codepage TSRMLS_CC);
+			php_com_wrap_variant(z, v, codepage, TSRMLS_C);
 	}
 
 	if (olestring) {
@@ -251,14 +251,14 @@ PHP_COM_DOTNET_API int php_com_zval_from_variant(zval *z, VARIANT *v, int codepa
 	}
 
 	if (ret == FAILURE) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "variant->zval: conversion from 0x%x ret=%d", V_VT(v), ret);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "variant->zval: conversion from 0x%x ret=%d", V_VT(v), ret);
 	}
 
 	return ret;
 }
 
 
-PHP_COM_DOTNET_API int php_com_copy_variant(VARIANT *dstvar, VARIANT *srcvar TSRMLS_DC)
+PHP_COM_DOTNET_API int php_com_copy_variant(VARIANT *dstvar, VARIANT *srcvar, TSRMLS_D)
 {
 	int ret = SUCCESS;
 	
@@ -382,10 +382,10 @@ PHP_COM_DOTNET_API int php_com_copy_variant(VARIANT *dstvar, VARIANT *srcvar TSR
 		break;
 
 	case VT_VARIANT:
-		return php_com_copy_variant(V_VARIANTREF(dstvar), srcvar TSRMLS_CC);
+		return php_com_copy_variant(V_VARIANTREF(dstvar), srcvar, TSRMLS_C);
 		
 	default:
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "variant->variant: failed to copy from 0x%x to 0x%x", V_VT(dstvar), V_VT(srcvar));
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "variant->variant: failed to copy from 0x%x to 0x%x", V_VT(dstvar), V_VT(srcvar));
 		ret = FAILURE;
 	}
 	return ret;
@@ -408,9 +408,9 @@ PHP_FUNCTION(com_variant_create_instance)
 	
 	obj = CDNO_FETCH(object);
 	
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 		"z!|ll", &zvalue, &vt, &codepage)) {
-			php_com_throw_exception(E_INVALIDARG, "Invalid arguments" TSRMLS_CC);
+			php_com_throw_exception(E_INVALIDARG, "Invalid arguments", TSRMLS_C);
 			return;
 	}
 
@@ -420,7 +420,7 @@ PHP_FUNCTION(com_variant_create_instance)
 	}
 
 	if (zvalue) {
-		php_com_variant_from_zval(&obj->v, zvalue, obj->code_page TSRMLS_CC);
+		php_com_variant_from_zval(&obj->v, zvalue, obj->code_page, TSRMLS_C);
 	}
 
 	/* Only perform conversion if variant not already of type passed */
@@ -450,7 +450,7 @@ PHP_FUNCTION(com_variant_create_instance)
 				spprintf(&msg, 0, "Variant type conversion failed: %s", werr);
 				LocalFree(werr);
 
-				php_com_throw_exception(res, msg TSRMLS_CC);
+				php_com_throw_exception(res, msg, TSRMLS_C);
 				efree(msg);
 			}
 		}
@@ -470,7 +470,7 @@ PHP_FUNCTION(variant_set)
 	zval *zobj, *zvalue = NULL;
 	php_com_dotnet_object *obj;
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 			"Oz!", &zobj, php_com_variant_class_entry, &zvalue)) {
 		return;
 	}
@@ -483,14 +483,14 @@ PHP_FUNCTION(variant_set)
 		obj->typeinfo = NULL;
 	}
 	if (obj->sink_dispatch) {
-		php_com_object_enable_event_sink(obj, FALSE TSRMLS_CC);
+		php_com_object_enable_event_sink(obj, FALSE, TSRMLS_C);
 		IDispatch_Release(obj->sink_dispatch);
 		obj->sink_dispatch = NULL;
 	}
 
 	VariantClear(&obj->v);
 
-	php_com_variant_from_zval(&obj->v, zvalue, obj->code_page TSRMLS_CC);
+	php_com_variant_from_zval(&obj->v, zvalue, obj->code_page, TSRMLS_C);
 	/* remember we modified this variant */
 	obj->modified = 1;
 }
@@ -521,33 +521,33 @@ static void variant_binary_operation(enum variant_binary_opcode op, INTERNAL_FUN
 	VariantInit(&vres);
 
 	if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET,
-			ZEND_NUM_ARGS() TSRMLS_CC, "OO", &zleft, php_com_variant_class_entry,
+			ZEND_NUM_ARGS(), TSRMLS_C, "OO", &zleft, php_com_variant_class_entry,
 			&zright, php_com_variant_class_entry)) {
 		obj = CDNO_FETCH(zleft);
 		vleft = &obj->v;
 		obj = CDNO_FETCH(zright);
 		vright = &obj->v;
 	} else if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET,
-			ZEND_NUM_ARGS() TSRMLS_CC, "Oz!", &zleft, php_com_variant_class_entry,
+			ZEND_NUM_ARGS(), TSRMLS_C, "Oz!", &zleft, php_com_variant_class_entry,
 			&zright)) {
 		obj = CDNO_FETCH(zleft);
 		vleft = &obj->v;
 		vright = &right_val;
-		php_com_variant_from_zval(vright, zright, codepage TSRMLS_CC);
+		php_com_variant_from_zval(vright, zright, codepage, TSRMLS_C);
 	} else if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET,
-			ZEND_NUM_ARGS() TSRMLS_CC, "z!O", &zleft, &zright, php_com_variant_class_entry)) {
+			ZEND_NUM_ARGS(), TSRMLS_C, "z!O", &zleft, &zright, php_com_variant_class_entry)) {
 		obj = CDNO_FETCH(zright);
 		vright = &obj->v;
 		vleft = &left_val;
-		php_com_variant_from_zval(vleft, zleft, codepage TSRMLS_CC);
-	} else if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+		php_com_variant_from_zval(vleft, zleft, codepage, TSRMLS_C);
+	} else if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 			"z!z!", &zleft, &zright)) {
 
 		vleft = &left_val;
-		php_com_variant_from_zval(vleft, zleft, codepage TSRMLS_CC);
+		php_com_variant_from_zval(vleft, zleft, codepage, TSRMLS_C);
 
 		vright = &right_val;
-		php_com_variant_from_zval(vright, zright, codepage TSRMLS_CC);
+		php_com_variant_from_zval(vright, zright, codepage, TSRMLS_C);
 
 	} else {
 		return;
@@ -599,9 +599,9 @@ static void variant_binary_operation(enum variant_binary_opcode op, INTERNAL_FUN
 	}
 
 	if (SUCCEEDED(result)) {
-		php_com_wrap_variant(return_value, &vres, codepage TSRMLS_CC);
+		php_com_wrap_variant(return_value, &vres, codepage, TSRMLS_C);
 	} else {
-		php_com_throw_exception(result, NULL TSRMLS_CC);
+		php_com_throw_exception(result, NULL, TSRMLS_C);
 	}
 
 	VariantClear(&vres);
@@ -728,13 +728,13 @@ static void variant_unary_operation(enum variant_unary_opcode op, INTERNAL_FUNCT
 	VariantInit(&vres);
 
 	if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET,
-			ZEND_NUM_ARGS() TSRMLS_CC, "O", &zleft, php_com_variant_class_entry)) {
+			ZEND_NUM_ARGS(), TSRMLS_C, "O", &zleft, php_com_variant_class_entry)) {
 		obj = CDNO_FETCH(zleft);
 		vleft = &obj->v;
-	} else if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	} else if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 			"z!", &zleft)) {
 		vleft = &left_val;
-		php_com_variant_from_zval(vleft, zleft, codepage TSRMLS_CC);
+		php_com_variant_from_zval(vleft, zleft, codepage, TSRMLS_C);
 	} else {
 		return;
 	}
@@ -760,9 +760,9 @@ static void variant_unary_operation(enum variant_unary_opcode op, INTERNAL_FUNCT
 	}
 
 	if (SUCCEEDED(result)) {
-		php_com_wrap_variant(return_value, &vres, codepage TSRMLS_CC);
+		php_com_wrap_variant(return_value, &vres, codepage, TSRMLS_C);
 	} else {
-		php_com_throw_exception(result, NULL TSRMLS_CC);
+		php_com_throw_exception(result, NULL, TSRMLS_C);
 	}
 
 	VariantClear(&vres);
@@ -826,19 +826,19 @@ PHP_FUNCTION(variant_round)
 	VariantInit(&vres);
 
 	if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET,
-			ZEND_NUM_ARGS() TSRMLS_CC, "Ol", &zleft, php_com_variant_class_entry, &decimals)) {
+			ZEND_NUM_ARGS(), TSRMLS_C, "Ol", &zleft, php_com_variant_class_entry, &decimals)) {
 		obj = CDNO_FETCH(zleft);
 		vleft = &obj->v;
-	} else if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	} else if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 			"z!l", &zleft, &decimals)) {
 		vleft = &left_val;
-		php_com_variant_from_zval(vleft, zleft, codepage TSRMLS_CC);
+		php_com_variant_from_zval(vleft, zleft, codepage, TSRMLS_C);
 	} else {
 		return;
 	}
 
 	if (SUCCEEDED(VarRound(vleft, decimals, &vres))) {
-		php_com_wrap_variant(return_value, &vres, codepage TSRMLS_CC);
+		php_com_wrap_variant(return_value, &vres, codepage, TSRMLS_C);
 	}
 
 	VariantClear(&vres);
@@ -864,34 +864,34 @@ PHP_FUNCTION(variant_cmp)
 	VariantInit(&right_val);
 
 	if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET,
-			ZEND_NUM_ARGS() TSRMLS_CC, "OO|ll", &zleft, php_com_variant_class_entry,
+			ZEND_NUM_ARGS(), TSRMLS_C, "OO|ll", &zleft, php_com_variant_class_entry,
 			&zright, php_com_variant_class_entry, &lcid, &flags)) {
 		obj = CDNO_FETCH(zleft);
 		vleft = &obj->v;
 		obj = CDNO_FETCH(zright);
 		vright = &obj->v;
 	} else if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET,
-			ZEND_NUM_ARGS() TSRMLS_CC, "Oz!|ll", &zleft, php_com_variant_class_entry,
+			ZEND_NUM_ARGS(), TSRMLS_C, "Oz!|ll", &zleft, php_com_variant_class_entry,
 			&zright, &lcid, &flags)) {
 		obj = CDNO_FETCH(zleft);
 		vleft = &obj->v;
 		vright = &right_val;
-		php_com_variant_from_zval(vright, zright, codepage TSRMLS_CC);
+		php_com_variant_from_zval(vright, zright, codepage, TSRMLS_C);
 	} else if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET,
-			ZEND_NUM_ARGS() TSRMLS_CC, "z!O|ll", &zleft, &zright, php_com_variant_class_entry,
+			ZEND_NUM_ARGS(), TSRMLS_C, "z!O|ll", &zleft, &zright, php_com_variant_class_entry,
 			&lcid, &flags)) {
 		obj = CDNO_FETCH(zright);
 		vright = &obj->v;
 		vleft = &left_val;
-		php_com_variant_from_zval(vleft, zleft, codepage TSRMLS_CC);
-	} else if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+		php_com_variant_from_zval(vleft, zleft, codepage, TSRMLS_C);
+	} else if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 			"z!z!|ll", &zleft, &zright, &lcid, &flags)) {
 
 		vleft = &left_val;
-		php_com_variant_from_zval(vleft, zleft, codepage TSRMLS_CC);
+		php_com_variant_from_zval(vleft, zleft, codepage, TSRMLS_C);
 
 		vright = &right_val;
-		php_com_variant_from_zval(vright, zright, codepage TSRMLS_CC);
+		php_com_variant_from_zval(vright, zright, codepage, TSRMLS_C);
 
 	} else {
 		return;
@@ -914,7 +914,7 @@ PHP_FUNCTION(variant_date_to_timestamp)
 
 	VariantInit(&vres);
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 		"O", &zleft, php_com_variant_class_entry)) {
 		return;
 	}
@@ -953,13 +953,13 @@ PHP_FUNCTION(variant_date_from_timestamp)
 	struct tm *tmv;
 	VARIANT res;
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l",
 			&timestamp)) {
 		return;
 	}
 
 	if (timestamp < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Timestamp value must be a positive value.");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Timestamp value must be a positive value.");
 		RETURN_FALSE;
 	}
 
@@ -979,7 +979,7 @@ PHP_FUNCTION(variant_date_from_timestamp)
 	V_VT(&res) = VT_DATE;
 	SystemTimeToVariantTime(&systime, &V_DATE(&res));
 
-	php_com_wrap_variant(return_value, &res, CP_ACP TSRMLS_CC);
+	php_com_wrap_variant(return_value, &res, CP_ACP, TSRMLS_C);
 
 	VariantClear(&res);
 }
@@ -992,7 +992,7 @@ PHP_FUNCTION(variant_get_type)
 	zval *zobj;
 	php_com_dotnet_object *obj;
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 		"O", &zobj, php_com_variant_class_entry)) {
 		return;
 	}
@@ -1011,7 +1011,7 @@ PHP_FUNCTION(variant_set_type)
 	/* VARTYPE == unsigned short */ long vt;
 	HRESULT res;
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 		"Ol", &zobj, php_com_variant_class_entry, &vt)) {
 		return;
 	}
@@ -1031,7 +1031,7 @@ PHP_FUNCTION(variant_set_type)
 		spprintf(&msg, 0, "Variant type conversion failed: %s", werr);
 		LocalFree(werr);
 
-		php_com_throw_exception(res, msg TSRMLS_CC);
+		php_com_throw_exception(res, msg, TSRMLS_C);
 		efree(msg);
 	}
 }
@@ -1047,7 +1047,7 @@ PHP_FUNCTION(variant_cast)
 	VARIANT vres;
 	HRESULT res;
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 		"Ol", &zobj, php_com_variant_class_entry, &vt)) {
 		return;
 	}
@@ -1057,7 +1057,7 @@ PHP_FUNCTION(variant_cast)
 	res = VariantChangeType(&vres, &obj->v, 0, (VARTYPE)vt);
 
 	if (SUCCEEDED(res)) {
-		php_com_wrap_variant(return_value, &vres, obj->code_page TSRMLS_CC);
+		php_com_wrap_variant(return_value, &vres, obj->code_page, TSRMLS_C);
 	} else {
 		char *werr, *msg;
 
@@ -1065,7 +1065,7 @@ PHP_FUNCTION(variant_cast)
 		spprintf(&msg, 0, "Variant type conversion failed: %s", werr);
 		LocalFree(werr);
 
-		php_com_throw_exception(res, msg TSRMLS_CC);
+		php_com_throw_exception(res, msg, TSRMLS_C);
 		efree(msg);
 	}
 

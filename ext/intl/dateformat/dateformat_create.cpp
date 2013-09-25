@@ -58,14 +58,14 @@ static void datefmt_ctor(INTERNAL_FUNCTION_PARAMETERS)
     int         slength			= 0;
 	IntlDateFormatter_object* dfo;
 
-	intl_error_reset(NULL TSRMLS_CC);
+	intl_error_reset(NULL, TSRMLS_C);
 	object = return_value;
 	/* Parse parameters. */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sll|Zzs",
+    if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sll|Zzs",
 			&locale_str, &locale_len, &date_type, &time_type, &timezone_zv,
 			&calendar_zv, &pattern_str, &pattern_str_len) == FAILURE) {
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,	"datefmt_create: "
-				"unable to parse input parameters", 0 TSRMLS_CC);
+				"unable to parse input parameters", 0, TSRMLS_C);
 		zval_dtor(return_value);
 		RETURN_NULL();
     }
@@ -80,14 +80,14 @@ static void datefmt_ctor(INTERNAL_FUNCTION_PARAMETERS)
 
 	if (DATE_FORMAT_OBJECT(dfo) != NULL) {
 		intl_errors_set(INTL_DATA_ERROR_P(dfo), U_ILLEGAL_ARGUMENT_ERROR,
-				"datefmt_create: cannot call constructor twice", 0 TSRMLS_CC);
+				"datefmt_create: cannot call constructor twice", 0, TSRMLS_C);
 		return;
 	}
 
 	/* process calendar */
 	if (datefmt_process_calendar_arg(calendar_zv, locale, "datefmt_create",
 			INTL_DATA_ERROR_P(dfo), calendar, calendar_type,
-			calendar_owned TSRMLS_CC)
+			calendar_owned, TSRMLS_C)
 			== FAILURE) {
 		goto error;
 	}
@@ -98,7 +98,7 @@ static void datefmt_ctor(INTERNAL_FUNCTION_PARAMETERS)
 	if (explicit_tz || calendar_owned ) {
 		//we have an explicit time zone or a non-object calendar
 		timezone = timezone_process_timezone_argument(timezone_zv,
-				INTL_DATA_ERROR_P(dfo), "datefmt_create" TSRMLS_CC);
+				INTL_DATA_ERROR_P(dfo), "datefmt_create", TSRMLS_C);
 		if (timezone == NULL) {
 			goto error;
 		}
@@ -111,7 +111,7 @@ static void datefmt_ctor(INTERNAL_FUNCTION_PARAMETERS)
 		if (U_FAILURE(INTL_DATA_ERROR_CODE(dfo))) {
 			/* object construction -> only set global error */
 			intl_error_set(NULL, INTL_DATA_ERROR_CODE(dfo), "datefmt_create: "
-					"error converting pattern to UTF-16", 0 TSRMLS_CC);
+					"error converting pattern to UTF-16", 0, TSRMLS_C);
 			goto error;
 		}
 	}
@@ -140,7 +140,7 @@ static void datefmt_ctor(INTERNAL_FUNCTION_PARAMETERS)
 		}
     } else {
 		intl_error_set(NULL, INTL_DATA_ERROR_CODE(dfo),	"datefmt_create: date "
-				"formatter creation failed", 0 TSRMLS_CC);
+				"formatter creation failed", 0, TSRMLS_C);
 		goto error;
 	}
 
@@ -160,7 +160,7 @@ error:
 	if (calendar != NULL && calendar_owned) {
 		delete calendar;
 	}
-	if (U_FAILURE(intl_error_get_code(NULL TSRMLS_CC))) {
+	if (U_FAILURE(intl_error_get_code(NULL, TSRMLS_C))) {
 		/* free_object handles partially constructed instances fine */
 		zval_dtor(return_value);
 		RETVAL_NULL();

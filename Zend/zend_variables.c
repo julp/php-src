@@ -51,7 +51,7 @@ ZEND_API void _zval_dtor_func(zval *zvalue ZEND_FILE_LINE_DC)
 			{
 				TSRMLS_FETCH();
 
-				Z_OBJ_HT_P(zvalue)->del_ref(zvalue TSRMLS_CC);
+				Z_OBJ_HT_P(zvalue)->del_ref(zvalue, TSRMLS_C);
 			}
 			break;
 		case IS_RESOURCE:
@@ -142,7 +142,7 @@ ZEND_API void _zval_copy_ctor_func(zval *zvalue ZEND_FILE_LINE_DC)
 		case IS_OBJECT:
 			{
 				TSRMLS_FETCH();
-				Z_OBJ_HT_P(zvalue)->add_ref(zvalue TSRMLS_CC);
+				Z_OBJ_HT_P(zvalue)->add_ref(zvalue, TSRMLS_C);
 			}
 			break;
 	}
@@ -189,7 +189,7 @@ ZEND_API void _zval_internal_ptr_dtor_wrapper(zval **zval_ptr)
 }
 #endif
 
-ZEND_API int zval_copy_static_var(zval **p TSRMLS_DC, int num_args, va_list args, zend_hash_key *key) /* {{{ */
+ZEND_API int zval_copy_static_var(zval **p, TSRMLS_D, int num_args, va_list args, zend_hash_key *key) /* {{{ */
 {
 	HashTable *target = va_arg(args, HashTable*);
 	zend_bool is_ref;

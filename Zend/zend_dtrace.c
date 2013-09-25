@@ -33,18 +33,18 @@ static inline char *dtrace_get_executed_filename(TSRMLS_D)
 	}
 }
 
-ZEND_API zend_op_array *dtrace_compile_file(zend_file_handle *file_handle, int type TSRMLS_DC)
+ZEND_API zend_op_array *dtrace_compile_file(zend_file_handle *file_handle, int type, TSRMLS_D)
 {
 	zend_op_array *res;
 	DTRACE_COMPILE_FILE_ENTRY(file_handle->opened_path, file_handle->filename);
-	res = compile_file(file_handle, type TSRMLS_CC);
+	res = compile_file(file_handle, type, TSRMLS_C);
 	DTRACE_COMPILE_FILE_RETURN(file_handle->opened_path, file_handle->filename);
 
 	return res;
 }
 
 /* We wrap the execute function to have fire the execute-entry/return and function-entry/return probes */
-ZEND_API void dtrace_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
+ZEND_API void dtrace_execute_ex(zend_execute_data *execute_data, TSRMLS_D)
 {
 	int lineno;
 	char *scope, *filename, *funcname, *classname;
@@ -59,7 +59,7 @@ ZEND_API void dtrace_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
 
 	if (DTRACE_FUNCTION_ENTRY_ENABLED() || DTRACE_FUNCTION_RETURN_ENABLED()) {
 		filename = dtrace_get_executed_filename(TSRMLS_C);
-		classname = get_active_class_name(&scope TSRMLS_CC);
+		classname = get_active_class_name(&scope, TSRMLS_C);
 		funcname = get_active_function_name(TSRMLS_C);
 		lineno = zend_get_executed_lineno(TSRMLS_C);
 	}
@@ -72,7 +72,7 @@ ZEND_API void dtrace_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
 		DTRACE_FUNCTION_ENTRY(funcname, filename, lineno, classname, scope);
 	}
 
-	execute_ex(execute_data TSRMLS_CC);
+	execute_ex(execute_data, TSRMLS_C);
 
 	if (DTRACE_FUNCTION_RETURN_ENABLED() && funcname != NULL) {
 		DTRACE_FUNCTION_RETURN(funcname, filename, lineno, classname, scope);
@@ -83,7 +83,7 @@ ZEND_API void dtrace_execute_ex(zend_execute_data *execute_data TSRMLS_DC)
 	}
 }
 
-ZEND_API void dtrace_execute_internal(zend_execute_data *execute_data_ptr, zend_fcall_info *fci, int return_value_used TSRMLS_DC)
+ZEND_API void dtrace_execute_internal(zend_execute_data *execute_data_ptr, zend_fcall_info *fci, int return_value_used, TSRMLS_D)
 {
 	int lineno;
 	char *filename;
@@ -96,7 +96,7 @@ ZEND_API void dtrace_execute_internal(zend_execute_data *execute_data_ptr, zend_
 		DTRACE_EXECUTE_ENTRY(filename, lineno);
 	}
 
-	execute_internal(execute_data_ptr, fci, return_value_used TSRMLS_CC);
+	execute_internal(execute_data_ptr, fci, return_value_used, TSRMLS_C);
 
 	if (DTRACE_EXECUTE_RETURN_ENABLED()) {
 		DTRACE_EXECUTE_RETURN(filename, lineno);

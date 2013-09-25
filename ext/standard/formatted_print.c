@@ -52,7 +52,7 @@ static char HEXCHARS[] = "0123456789ABCDEF";
 
 /* php_spintf_appendchar() {{{ */
 inline static void
-php_sprintf_appendchar(char **buffer, int *pos, int *size, char add TSRMLS_DC)
+php_sprintf_appendchar(char **buffer, int *pos, int *size, char add, TSRMLS_D)
 {
 	if ((*pos + 1) >= *size) {
 		*size <<= 1;
@@ -208,7 +208,7 @@ php_sprintf_appenddouble(char **buffer, int *pos,
 						 int alignment, int precision,
 						 int adjust, char fmt,
 						 int always_sign
-						 TSRMLS_DC)
+						, TSRMLS_D)
 {
 	char num_buf[NUM_BUF_SIZE];
 	char *s = NULL;
@@ -222,7 +222,7 @@ php_sprintf_appenddouble(char **buffer, int *pos,
 	if ((adjust & ADJ_PRECISION) == 0) {
 		precision = FLOAT_PRECISION;
 	} else if (precision > MAX_FLOAT_PRECISION) {
-		php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Requested precision of %d digits was truncated to PHP maximum of %d digits", precision, MAX_FLOAT_PRECISION);
+		php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Requested precision of %d digits was truncated to PHP maximum of %d digits", precision, MAX_FLOAT_PRECISION);
 		precision = MAX_FLOAT_PRECISION;
 	}
 	
@@ -369,7 +369,7 @@ php_sprintf_getnumber(char *buffer, int *pos)
  *
  */
 static char *
-php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC)
+php_formatted_print(int ht, int *len, int use_array, int format_offset, TSRMLS_D)
 {
 	zval ***args, **z_format;
 	int argc, size = 240, inpos = 0, outpos = 0, temppos;
@@ -377,7 +377,7 @@ php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC
 	char *format, *result, padding;
 	int always_sign;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &args, &argc) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "+", &args, &argc) == FAILURE) {
 		return NULL;
 	}
 
@@ -425,9 +425,9 @@ php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC
 		PRINTF_DEBUG(("sprintf: format[%d]='%c'\n", inpos, format[inpos]));
 		PRINTF_DEBUG(("sprintf: outpos=%d\n", outpos));
 		if (format[inpos] != '%') {
-			php_sprintf_appendchar(&result, &outpos, &size, format[inpos++] TSRMLS_CC);
+			php_sprintf_appendchar(&result, &outpos, &size, format[inpos++], TSRMLS_C);
 		} else if (format[inpos + 1] == '%') {
-			php_sprintf_appendchar(&result, &outpos, &size, '%' TSRMLS_CC);
+			php_sprintf_appendchar(&result, &outpos, &size, '%', TSRMLS_C);
 			inpos += 2;
 		} else {
 			/* starting a new format specifier, reset variables */
@@ -449,7 +449,7 @@ php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC
 					if (argnum <= 0) {
 						efree(result);
 						efree(args);
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Argument number must be greater than zero");
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "Argument number must be greater than zero");
 						return NULL;
 					}
 
@@ -491,7 +491,7 @@ php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC
 					if ((width = php_sprintf_getnumber(format, &inpos)) < 0) {
 						efree(result);
 						efree(args);
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Width must be greater than zero and less than %d", INT_MAX);
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "Width must be greater than zero and less than %d", INT_MAX);
 						return NULL;
 					}
 					adjusting |= ADJ_WIDTH;
@@ -508,7 +508,7 @@ php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC
 						if ((precision = php_sprintf_getnumber(format, &inpos)) < 0) {
 							efree(result);
 							efree(args);
-							php_error_docref(NULL TSRMLS_CC, E_WARNING, "Precision must be greater than zero and less than %d", INT_MAX);
+							php_error_docref(NULL, TSRMLS_C, E_WARNING, "Precision must be greater than zero and less than %d", INT_MAX);
 							return NULL;
 						}
 						adjusting |= ADJ_PRECISION;
@@ -528,7 +528,7 @@ php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC
 			if (argnum >= argc) {
 				efree(result);
 				efree(args);
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Too few arguments");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Too few arguments");
 				return NULL;
 			}
 
@@ -597,13 +597,13 @@ php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC
 											 width, padding, alignment,
 											 precision, adjusting,
 											 format[inpos], always_sign
-											 TSRMLS_CC);
+											, TSRMLS_C);
 					break;
 					
 				case 'c':
 					convert_to_long(tmp);
 					php_sprintf_appendchar(&result, &outpos, &size,
-										(char) Z_LVAL_P(tmp) TSRMLS_CC);
+										(char) Z_LVAL_P(tmp), TSRMLS_C);
 					break;
 
 				case 'o':
@@ -639,7 +639,7 @@ php_formatted_print(int ht, int *len, int use_array, int format_offset TSRMLS_DC
 					break;
 
 				case '%':
-					php_sprintf_appendchar(&result, &outpos, &size, '%' TSRMLS_CC);
+					php_sprintf_appendchar(&result, &outpos, &size, '%', TSRMLS_C);
 
 					break;
 				default:
@@ -668,7 +668,7 @@ PHP_FUNCTION(user_sprintf)
 	char *result;
 	int len;
 	
-	if ((result=php_formatted_print(ht, &len, 0, 0 TSRMLS_CC))==NULL) {
+	if ((result=php_formatted_print(ht, &len, 0, 0, TSRMLS_C))==NULL) {
 		RETURN_FALSE;
 	}
 	RETVAL_STRINGL(result, len, 0);
@@ -682,7 +682,7 @@ PHP_FUNCTION(vsprintf)
 	char *result;
 	int len;
 	
-	if ((result=php_formatted_print(ht, &len, 1, 0 TSRMLS_CC))==NULL) {
+	if ((result=php_formatted_print(ht, &len, 1, 0, TSRMLS_C))==NULL) {
 		RETURN_FALSE;
 	}
 	RETVAL_STRINGL(result, len, 0);
@@ -696,7 +696,7 @@ PHP_FUNCTION(user_printf)
 	char *result;
 	int len, rlen;
 	
-	if ((result=php_formatted_print(ht, &len, 0, 0 TSRMLS_CC))==NULL) {
+	if ((result=php_formatted_print(ht, &len, 0, 0, TSRMLS_C))==NULL) {
 		RETURN_FALSE;
 	}
 	rlen = PHPWRITE(result, len);
@@ -712,7 +712,7 @@ PHP_FUNCTION(vprintf)
 	char *result;
 	int len, rlen;
 	
-	if ((result=php_formatted_print(ht, &len, 1, 0 TSRMLS_CC))==NULL) {
+	if ((result=php_formatted_print(ht, &len, 1, 0, TSRMLS_C))==NULL) {
 		RETURN_FALSE;
 	}
 	rlen = PHPWRITE(result, len);
@@ -734,13 +734,13 @@ PHP_FUNCTION(fprintf)
 		WRONG_PARAM_COUNT;
 	}
 	
-	if (zend_parse_parameters(1 TSRMLS_CC, "r", &arg1) == FAILURE) {
+	if (zend_parse_parameters(1, TSRMLS_C, "r", &arg1) == FAILURE) {
 		RETURN_FALSE;
 	}
 	
 	php_stream_from_zval(stream, &arg1);
 
-	if ((result=php_formatted_print(ht, &len, 0, 1 TSRMLS_CC))==NULL) {
+	if ((result=php_formatted_print(ht, &len, 0, 1, TSRMLS_C))==NULL) {
 		RETURN_FALSE;
 	}
 
@@ -765,13 +765,13 @@ PHP_FUNCTION(vfprintf)
 		WRONG_PARAM_COUNT;
 	}
 	
-	if (zend_parse_parameters(1 TSRMLS_CC, "r", &arg1) == FAILURE) {
+	if (zend_parse_parameters(1, TSRMLS_C, "r", &arg1) == FAILURE) {
 		RETURN_FALSE;
 	}
 	
 	php_stream_from_zval(stream, &arg1);
 
-	if ((result=php_formatted_print(ht, &len, 1, 1 TSRMLS_CC))==NULL) {
+	if ((result=php_formatted_print(ht, &len, 1, 1, TSRMLS_C))==NULL) {
 		RETURN_FALSE;
 	}
 

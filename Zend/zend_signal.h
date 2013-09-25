@@ -88,8 +88,8 @@ void zend_signal_activate(TSRMLS_D);
 void zend_signal_deactivate(TSRMLS_D);
 void zend_signal_startup();
 void zend_signal_shutdown(TSRMLS_D);
-ZEND_API int zend_signal(int signo, void (*handler)(int) TSRMLS_DC);
-ZEND_API int zend_sigaction(int signo, const struct sigaction *act, struct sigaction *oldact TSRMLS_DC);
+ZEND_API int zend_signal(int signo, void (*handler)(int), TSRMLS_D);
+ZEND_API int zend_sigaction(int signo, const struct sigaction *act, struct sigaction *oldact, TSRMLS_D);
 
 #ifdef ZTS
 #define zend_sigprocmask(signo, set, oldset) tsrm_sigmask((signo), (set), (oldset))

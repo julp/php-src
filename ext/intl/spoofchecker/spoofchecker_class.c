@@ -32,20 +32,20 @@ static zend_object_handlers Spoofchecker_handlers;
 /* {{{ Spoofchecker_objects_dtor */
 static void Spoofchecker_objects_dtor(
 	void *object,
-	zend_object_handle handle TSRMLS_DC)
+	zend_object_handle handle, TSRMLS_D)
 {
-	zend_objects_destroy_object(object, handle TSRMLS_CC);
+	zend_objects_destroy_object(object, handle, TSRMLS_C);
 }
 /* }}} */
 
 /* {{{ Spoofchecker_objects_free */
-void Spoofchecker_objects_free(zend_object *object TSRMLS_DC)
+void Spoofchecker_objects_free(zend_object *object, TSRMLS_D)
 {
 	Spoofchecker_object* co = (Spoofchecker_object*)object;
 
-	zend_object_std_dtor(&co->zo TSRMLS_CC);
+	zend_object_std_dtor(&co->zo, TSRMLS_C);
 
-	spoofchecker_object_destroy(co TSRMLS_CC);
+	spoofchecker_object_destroy(co, TSRMLS_C);
 
 	efree(co);
 }
@@ -53,21 +53,21 @@ void Spoofchecker_objects_free(zend_object *object TSRMLS_DC)
 
 /* {{{ Spoofchecker_object_create */
 zend_object_value Spoofchecker_object_create(
-	zend_class_entry *ce TSRMLS_DC)
+	zend_class_entry *ce, TSRMLS_D)
 {
 	zend_object_value    retval;
 	Spoofchecker_object*     intern;
 
 	intern = ecalloc(1, sizeof(Spoofchecker_object));
-	intl_error_init(SPOOFCHECKER_ERROR_P(intern) TSRMLS_CC);
-	zend_object_std_init(&intern->zo, ce TSRMLS_CC);
+	intl_error_init(SPOOFCHECKER_ERROR_P(intern), TSRMLS_C);
+	zend_object_std_init(&intern->zo, ce, TSRMLS_C);
 	object_properties_init(&intern->zo, ce);
 
 	retval.handle = zend_objects_store_put(
 		intern,
 		Spoofchecker_objects_dtor,
 		(zend_objects_free_object_storage_t)Spoofchecker_objects_free,
-		NULL TSRMLS_CC);
+		NULL, TSRMLS_C);
 
 	retval.handlers = &Spoofchecker_handlers;
 
@@ -118,25 +118,25 @@ zend_function_entry Spoofchecker_class_functions[] = {
 };
 /* }}} */
 
-static zend_object_value spoofchecker_clone_obj(zval *object TSRMLS_DC) /* {{{ */
+static zend_object_value spoofchecker_clone_obj(zval *object, TSRMLS_D) /* {{{ */
 {
 	zend_object_value new_obj_val;
 	zend_object_handle handle = Z_OBJ_HANDLE_P(object);
 	Spoofchecker_object *sfo, *new_sfo;
 
-    sfo = (Spoofchecker_object *) zend_object_store_get_object(object TSRMLS_CC);
-    intl_error_reset(SPOOFCHECKER_ERROR_P(sfo) TSRMLS_CC);
+    sfo = (Spoofchecker_object *) zend_object_store_get_object(object, TSRMLS_C);
+    intl_error_reset(SPOOFCHECKER_ERROR_P(sfo), TSRMLS_C);
 
-	new_obj_val = Spoofchecker_ce_ptr->create_object(Z_OBJCE_P(object) TSRMLS_CC);
-	new_sfo = (Spoofchecker_object *)zend_object_store_get_object_by_handle(new_obj_val.handle TSRMLS_CC);
+	new_obj_val = Spoofchecker_ce_ptr->create_object(Z_OBJCE_P(object), TSRMLS_C);
+	new_sfo = (Spoofchecker_object *)zend_object_store_get_object_by_handle(new_obj_val.handle, TSRMLS_C);
 	/* clone standard parts */	
-	zend_objects_clone_members(&new_sfo->zo, new_obj_val, &sfo->zo, handle TSRMLS_CC);
+	zend_objects_clone_members(&new_sfo->zo, new_obj_val, &sfo->zo, handle, TSRMLS_C);
 	/* clone internal object */
 	new_sfo->uspoof = uspoof_clone(sfo->uspoof, SPOOFCHECKER_ERROR_CODE_P(new_sfo));
 	if(U_FAILURE(SPOOFCHECKER_ERROR_CODE(new_sfo))) {
 		/* set up error in case error handler is interested */
-		intl_error_set( NULL, SPOOFCHECKER_ERROR_CODE(new_sfo), "Failed to clone SpoofChecker object", 0 TSRMLS_CC );
-		Spoofchecker_objects_dtor(new_sfo, new_obj_val.handle TSRMLS_CC); /* free new object */
+		intl_error_set( NULL, SPOOFCHECKER_ERROR_CODE(new_sfo), "Failed to clone SpoofChecker object", 0, TSRMLS_C );
+		Spoofchecker_objects_dtor(new_sfo, new_obj_val.handle, TSRMLS_C); /* free new object */
 		zend_error(E_ERROR, "Failed to clone SpoofChecker object");
 	}
 	return new_obj_val;
@@ -153,7 +153,7 @@ void spoofchecker_register_Spoofchecker_class(TSRMLS_D)
 	/* Create and register 'Spoofchecker' class. */
 	INIT_CLASS_ENTRY(ce, "Spoofchecker", Spoofchecker_class_functions);
 	ce.create_object = Spoofchecker_object_create;
-	Spoofchecker_ce_ptr = zend_register_internal_class(&ce TSRMLS_CC);
+	Spoofchecker_ce_ptr = zend_register_internal_class(&ce, TSRMLS_C);
 
 	memcpy(&Spoofchecker_handlers, zend_get_std_object_handlers(),
 		sizeof Spoofchecker_handlers);
@@ -172,20 +172,20 @@ void spoofchecker_register_Spoofchecker_class(TSRMLS_D)
  * Initialize internals of Spoofchecker_object.
  * Must be called before any other call to 'spoofchecker_object_...' functions.
  */
-void spoofchecker_object_init(Spoofchecker_object* co TSRMLS_DC)
+void spoofchecker_object_init(Spoofchecker_object* co, TSRMLS_D)
 {
 	if (!co) {
 		return;
 	}
 
-	intl_error_init(SPOOFCHECKER_ERROR_P(co) TSRMLS_CC);
+	intl_error_init(SPOOFCHECKER_ERROR_P(co), TSRMLS_C);
 }
 /* }}} */
 
 /* {{{ void spoofchecker_object_destroy( Spoofchecker_object* co )
  * Clean up mem allocted by internals of Spoofchecker_object
  */
-void spoofchecker_object_destroy(Spoofchecker_object* co TSRMLS_DC)
+void spoofchecker_object_destroy(Spoofchecker_object* co, TSRMLS_D)
 {
 	if (!co) {
 		return;
@@ -196,7 +196,7 @@ void spoofchecker_object_destroy(Spoofchecker_object* co TSRMLS_DC)
 		co->uspoof = NULL;
 	}
 
-	intl_error_reset(SPOOFCHECKER_ERROR_P(co) TSRMLS_CC);
+	intl_error_reset(SPOOFCHECKER_ERROR_P(co), TSRMLS_C);
 }
 /* }}} */
 

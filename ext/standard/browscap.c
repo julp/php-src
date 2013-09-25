@@ -138,7 +138,7 @@ static void convert_browscap_pattern(zval *pattern, int persistent) /* {{{ */
 }
 /* }}} */
 
-static void php_browscap_parser_cb(zval *arg1, zval *arg2, zval *arg3, int callback_type, void *arg TSRMLS_DC) /* {{{ */
+static void php_browscap_parser_cb(zval *arg1, zval *arg2, zval *arg3, int callback_type, void *arg, TSRMLS_D) /* {{{ */
 {
 	browser_data *bdata = arg;
 	int persistent = bdata->htab->persistent;
@@ -239,7 +239,7 @@ static void php_browscap_parser_cb(zval *arg1, zval *arg2, zval *arg3, int callb
 }
 /* }}} */
 
-static int browscap_read_file(char *filename, browser_data *browdata, int persistent TSRMLS_DC) /* {{{ */
+static int browscap_read_file(char *filename, browser_data *browdata, int persistent, TSRMLS_D) /* {{{ */
 {
 	zend_file_handle fh = {0};
 	
@@ -275,7 +275,7 @@ static int browscap_read_file(char *filename, browser_data *browdata, int persis
 	Z_TYPE(fh) = ZEND_HANDLE_FP;
 	browdata->current_section_name = NULL;
 	zend_parse_ini_file(&fh, 1, ZEND_INI_SCANNER_RAW,
-			(zend_ini_parser_cb_t) php_browscap_parser_cb, browdata TSRMLS_CC);
+			(zend_ini_parser_cb_t) php_browscap_parser_cb, browdata, TSRMLS_C);
 	if (browdata->current_section_name != NULL) {
 		pefree(browdata->current_section_name, persistent);
 		browdata->current_section_name = NULL;
@@ -286,7 +286,7 @@ static int browscap_read_file(char *filename, browser_data *browdata, int persis
 /* }}} */
 
 #ifdef ZTS
-static void browscap_globals_ctor(zend_browscap_globals *browscap_globals TSRMLS_DC) /* {{{ */
+static void browscap_globals_ctor(zend_browscap_globals *browscap_globals, TSRMLS_D) /* {{{ */
 {
 	browscap_globals->activation_bdata.htab = NULL;
 	browscap_globals->activation_bdata.current_section = NULL;
@@ -296,7 +296,7 @@ static void browscap_globals_ctor(zend_browscap_globals *browscap_globals TSRMLS
 /* }}} */
 #endif
 
-static void browscap_bdata_dtor(browser_data *bdata, int persistent TSRMLS_DC) /* {{{ */
+static void browscap_bdata_dtor(browser_data *bdata, int persistent, TSRMLS_D) /* {{{ */
 {
 	if (bdata->htab != NULL) {
 		zend_hash_destroy(bdata->htab);
@@ -318,7 +318,7 @@ PHP_INI_MH(OnChangeBrowscap)
 	} else if (stage == PHP_INI_STAGE_ACTIVATE) {
 		browser_data *bdata = &BROWSCAP_G(activation_bdata);
 		if (bdata->filename[0] != '\0') {
-			browscap_bdata_dtor(bdata, 0 TSRMLS_CC);
+			browscap_bdata_dtor(bdata, 0, TSRMLS_C);
 		}
 		if (VCWD_REALPATH(new_value, bdata->filename) == NULL) {
 			return FAILURE;
@@ -341,7 +341,7 @@ PHP_MINIT_FUNCTION(browscap) /* {{{ */
 	/* ctor call not really needed for non-ZTS */
 
 	if (browscap && browscap[0]) {
-		if (browscap_read_file(browscap, &global_bdata, 1 TSRMLS_CC) == FAILURE) {
+		if (browscap_read_file(browscap, &global_bdata, 1, TSRMLS_C) == FAILURE) {
 			return FAILURE;
 		}
 	}
@@ -354,7 +354,7 @@ PHP_RSHUTDOWN_FUNCTION(browscap) /* {{{ */
 {
 	browser_data *bdata = &BROWSCAP_G(activation_bdata);
 	if (bdata->filename[0] != '\0') {
-		browscap_bdata_dtor(bdata, 0 TSRMLS_CC);
+		browscap_bdata_dtor(bdata, 0, TSRMLS_C);
 	}
 	
 	return SUCCESS;
@@ -363,13 +363,13 @@ PHP_RSHUTDOWN_FUNCTION(browscap) /* {{{ */
 
 PHP_MSHUTDOWN_FUNCTION(browscap) /* {{{ */
 {
-	browscap_bdata_dtor(&global_bdata, 1 TSRMLS_CC);
+	browscap_bdata_dtor(&global_bdata, 1, TSRMLS_C);
 	
 	return SUCCESS;
 }
 /* }}} */
 
-static int browser_reg_compare(zval **browser TSRMLS_DC, int num_args, va_list args, zend_hash_key *key) /* {{{ */
+static int browser_reg_compare(zval **browser, TSRMLS_D, int num_args, va_list args, zend_hash_key *key) /* {{{ */
 {
 	zval **browser_regex, **previous_match;
 	pcre *re;
@@ -393,7 +393,7 @@ static int browser_reg_compare(zval **browser TSRMLS_DC, int num_args, va_list a
 		return 0;
 	}
 
-	re = pcre_get_compiled_regex(Z_STRVAL_PP(browser_regex), &re_extra, &re_options TSRMLS_CC);
+	re = pcre_get_compiled_regex(Z_STRVAL_PP(browser_regex), &re_extra, &re_options, TSRMLS_C);
 	if (re == NULL) {
 		return 0;
 	}
@@ -479,28 +479,28 @@ PHP_FUNCTION(get_browser)
 	if (BROWSCAP_G(activation_bdata).filename[0] != '\0') {
 		bdata = &BROWSCAP_G(activation_bdata);
 		if (bdata->htab == NULL) { /* not initialized yet */
-			if (browscap_read_file(bdata->filename, bdata, 0 TSRMLS_CC) == FAILURE) {
+			if (browscap_read_file(bdata->filename, bdata, 0, TSRMLS_C) == FAILURE) {
 				RETURN_FALSE;
 			}
 		}
 	} else {
 		if (!global_bdata.htab) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "browscap ini directive not set");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "browscap ini directive not set");
 			RETURN_FALSE;
 		}
 		bdata = &global_bdata;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s!b", &agent_name, &agent_name_len, &return_array) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|s!b", &agent_name, &agent_name_len, &return_array) == FAILURE) {
 		return;
 	}
 
 	if (agent_name == NULL) {
-		zend_is_auto_global("_SERVER", sizeof("_SERVER") - 1 TSRMLS_CC);
+		zend_is_auto_global("_SERVER", sizeof("_SERVER") - 1, TSRMLS_C);
 		if (!PG(http_globals)[TRACK_VARS_SERVER] ||
 			zend_hash_find(HASH_OF(PG(http_globals)[TRACK_VARS_SERVER]), "HTTP_USER_AGENT", sizeof("HTTP_USER_AGENT"), (void **) &http_user_agent) == FAILURE
 		) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "HTTP_USER_AGENT variable is not set, cannot determine user agent name");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "HTTP_USER_AGENT variable is not set, cannot determine user agent name");
 			RETURN_FALSE;
 		}
 		agent_name = Z_STRVAL_PP(http_user_agent);
@@ -512,7 +512,7 @@ PHP_FUNCTION(get_browser)
 
 	if (zend_hash_find(bdata->htab, lookup_browser_name, agent_name_len + 1, (void **) &agent) == FAILURE) {
 		found_browser_entry = NULL;
-		zend_hash_apply_with_arguments(bdata->htab TSRMLS_CC, (apply_func_args_t) browser_reg_compare, 3, lookup_browser_name, agent_name_len, &found_browser_entry);
+		zend_hash_apply_with_arguments(bdata->htab, TSRMLS_C, (apply_func_args_t) browser_reg_compare, 3, lookup_browser_name, agent_name_len, &found_browser_entry);
 
 		if (found_browser_entry) {
 			agent = &found_browser_entry;

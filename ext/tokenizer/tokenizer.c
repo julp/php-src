@@ -101,7 +101,7 @@ PHP_MINFO_FUNCTION(tokenizer)
 }
 /* }}} */
 
-static void tokenize(zval *return_value TSRMLS_DC)
+static void tokenize(zval *return_value, TSRMLS_D)
 {
 	zval token;
 	zval *keyword;
@@ -113,7 +113,7 @@ static void tokenize(zval *return_value TSRMLS_DC)
 	array_init(return_value);
 
 	ZVAL_NULL(&token);
-	while ((token_type = lex_scan(&token TSRMLS_CC))) {
+	while ((token_type = lex_scan(&token, TSRMLS_C))) {
 		destroy = 1;
 		switch (token_type) {
 			case T_CLOSE_TAG:
@@ -185,23 +185,23 @@ PHP_FUNCTION(token_get_all)
 	zval source_z;
 	zend_lex_state original_lex_state;
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "s", &source, &source_len) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "s", &source, &source_len) == FAILURE) {
 		return;
 	}
 
 	ZVAL_STRINGL(&source_z, source, source_len, 1);
-	zend_save_lexical_state(&original_lex_state TSRMLS_CC);
+	zend_save_lexical_state(&original_lex_state, TSRMLS_C);
 
-	if (zend_prepare_string_for_scanning(&source_z, "" TSRMLS_CC) == FAILURE) {
-		zend_restore_lexical_state(&original_lex_state TSRMLS_CC);
+	if (zend_prepare_string_for_scanning(&source_z, "", TSRMLS_C) == FAILURE) {
+		zend_restore_lexical_state(&original_lex_state, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
 	LANG_SCNG(yy_state) = yycINITIAL;
 
-	tokenize(return_value TSRMLS_CC);
+	tokenize(return_value, TSRMLS_C);
 	
-	zend_restore_lexical_state(&original_lex_state TSRMLS_CC);
+	zend_restore_lexical_state(&original_lex_state, TSRMLS_C);
 	zval_dtor(&source_z);
 }
 /* }}} */
@@ -213,7 +213,7 @@ PHP_FUNCTION(token_name)
 	int argc = ZEND_NUM_ARGS();
 	long type;
 
-	if (zend_parse_parameters(argc TSRMLS_CC, "l", &type) == FAILURE) {
+	if (zend_parse_parameters(argc, TSRMLS_C, "l", &type) == FAILURE) {
 		return;
 	}
 	RETVAL_STRING(get_token_type_name(type), 1);

@@ -57,7 +57,7 @@ static void php_dba_db4_errcall_fcn(
 	}
 #endif
 
-	php_error_docref(NULL TSRMLS_CC, E_NOTICE, "%s%s", errpfx?errpfx:"", msg);
+	php_error_docref(NULL, TSRMLS_C, E_NOTICE, "%s%s", errpfx?errpfx:"", msg);
 }
 
 #define DB4_DATA dba_db4_data *dba = info->dbf
@@ -239,7 +239,7 @@ DBA_FIRSTKEY_FUNC(db4)
 	}
 
 	/* we should introduce something like PARAM_PASSTHRU... */
-	return dba_nextkey_db4(info, newlen TSRMLS_CC);
+	return dba_nextkey_db4(info, newlen, TSRMLS_C);
 }
 
 DBA_NEXTKEY_FUNC(db4)

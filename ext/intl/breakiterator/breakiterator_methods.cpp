@@ -37,7 +37,7 @@ U_CFUNC PHP_METHOD(BreakIterator, __construct)
 {
 	zend_throw_exception( NULL,
 		"An object of this type cannot be created with the new operator",
-		0 TSRMLS_CC );
+		0, TSRMLS_C );
 }
 
 static void _breakiter_factory(const char *func_name,
@@ -49,12 +49,12 @@ static void _breakiter_factory(const char *func_name,
 	int				dummy;
 	char			*msg;
 	UErrorCode		status = UErrorCode();
-	intl_error_reset(NULL TSRMLS_CC);
+	intl_error_reset(NULL, TSRMLS_C);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s!",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s!",
 			&locale_str, &dummy) == FAILURE) {
 		spprintf(&msg, 0, "%s: bad arguments", func_name);
-		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR, msg, 1 TSRMLS_CC);
+		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR, msg, 1, TSRMLS_C);
 		efree(msg);
 		RETURN_NULL();
 	}
@@ -64,16 +64,16 @@ static void _breakiter_factory(const char *func_name,
 	}
 
 	biter = func(Locale::createFromName(locale_str), status);
-	intl_error_set_code(NULL, status TSRMLS_CC);
+	intl_error_set_code(NULL, status, TSRMLS_C);
 	if (U_FAILURE(status)) {
 		spprintf(&msg, 0, "%s: error creating BreakIterator",
 				func_name);
-		intl_error_set_custom_msg(NULL, msg, 1 TSRMLS_CC);
+		intl_error_set_custom_msg(NULL, msg, 1, TSRMLS_C);
 		efree(msg);
 		RETURN_NULL();
 	}
 
-	breakiterator_object_create(return_value, biter TSRMLS_CC);
+	breakiterator_object_create(return_value, biter, TSRMLS_C);
 }
 
 U_CFUNC PHP_FUNCTION(breakiter_create_word_instance)
@@ -114,16 +114,16 @@ U_CFUNC PHP_FUNCTION(breakiter_create_title_instance)
 U_CFUNC PHP_FUNCTION(breakiter_create_code_point_instance)
 {
 	UErrorCode status = UErrorCode();
-	intl_error_reset(NULL TSRMLS_CC);
+	intl_error_reset(NULL, TSRMLS_C);
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_create_code_point_instance: bad arguments", 0 TSRMLS_CC);
+			"breakiter_create_code_point_instance: bad arguments", 0, TSRMLS_C);
 		RETURN_NULL();
 	}
 
 	CodePointBreakIterator *cpbi = new CodePointBreakIterator();
-	breakiterator_object_create(return_value, cpbi TSRMLS_CC);
+	breakiterator_object_create(return_value, cpbi, TSRMLS_C);
 }
 
 U_CFUNC PHP_FUNCTION(breakiter_get_text)
@@ -133,7 +133,7 @@ U_CFUNC PHP_FUNCTION(breakiter_get_text)
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_get_text: bad arguments", 0 TSRMLS_CC);
+			"breakiter_get_text: bad arguments", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
@@ -155,10 +155,10 @@ U_CFUNC PHP_FUNCTION(breakiter_set_text)
 	BREAKITER_METHOD_INIT_VARS;
 	object = getThis();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s",
 			&text, &text_len) == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_set_text: bad arguments", 0 TSRMLS_CC);
+			"breakiter_set_text: bad arguments", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
@@ -202,7 +202,7 @@ static void _breakiter_no_args_ret_int32(
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		spprintf(&msg, 0, "%s: bad arguments", func_name);
-		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR, msg, 1 TSRMLS_CC);
+		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR, msg, 1, TSRMLS_C);
 		efree(msg);
 		RETURN_FALSE;
 	}
@@ -224,9 +224,9 @@ static void _breakiter_int32_ret_int32(
 	BREAKITER_METHOD_INIT_VARS;
 	object = getThis();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &arg) == FAILURE) {
 		spprintf(&msg, 0, "%s: bad arguments", func_name);
-		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR, msg, 1 TSRMLS_CC);
+		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR, msg, 1, TSRMLS_C);
 		efree(msg);
 		RETURN_FALSE;
 	}
@@ -236,7 +236,7 @@ static void _breakiter_int32_ret_int32(
 	if (arg < INT32_MIN || arg > INT32_MAX) {
 		spprintf(&msg, 0, "%s: offset argument is outside bounds of "
 				"a 32-bit wide integer", func_name);
-		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR, msg, 1 TSRMLS_CC);
+		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR, msg, 1, TSRMLS_C);
 		efree(msg);
 		RETURN_FALSE;
 	}
@@ -303,7 +303,7 @@ U_CFUNC PHP_FUNCTION(breakiter_current)
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-				"breakiter_current: bad arguments", 0 TSRMLS_CC);
+				"breakiter_current: bad arguments", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
@@ -334,17 +334,17 @@ U_CFUNC PHP_FUNCTION(breakiter_is_boundary)
 	BREAKITER_METHOD_INIT_VARS;
 	object = getThis();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l",
 			&offset) == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-				"breakiter_is_boundary: bad arguments", 0 TSRMLS_CC);
+				"breakiter_is_boundary: bad arguments", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
 	if (offset < INT32_MIN || offset > INT32_MAX) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
 				"breakiter_is_boundary: offset argument is outside bounds of "
-				"a 32-bit wide integer", 0 TSRMLS_CC);
+				"a 32-bit wide integer", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
@@ -361,15 +361,15 @@ U_CFUNC PHP_FUNCTION(breakiter_get_locale)
 	BREAKITER_METHOD_INIT_VARS;
 	object = getThis();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &locale_type) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &locale_type) == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_get_locale: bad arguments", 0 TSRMLS_CC);
+			"breakiter_get_locale: bad arguments", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
 	if (locale_type != ULOC_ACTUAL_LOCALE && locale_type != ULOC_VALID_LOCALE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_get_locale: invalid locale type", 0 TSRMLS_CC);
+			"breakiter_get_locale: invalid locale type", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
@@ -389,9 +389,9 @@ U_CFUNC PHP_FUNCTION(breakiter_get_parts_iterator)
 	BREAKITER_METHOD_INIT_VARS;
 	object = getThis();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|l", &key_type) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|l", &key_type) == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_get_parts_iterator: bad arguments", 0 TSRMLS_CC);
+			"breakiter_get_parts_iterator: bad arguments", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
@@ -399,14 +399,14 @@ U_CFUNC PHP_FUNCTION(breakiter_get_parts_iterator)
 			&& key_type != PARTS_ITERATOR_KEY_LEFT
 			&& key_type != PARTS_ITERATOR_KEY_RIGHT) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_get_parts_iterator: bad key type", 0 TSRMLS_CC);
+			"breakiter_get_parts_iterator: bad key type", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
 	BREAKITER_METHOD_FETCH_OBJECT;
 
 	IntlIterator_from_BreakIterator_parts(
-		object, return_value, (parts_iter_key_type)key_type TSRMLS_CC);
+		object, return_value, (parts_iter_key_type)key_type, TSRMLS_C);
 }
 
 U_CFUNC PHP_FUNCTION(breakiter_get_error_code)
@@ -416,12 +416,12 @@ U_CFUNC PHP_FUNCTION(breakiter_get_error_code)
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_get_error_code: bad arguments", 0 TSRMLS_CC);
+			"breakiter_get_error_code: bad arguments", 0, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
 	/* Fetch the object (without resetting its last error code ). */
-	bio = (BreakIterator_object*)zend_object_store_get_object(object TSRMLS_CC);
+	bio = (BreakIterator_object*)zend_object_store_get_object(object, TSRMLS_C);
 	if (bio == NULL)
 		RETURN_FALSE;
 
@@ -436,17 +436,17 @@ U_CFUNC PHP_FUNCTION(breakiter_get_error_message)
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"breakiter_get_error_message: bad arguments", 0 TSRMLS_CC );
+			"breakiter_get_error_message: bad arguments", 0, TSRMLS_C );
 		RETURN_FALSE;
 	}
 
 
 	/* Fetch the object (without resetting its last error code ). */
-	bio = (BreakIterator_object*)zend_object_store_get_object(object TSRMLS_CC);
+	bio = (BreakIterator_object*)zend_object_store_get_object(object, TSRMLS_C);
 	if (bio == NULL)
 		RETURN_FALSE;
 
 	/* Return last error message. */
-	message = intl_error_get_message(BREAKITER_ERROR_P(bio) TSRMLS_CC);
+	message = intl_error_get_message(BREAKITER_ERROR_P(bio), TSRMLS_C);
 	RETURN_STRING(message, 0);
 }

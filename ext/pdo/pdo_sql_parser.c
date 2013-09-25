@@ -430,7 +430,7 @@ struct placeholder {
 };
 
 PDO_API int pdo_parse_params(pdo_stmt_t *stmt, char *inquery, int inquery_len, 
-	char **outquery, int *outquery_len TSRMLS_DC)
+	char **outquery, int *outquery_len, TSRMLS_D)
 {
 	Scanner s;
 	char *ptr, *newbuffer;
@@ -484,7 +484,7 @@ PDO_API int pdo_parse_params(pdo_stmt_t *stmt, char *inquery, int inquery_len,
 	/* did the query make sense to me? */
 	if (query_type == (PDO_PLACEHOLDER_NAMED|PDO_PLACEHOLDER_POSITIONAL)) {
 		/* they mixed both types; punt */
-		pdo_raise_impl_error(stmt->dbh, stmt, "HY093", "mixed named and positional parameters" TSRMLS_CC);
+		pdo_raise_impl_error(stmt->dbh, stmt, "HY093", "mixed named and positional parameters", TSRMLS_C);
 		ret = -1;
 		goto clean_up;
 	}
@@ -508,7 +508,7 @@ PDO_API int pdo_parse_params(pdo_stmt_t *stmt, char *inquery, int inquery_len,
 	
 	/* Do we have placeholders but no bound params */
 	if (bindno && !params && stmt->supports_placeholders == PDO_PLACEHOLDER_NONE) {
-		pdo_raise_impl_error(stmt->dbh, stmt, "HY093", "no parameters were bound" TSRMLS_CC);
+		pdo_raise_impl_error(stmt->dbh, stmt, "HY093", "no parameters were bound", TSRMLS_C);
 		ret = -1;
 		goto clean_up;
 	}
@@ -527,7 +527,7 @@ PDO_API int pdo_parse_params(pdo_stmt_t *stmt, char *inquery, int inquery_len,
 				goto safe;
 			}
 		}
-		pdo_raise_impl_error(stmt->dbh, stmt, "HY093", "number of bound variables does not match number of tokens" TSRMLS_CC);
+		pdo_raise_impl_error(stmt->dbh, stmt, "HY093", "number of bound variables does not match number of tokens", TSRMLS_C);
 		ret = -1;
 		goto clean_up;
 	}
@@ -548,7 +548,7 @@ safe:
 			if (ret == FAILURE) {
 				/* parameter was not defined */
 				ret = -1;
-				pdo_raise_impl_error(stmt->dbh, stmt, "HY093", "parameter was not defined" TSRMLS_CC);
+				pdo_raise_impl_error(stmt->dbh, stmt, "HY093", "parameter was not defined", TSRMLS_C);
 				goto clean_up;
 			}
 			if (stmt->dbh->methods->quoter) {
@@ -562,7 +562,7 @@ safe:
 					
 						len = php_stream_copy_to_mem(stm, &buf, PHP_STREAM_COPY_ALL, 0);
 						if (!stmt->dbh->methods->quoter(stmt->dbh, buf, len, &plc->quoted, &plc->qlen,
-								param->param_type TSRMLS_CC)) {
+								param->param_type, TSRMLS_C)) {
 							/* bork */
 							ret = -1;
 							strncpy(stmt->error_code, stmt->dbh->error_code, 6);
@@ -575,7 +575,7 @@ safe:
 							efree(buf);
 						}
 					} else {
-						pdo_raise_impl_error(stmt->dbh, stmt, "HY105", "Expected a stream resource" TSRMLS_CC);
+						pdo_raise_impl_error(stmt->dbh, stmt, "HY105", "Expected a stream resource", TSRMLS_C);
 						ret = -1;
 						goto clean_up;
 					}
@@ -603,7 +603,7 @@ safe:
 							convert_to_string(param->parameter);
 							if (!stmt->dbh->methods->quoter(stmt->dbh, Z_STRVAL_P(param->parameter),
 									Z_STRLEN_P(param->parameter), &plc->quoted, &plc->qlen,
-									param->param_type TSRMLS_CC)) {
+									param->param_type, TSRMLS_C)) {
 								/* bork */
 								ret = -1;
 								strncpy(stmt->error_code, stmt->dbh->error_code, 6);
@@ -737,7 +737,7 @@ clean_up:
 
 #if 0
 int old_pdo_parse_params(pdo_stmt_t *stmt, char *inquery, int inquery_len, char **outquery, 
-		int *outquery_len TSRMLS_DC)
+		int *outquery_len, TSRMLS_D)
 {
 	Scanner s;
 	char *ptr;
@@ -801,7 +801,7 @@ int old_pdo_parse_params(pdo_stmt_t *stmt, char *inquery, int inquery_len, char 
 				
 				/* quote the bind value if necessary */
 				if(stmt->dbh->methods->quoter(stmt->dbh, Z_STRVAL_P(param->parameter), 
-					Z_STRLEN_P(param->parameter), &quotedstr, &quotedstrlen TSRMLS_CC))
+					Z_STRLEN_P(param->parameter), &quotedstr, &quotedstrlen, TSRMLS_C))
 				{
 					memcpy(ptr, quotedstr, quotedstrlen);
 					ptr += quotedstrlen;
@@ -837,7 +837,7 @@ int old_pdo_parse_params(pdo_stmt_t *stmt, char *inquery, int inquery_len, char 
 				
 				/* quote the bind value if necessary */
 				if(stmt->dbh->methods->quoter(stmt->dbh, Z_STRVAL_P(param->parameter), 
-					Z_STRLEN_P(param->parameter), &quotedstr, &quotedstrlen TSRMLS_CC))
+					Z_STRLEN_P(param->parameter), &quotedstr, &quotedstrlen, TSRMLS_C))
 				{
 					memcpy(ptr, quotedstr, quotedstrlen);
 					ptr += quotedstrlen;

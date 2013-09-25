@@ -381,7 +381,7 @@ ZEND_GET_MODULE(posix)
 
 #define PHP_POSIX_SINGLE_ARG_FUNC(func_name)	\
 	long val;	\
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &val) == FAILURE) RETURN_FALSE;	\
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &val) == FAILURE) RETURN_FALSE;	\
 	if (func_name(val) < 0) {	\
 		POSIX_G(last_error) = errno;	\
 		RETURN_FALSE;	\
@@ -395,7 +395,7 @@ PHP_FUNCTION(posix_kill)
 {
 	long pid, sig;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &pid, &sig) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ll", &pid, &sig) == FAILURE) {
 		RETURN_FALSE;
 	}
 		
@@ -560,7 +560,7 @@ PHP_FUNCTION(posix_setpgid)
 {
 	long pid, pgid;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ll", &pid, &pgid) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ll", &pid, &pgid) == FAILURE) {
 		RETURN_FALSE;
 	}
 	
@@ -579,7 +579,7 @@ PHP_FUNCTION(posix_setpgid)
 PHP_FUNCTION(posix_getpgid)
 {
 	long val;
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &val) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &val) == FAILURE) {
 		RETURN_FALSE;
 	}
 	
@@ -598,7 +598,7 @@ PHP_FUNCTION(posix_getpgid)
 PHP_FUNCTION(posix_getsid)
 {
 	long val;
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &val) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &val) == FAILURE) {
 		RETURN_FALSE;
 	}
 	
@@ -693,14 +693,14 @@ PHP_FUNCTION(posix_ctermid)
 /* }}} */
 
 /* Checks if the provides resource is a stream and if it provides a file descriptor */
-static int php_posix_stream_get_fd(zval *zfp, int *fd TSRMLS_DC) /* {{{ */
+static int php_posix_stream_get_fd(zval *zfp, int *fd, TSRMLS_D) /* {{{ */
 {
 	php_stream *stream;
 
 	php_stream_from_zval_no_verify(stream, &zfp);
 
 	if (stream == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "expects argument 1 to be a valid stream resource");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "expects argument 1 to be a valid stream resource");
 		return 0;
 	}
 	if (php_stream_can_cast(stream, PHP_STREAM_AS_FD_FOR_SELECT) == SUCCESS) {
@@ -708,7 +708,7 @@ static int php_posix_stream_get_fd(zval *zfp, int *fd TSRMLS_DC) /* {{{ */
 	} else if (php_stream_can_cast(stream, PHP_STREAM_AS_FD) == SUCCESS) {
 		php_stream_cast(stream, PHP_STREAM_AS_FD, (void*)fd, 0);
 	} else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "could not use stream of type '%s'", 
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "could not use stream of type '%s'", 
 				stream->ops->label);
 		return 0;
 	}
@@ -727,13 +727,13 @@ PHP_FUNCTION(posix_ttyname)
 	long buflen;
 #endif
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &z_fd) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &z_fd) == FAILURE) {
 		RETURN_FALSE;
 	}
 
 	switch (Z_TYPE_PP(z_fd)) {
 		case IS_RESOURCE:
-			if (!php_posix_stream_get_fd(*z_fd, &fd TSRMLS_CC)) {
+			if (!php_posix_stream_get_fd(*z_fd, &fd, TSRMLS_C)) {
 				RETURN_FALSE;
 			}
 			break;
@@ -771,13 +771,13 @@ PHP_FUNCTION(posix_isatty)
 	zval **z_fd;
 	int fd;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &z_fd) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &z_fd) == FAILURE) {
 		RETURN_FALSE;
 	}
 	
 	switch (Z_TYPE_PP(z_fd)) {
 		case IS_RESOURCE:
-			if (!php_posix_stream_get_fd(*z_fd, &fd TSRMLS_CC)) {
+			if (!php_posix_stream_get_fd(*z_fd, &fd, TSRMLS_C)) {
 				RETURN_FALSE;
 			}
 			break;
@@ -838,11 +838,11 @@ PHP_FUNCTION(posix_mkfifo)
 	long mode;
 	int     result;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "pl", &path, &path_len, &mode) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "pl", &path, &path_len, &mode) == FAILURE) {
 		RETURN_FALSE;
 	}
 
-	if (php_check_open_basedir_ex(path, 0 TSRMLS_CC)) {
+	if (php_check_open_basedir_ex(path, 0, TSRMLS_C)) {
 		RETURN_FALSE;
 	}
 
@@ -871,29 +871,29 @@ PHP_FUNCTION(posix_mknod)
 
 	php_dev = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "pl|ll", &path, &path_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "pl|ll", &path, &path_len,
 			&mode, &major, &minor) == FAILURE) {
 		RETURN_FALSE;
 	}
 
-	if (php_check_open_basedir_ex(path, 0 TSRMLS_CC)) {
+	if (php_check_open_basedir_ex(path, 0, TSRMLS_C)) {
 		RETURN_FALSE;
 	}
 
 	if ((mode & S_IFCHR) || (mode & S_IFBLK)) {
 		if (ZEND_NUM_ARGS() == 2) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "For S_IFCHR and S_IFBLK you need to pass a major device kernel identifier");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "For S_IFCHR and S_IFBLK you need to pass a major device kernel identifier");
 			RETURN_FALSE;
 		}
 		if (major == 0) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING,
+			php_error_docref(NULL, TSRMLS_C, E_WARNING,
 				"Expects argument 3 to be non-zero for POSIX_S_IFCHR and POSIX_S_IFBLK");
 			RETURN_FALSE;
 		} else {
 #if defined(HAVE_MAKEDEV) || defined(makedev)
 			php_dev = makedev(major, minor);
 #else
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create a block or character device, creating a normal file instead");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot create a block or character device, creating a normal file instead");
 #endif
 		}
 	}
@@ -951,17 +951,17 @@ PHP_FUNCTION(posix_access)
 	int filename_len, ret;
 	char *filename, *path;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|l", &filename, &filename_len, &mode) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "p|l", &filename, &filename_len, &mode) == FAILURE) {
 		RETURN_FALSE;
 	}
 
-	path = expand_filepath(filename, NULL TSRMLS_CC);
+	path = expand_filepath(filename, NULL, TSRMLS_C);
 	if (!path) {
 		POSIX_G(last_error) = EIO;
 		RETURN_FALSE;
 	}
 
-	if (php_check_open_basedir_ex(path, 0 TSRMLS_CC)) {
+	if (php_check_open_basedir_ex(path, 0, TSRMLS_C)) {
 		efree(path);
 		POSIX_G(last_error) = EPERM;
 		RETURN_FALSE;
@@ -999,7 +999,7 @@ PHP_FUNCTION(posix_getgrnam)
 	char *buf;
 #endif
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &name, &name_len) == FAILURE) {
 		RETURN_FALSE;
 	}
 
@@ -1026,7 +1026,7 @@ PHP_FUNCTION(posix_getgrnam)
 
 	if (!php_posix_group_to_array(g, return_value)) {
 		zval_dtor(return_value);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "unable to convert posix group to array");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "unable to convert posix group to array");
 		RETVAL_FALSE;
 	}
 #if defined(ZTS) && defined(HAVE_GETGRNAM_R) && defined(_SC_GETGR_R_SIZE_MAX)
@@ -1049,7 +1049,7 @@ PHP_FUNCTION(posix_getgrgid)
 #endif
 	struct group *g;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &gid) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &gid) == FAILURE) {
 		RETURN_FALSE;
 	}
 #if defined(ZTS) && defined(HAVE_GETGRGID_R) && defined(_SC_GETGR_R_SIZE_MAX)
@@ -1078,7 +1078,7 @@ PHP_FUNCTION(posix_getgrgid)
 
 	if (!php_posix_group_to_array(g, return_value)) {
 		zval_dtor(return_value);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "unable to convert posix group struct to array");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "unable to convert posix group struct to array");
 		RETVAL_FALSE;
 	}
 #if defined(ZTS) && defined(HAVE_GETGRGID_R) && defined(_SC_GETGR_R_SIZE_MAX)
@@ -1118,7 +1118,7 @@ PHP_FUNCTION(posix_getpwnam)
 	char *buf;
 #endif
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &name, &name_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &name, &name_len) == FAILURE) {
 		RETURN_FALSE;
 	}
 
@@ -1145,7 +1145,7 @@ PHP_FUNCTION(posix_getpwnam)
 
 	if (!php_posix_passwd_to_array(pw, return_value)) {
 		zval_dtor(return_value);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "unable to convert posix passwd struct to array");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "unable to convert posix passwd struct to array");
 		RETVAL_FALSE;
 	}
 #if defined(ZTS) && defined(_SC_GETPW_R_SIZE_MAX) && defined(HAVE_GETPWNAM_R)
@@ -1168,7 +1168,7 @@ PHP_FUNCTION(posix_getpwuid)
 #endif
 	struct passwd *pw;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &uid) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &uid) == FAILURE) {
 		RETURN_FALSE;
 	}
 #if defined(ZTS) && defined(_SC_GETPW_R_SIZE_MAX) && defined(HAVE_GETPWUID_R)
@@ -1195,7 +1195,7 @@ PHP_FUNCTION(posix_getpwuid)
 
 	if (!php_posix_passwd_to_array(pw, return_value)) {
 		zval_dtor(return_value);
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "unable to convert posix passwd struct to array");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "unable to convert posix passwd struct to array");
 		RETVAL_FALSE;
 	}
 #if defined(ZTS) && defined(_SC_GETPW_R_SIZE_MAX) && defined(HAVE_GETPWUID_R)
@@ -1211,7 +1211,7 @@ PHP_FUNCTION(posix_getpwuid)
 
 /* {{{ posix_addlimit
  */
-static int posix_addlimit(int limit, char *name, zval *return_value TSRMLS_DC) {
+static int posix_addlimit(int limit, char *name, zval *return_value, TSRMLS_D) {
 	int result;
 	struct rlimit rl;
 	char hard[80];
@@ -1312,7 +1312,7 @@ PHP_FUNCTION(posix_getrlimit)
 	array_init(return_value);
 
 	for (l=limits; l->name; l++) {
-		if (posix_addlimit(l->limit, l->name, return_value TSRMLS_CC) == FAILURE) {
+		if (posix_addlimit(l->limit, l->name, return_value, TSRMLS_C) == FAILURE) {
 			zval_dtor(return_value);
 			RETURN_FALSE;
 		}
@@ -1338,7 +1338,7 @@ PHP_FUNCTION(posix_strerror)
 {
 	long error;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &error) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &error) == FAILURE) {
 		RETURN_FALSE;
 	}
 
@@ -1357,7 +1357,7 @@ PHP_FUNCTION(posix_initgroups)
 	char *name;
 	int name_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &name, &name_len, &basegid) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sl", &name, &name_len, &basegid) == FAILURE) {
 		RETURN_FALSE;
 	}
 

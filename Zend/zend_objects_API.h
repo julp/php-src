@@ -24,9 +24,9 @@
 
 #include "zend.h"
 
-typedef void (*zend_objects_store_dtor_t)(void *object, zend_object_handle handle TSRMLS_DC);
-typedef void (*zend_objects_free_object_storage_t)(void *object TSRMLS_DC);
-typedef void (*zend_objects_store_clone_t)(void *object, void **object_clone TSRMLS_DC);
+typedef void (*zend_objects_store_dtor_t)(void *object, zend_object_handle handle, TSRMLS_D);
+typedef void (*zend_objects_free_object_storage_t)(void *object, TSRMLS_D);
+typedef void (*zend_objects_store_clone_t)(void *object, void **object_clone, TSRMLS_D);
 
 typedef struct _zend_object_store_bucket {
 	zend_bool destructor_called;
@@ -58,33 +58,33 @@ typedef struct _zend_objects_store {
 /* Global store handling functions */
 BEGIN_EXTERN_C()
 ZEND_API void zend_objects_store_init(zend_objects_store *objects, zend_uint init_size);
-ZEND_API void zend_objects_store_call_destructors(zend_objects_store *objects TSRMLS_DC);
-ZEND_API void zend_objects_store_mark_destructed(zend_objects_store *objects TSRMLS_DC);
+ZEND_API void zend_objects_store_call_destructors(zend_objects_store *objects, TSRMLS_D);
+ZEND_API void zend_objects_store_mark_destructed(zend_objects_store *objects, TSRMLS_D);
 ZEND_API void zend_objects_store_destroy(zend_objects_store *objects);
 
 /* Store API functions */
-ZEND_API zend_object_handle zend_objects_store_put(void *object, zend_objects_store_dtor_t dtor, zend_objects_free_object_storage_t storage, zend_objects_store_clone_t clone TSRMLS_DC);
+ZEND_API zend_object_handle zend_objects_store_put(void *object, zend_objects_store_dtor_t dtor, zend_objects_free_object_storage_t storage, zend_objects_store_clone_t clone, TSRMLS_D);
 
-ZEND_API void zend_objects_store_add_ref(zval *object TSRMLS_DC);
-ZEND_API void zend_objects_store_del_ref(zval *object TSRMLS_DC);
-ZEND_API void zend_objects_store_add_ref_by_handle(zend_object_handle handle TSRMLS_DC);
-ZEND_API void zend_objects_store_del_ref_by_handle_ex(zend_object_handle handle, const zend_object_handlers *handlers TSRMLS_DC);
-static zend_always_inline void zend_objects_store_del_ref_by_handle(zend_object_handle handle TSRMLS_DC) {
-	zend_objects_store_del_ref_by_handle_ex(handle, NULL TSRMLS_CC);
+ZEND_API void zend_objects_store_add_ref(zval *object, TSRMLS_D);
+ZEND_API void zend_objects_store_del_ref(zval *object, TSRMLS_D);
+ZEND_API void zend_objects_store_add_ref_by_handle(zend_object_handle handle, TSRMLS_D);
+ZEND_API void zend_objects_store_del_ref_by_handle_ex(zend_object_handle handle, const zend_object_handlers *handlers, TSRMLS_D);
+static zend_always_inline void zend_objects_store_del_ref_by_handle(zend_object_handle handle, TSRMLS_D) {
+	zend_objects_store_del_ref_by_handle_ex(handle, NULL, TSRMLS_C);
 }
-ZEND_API zend_uint zend_objects_store_get_refcount(zval *object TSRMLS_DC);
-ZEND_API zend_object_value zend_objects_store_clone_obj(zval *object TSRMLS_DC);
-ZEND_API void *zend_object_store_get_object(const zval *object TSRMLS_DC);
-ZEND_API void *zend_object_store_get_object_by_handle(zend_object_handle handle TSRMLS_DC);
+ZEND_API zend_uint zend_objects_store_get_refcount(zval *object, TSRMLS_D);
+ZEND_API zend_object_value zend_objects_store_clone_obj(zval *object, TSRMLS_D);
+ZEND_API void *zend_object_store_get_object(const zval *object, TSRMLS_D);
+ZEND_API void *zend_object_store_get_object_by_handle(zend_object_handle handle, TSRMLS_D);
 /* See comment in zend_objects_API.c before you use this */
-ZEND_API void zend_object_store_set_object(zval *zobject, void *object TSRMLS_DC);
-ZEND_API void zend_object_store_ctor_failed(zval *zobject TSRMLS_DC);
+ZEND_API void zend_object_store_set_object(zval *zobject, void *object, TSRMLS_D);
+ZEND_API void zend_object_store_ctor_failed(zval *zobject, TSRMLS_D);
 
-ZEND_API void zend_objects_store_free_object_storage(zend_objects_store *objects TSRMLS_DC);
+ZEND_API void zend_objects_store_free_object_storage(zend_objects_store *objects, TSRMLS_D);
 
 #define ZEND_OBJECTS_STORE_HANDLERS zend_objects_store_add_ref, zend_objects_store_del_ref, zend_objects_store_clone_obj
 
-ZEND_API zval *zend_object_create_proxy(zval *object, zval *member TSRMLS_DC);
+ZEND_API zval *zend_object_create_proxy(zval *object, zval *member, TSRMLS_D);
 
 ZEND_API zend_object_handlers *zend_get_std_object_handlers(void);
 END_EXTERN_C()

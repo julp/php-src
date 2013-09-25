@@ -226,7 +226,7 @@ static int is_wsdl_element(xmlNodePtr node)
 	return 1;
 }
 
-void sdl_set_uri_credentials(sdlCtx *ctx, char *uri TSRMLS_DC)
+void sdl_set_uri_credentials(sdlCtx *ctx, char *uri, TSRMLS_D)
 {
 	char *s;
 	int l1, l2;
@@ -278,8 +278,8 @@ void sdl_set_uri_credentials(sdlCtx *ctx, char *uri TSRMLS_DC)
 	}
 	if (l1 != l2 || memcmp(ctx->sdl->source, uri, l1) != 0) {
 		/* another server. clear authentication credentals */
-		context = php_libxml_switch_context(NULL TSRMLS_CC);
-		php_libxml_switch_context(context TSRMLS_CC);
+		context = php_libxml_switch_context(NULL, TSRMLS_C);
+		php_libxml_switch_context(context, TSRMLS_C);
 		if (context) {
 			ctx->context = php_stream_context_from_zval(context, 1);
 
@@ -308,7 +308,7 @@ void sdl_set_uri_credentials(sdlCtx *ctx, char *uri TSRMLS_DC)
 	}
 }
 
-void sdl_restore_uri_credentials(sdlCtx *ctx TSRMLS_DC)
+void sdl_restore_uri_credentials(sdlCtx *ctx, TSRMLS_D)
 {
 	if (ctx->old_header) {
 	    php_stream_context_set_option(ctx->context, "http", "header", ctx->old_header);
@@ -318,7 +318,7 @@ void sdl_restore_uri_credentials(sdlCtx *ctx TSRMLS_DC)
 	ctx->context = NULL;
 }
 
-static void load_wsdl_ex(zval *this_ptr, char *struri, sdlCtx *ctx, int include TSRMLS_DC)
+static void load_wsdl_ex(zval *this_ptr, char *struri, sdlCtx *ctx, int include, TSRMLS_D)
 {
 	sdlPtr tmpsdl = ctx->sdl;
 	xmlDocPtr wsdl;
@@ -329,9 +329,9 @@ static void load_wsdl_ex(zval *this_ptr, char *struri, sdlCtx *ctx, int include 
 		return;
 	}
 	
-	sdl_set_uri_credentials(ctx, struri TSRMLS_CC);
-	wsdl = soap_xmlParseFile(struri TSRMLS_CC);
-	sdl_restore_uri_credentials(ctx TSRMLS_CC);
+	sdl_set_uri_credentials(ctx, struri, TSRMLS_C);
+	wsdl = soap_xmlParseFile(struri, TSRMLS_C);
+	sdl_restore_uri_credentials(ctx, TSRMLS_C);
 	
 	if (!wsdl) {
 		xmlErrorPtr xmlErrorPtr = xmlGetLastError();
@@ -351,7 +351,7 @@ static void load_wsdl_ex(zval *this_ptr, char *struri, sdlCtx *ctx, int include 
 		if (include) {
 			xmlNodePtr schema = get_node_ex(root, "schema", XSD_NAMESPACE);
 			if (schema) {
-				load_schema(ctx, schema TSRMLS_CC);
+				load_schema(ctx, schema, TSRMLS_C);
 				return;
 			}
 		}
@@ -377,7 +377,7 @@ static void load_wsdl_ex(zval *this_ptr, char *struri, sdlCtx *ctx, int include 
 
 			while (trav2 != NULL) {
 				if (node_is_equal_ex(trav2, "schema", XSD_NAMESPACE)) {
-					load_schema(ctx, trav2 TSRMLS_CC);
+					load_schema(ctx, trav2, TSRMLS_C);
 				} else if (is_wsdl_element(trav2) && !node_is_equal(trav2,"documentation")) {
 					soap_error1(E_ERROR, "Parsing WSDL: Unexpected WSDL element <%s>", trav2->name);
 				}
@@ -396,7 +396,7 @@ static void load_wsdl_ex(zval *this_ptr, char *struri, sdlCtx *ctx, int include 
 					uri = xmlBuildURI(tmp->children->content, base);
 					xmlFree(base);
 				}
-				load_wsdl_ex(this_ptr, (char*)uri, ctx, 1 TSRMLS_CC);
+				load_wsdl_ex(this_ptr, (char*)uri, ctx, 1, TSRMLS_C);
 				xmlFree(uri);
 			}
 
@@ -728,7 +728,7 @@ static HashTable* wsdl_message(sdlCtx *ctx, xmlChar* message_name)
 	return parameters;
 }
 
-static sdlPtr load_wsdl(zval *this_ptr, char *struri TSRMLS_DC)
+static sdlPtr load_wsdl(zval *this_ptr, char *struri, TSRMLS_D)
 {
 	sdlCtx ctx;
 	int i,n;
@@ -745,7 +745,7 @@ static sdlPtr load_wsdl(zval *this_ptr, char *struri TSRMLS_DC)
 	zend_hash_init(&ctx.portTypes, 0, NULL, NULL, 0);
 	zend_hash_init(&ctx.services,  0, NULL, NULL, 0);
 
-	load_wsdl_ex(this_ptr, struri,&ctx, 0 TSRMLS_CC);
+	load_wsdl_ex(this_ptr, struri,&ctx, 0, TSRMLS_C);
 	schema_pass2(&ctx);
 
 	n = zend_hash_num_elements(&ctx.services);
@@ -1530,7 +1530,7 @@ static HashTable* sdl_deserialize_parameters(encodePtr *encoders, sdlTypePtr *ty
 	return ht;
 }
 
-static sdlPtr get_sdl_from_cache(const char *fn, const char *uri, time_t t, time_t *cached TSRMLS_DC)
+static sdlPtr get_sdl_from_cache(const char *fn, const char *uri, time_t t, time_t *cached, TSRMLS_D)
 {
 	sdlPtr sdl;
 	time_t old_t;
@@ -2107,7 +2107,7 @@ static void sdl_serialize_soap_body(sdlSoapBindingFunctionBodyPtr body, HashTabl
 	}
 }
 
-static void add_sdl_to_cache(const char *fn, const char *uri, time_t t, sdlPtr sdl TSRMLS_DC)
+static void add_sdl_to_cache(const char *fn, const char *uri, time_t t, sdlPtr sdl, TSRMLS_D)
 {
 	smart_str buf = {0};
 	smart_str *out = &buf;
@@ -2946,7 +2946,7 @@ static sdlFunctionPtr make_persistent_sdl_function(sdlFunctionPtr func, HashTabl
 	return pfunc;
 }
 
-static sdlPtr make_persistent_sdl(sdlPtr sdl TSRMLS_DC)
+static sdlPtr make_persistent_sdl(sdlPtr sdl, TSRMLS_D)
 {
 	sdlPtr psdl = NULL;
 	HashTable ptr_map;
@@ -3185,7 +3185,7 @@ static void delete_psdl(void *data)
 	free(tmp);
 }
 
-sdlPtr get_sdl(zval *this_ptr, char *uri, long cache_wsdl TSRMLS_DC)
+sdlPtr get_sdl(zval *this_ptr, char *uri, long cache_wsdl, TSRMLS_D)
 {
 	char  fn[MAXPATHLEN];
 	sdlPtr sdl = NULL;
@@ -3247,7 +3247,7 @@ sdlPtr get_sdl(zval *this_ptr, char *uri, long cache_wsdl TSRMLS_DC)
 		}
 		memcpy(key+len,md5str,sizeof(md5str));
 
-		if ((sdl = get_sdl_from_cache(key, uri, t-SOAP_GLOBAL(cache_ttl), &cached TSRMLS_CC)) != NULL) {
+		if ((sdl = get_sdl_from_cache(key, uri, t-SOAP_GLOBAL(cache_ttl), &cached, TSRMLS_C)) != NULL) {
 			t = cached;
 			efree(key);
 			goto cache_in_memory;
@@ -3301,10 +3301,10 @@ sdlPtr get_sdl(zval *this_ptr, char *uri, long cache_wsdl TSRMLS_DC)
 			zval_ptr_dtor(&str_proxy);
 		}
 
-		has_proxy_authorization = proxy_authentication(this_ptr, &headers TSRMLS_CC);
+		has_proxy_authorization = proxy_authentication(this_ptr, &headers, TSRMLS_C);
 	}
 
-	has_authorization = basic_authentication(this_ptr, &headers TSRMLS_CC);
+	has_authorization = basic_authentication(this_ptr, &headers, TSRMLS_C);
 
 	/* Use HTTP/1.1 with "Connection: close" by default */
 	if (php_stream_context_get_option(context, "http", "protocol_version", &tmp) == FAILURE) {
@@ -3322,7 +3322,7 @@ sdlPtr get_sdl(zval *this_ptr, char *uri, long cache_wsdl TSRMLS_DC)
 		if (!context) {
 			context = php_stream_context_alloc(TSRMLS_C);
 		} else {
-			http_context_headers(context, has_authorization, has_proxy_authorization, 0, &headers TSRMLS_CC);
+			http_context_headers(context, has_authorization, has_proxy_authorization, 0, &headers, TSRMLS_C);
 		}
 
 		smart_str_0(&headers);
@@ -3336,12 +3336,12 @@ sdlPtr get_sdl(zval *this_ptr, char *uri, long cache_wsdl TSRMLS_DC)
 	if (context) {
 		MAKE_STD_ZVAL(new_context);
 		php_stream_context_to_zval(context, new_context);
-		orig_context = php_libxml_switch_context(new_context TSRMLS_CC);
+		orig_context = php_libxml_switch_context(new_context, TSRMLS_C);
 	}
 
 	SOAP_GLOBAL(error_code) = "WSDL";
 
-	sdl = load_wsdl(this_ptr, uri TSRMLS_CC);
+	sdl = load_wsdl(this_ptr, uri, TSRMLS_C);
 	if (sdl) {
 		sdl->is_persistent = 0;
 	}
@@ -3349,13 +3349,13 @@ sdlPtr get_sdl(zval *this_ptr, char *uri, long cache_wsdl TSRMLS_DC)
 	SOAP_GLOBAL(error_code) = old_error_code;
 
 	if (context) {
-		php_libxml_switch_context(orig_context TSRMLS_CC);
+		php_libxml_switch_context(orig_context, TSRMLS_C);
 		zval_ptr_dtor(&new_context);
 	}
 
 	if ((cache_wsdl & WSDL_CACHE_DISK) && key) {
 		if (sdl) {
-			add_sdl_to_cache(key, uri, t, sdl TSRMLS_CC);
+			add_sdl_to_cache(key, uri, t, sdl, TSRMLS_C);
 		}
 		efree(key);
 	}
@@ -3394,7 +3394,7 @@ cache_in_memory:
 				}
 			}
 
-			psdl = make_persistent_sdl(sdl TSRMLS_CC);
+			psdl = make_persistent_sdl(sdl, TSRMLS_C);
 			psdl->is_persistent = 1;
 			p.time = t;
 			p.sdl = psdl;
@@ -3406,7 +3406,7 @@ cache_in_memory:
 				/* and replace it with persistent one */
 				sdl = psdl;
 			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to register persistent entry");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Failed to register persistent entry");
 				/* clean up persistent sdl */
 				delete_psdl(&p);
 				/* keep non-persistent sdl and return it */

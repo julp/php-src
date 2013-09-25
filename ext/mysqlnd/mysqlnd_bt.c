@@ -50,7 +50,7 @@
 
 
 static int
-mysqlnd_build_trace_args(zval **arg TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key) /* {{{ */
+mysqlnd_build_trace_args(zval **arg, TSRMLS_D, int num_args, va_list args, zend_hash_key *hash_key) /* {{{ */
 {
 	char **str;
 	int *len;
@@ -129,7 +129,7 @@ mysqlnd_build_trace_args(zval **arg TSRMLS_DC, int num_args, va_list args, zend_
 
 			TRACE_APPEND_STR("Object(");
 
-			dupl = zend_get_object_classname(*arg, (const char **)&class_name, &class_name_len TSRMLS_CC);
+			dupl = zend_get_object_classname(*arg, (const char **)&class_name, &class_name_len, TSRMLS_C);
 
 			TRACE_APPEND_STRL(class_name, class_name_len);
 			if (!dupl) {
@@ -147,7 +147,7 @@ mysqlnd_build_trace_args(zval **arg TSRMLS_DC, int num_args, va_list args, zend_
 /* }}} */
 
 static int
-mysqlnd_build_trace_string(zval **frame TSRMLS_DC, int num_args, va_list args, zend_hash_key *hash_key) /* {{{ */
+mysqlnd_build_trace_string(zval **frame, TSRMLS_D, int num_args, va_list args, zend_hash_key *hash_key) /* {{{ */
 {
 	char *s_tmp, **str;
 	int *len, *num;
@@ -189,7 +189,7 @@ mysqlnd_build_trace_string(zval **frame TSRMLS_DC, int num_args, va_list args, z
 	TRACE_APPEND_CHR('(');
 	if (zend_hash_find(ht, "args", sizeof("args"), (void**)&tmp) == SUCCESS) {
 		int last_len = *len;
-		zend_hash_apply_with_arguments(Z_ARRVAL_PP(tmp) TSRMLS_CC, (apply_func_args_t)mysqlnd_build_trace_args, 2, str, len);
+		zend_hash_apply_with_arguments(Z_ARRVAL_PP(tmp), TSRMLS_C, (apply_func_args_t)mysqlnd_build_trace_args, 2, str, len);
 		if (last_len != *len) {
 			*len -= 2; /* remove last ', ' */
 		}
@@ -201,7 +201,7 @@ mysqlnd_build_trace_string(zval **frame TSRMLS_DC, int num_args, va_list args, z
 
 
 PHPAPI char *
-mysqlnd_get_backtrace(uint max_levels, size_t * length TSRMLS_DC)
+mysqlnd_get_backtrace(uint max_levels, size_t * length, TSRMLS_D)
 {
 	zval *trace;
 	char *res = estrdup(""), **str = &res, *s_tmp;
@@ -211,9 +211,9 @@ mysqlnd_get_backtrace(uint max_levels, size_t * length TSRMLS_DC)
 	}
 
 	MAKE_STD_ZVAL(trace);
-	zend_fetch_debug_backtrace(trace, 0, 0, 0 TSRMLS_CC);
+	zend_fetch_debug_backtrace(trace, 0, 0, 0, TSRMLS_C);
 
-	zend_hash_apply_with_arguments(Z_ARRVAL_P(trace) TSRMLS_CC, (apply_func_args_t)mysqlnd_build_trace_string, 4, &max_levels, str, len, &num);
+	zend_hash_apply_with_arguments(Z_ARRVAL_P(trace), TSRMLS_C, (apply_func_args_t)mysqlnd_build_trace_string, 4, &max_levels, str, len, &num);
 	zval_ptr_dtor(&trace);
 
 	if (max_levels) {

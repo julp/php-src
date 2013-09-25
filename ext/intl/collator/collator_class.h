@@ -43,8 +43,8 @@ typedef struct {
 #define COLLATOR_ERROR_CODE_P(co) &(INTL_ERROR_CODE(COLLATOR_ERROR(co)))
 
 void collator_register_Collator_class( TSRMLS_D );
-void collator_object_init( Collator_object* co TSRMLS_DC );
-void collator_object_destroy( Collator_object* co TSRMLS_DC );
+void collator_object_init( Collator_object* co, TSRMLS_D );
+void collator_object_destroy( Collator_object* co, TSRMLS_D );
 
 extern zend_class_entry *Collator_ce_ptr;
 
@@ -53,16 +53,16 @@ extern zend_class_entry *Collator_ce_ptr;
 #define COLLATOR_METHOD_INIT_VARS       \
     zval*             object  = NULL;   \
     Collator_object*  co      = NULL;   \
-    intl_error_reset( NULL TSRMLS_CC ); \
+    intl_error_reset( NULL, TSRMLS_C ); \
 
 #define COLLATOR_METHOD_FETCH_OBJECT	INTL_METHOD_FETCH_OBJECT(Collator, co)
 
 // Macro to check return value of a ucol_* function call.
 #define COLLATOR_CHECK_STATUS( co, msg )                                        \
-    intl_error_set_code( NULL, COLLATOR_ERROR_CODE( co ) TSRMLS_CC );           \
+    intl_error_set_code( NULL, COLLATOR_ERROR_CODE( co ), TSRMLS_C );           \
     if( U_FAILURE( COLLATOR_ERROR_CODE( co ) ) )                                \
     {                                                                           \
-        intl_errors_set_custom_msg( COLLATOR_ERROR_P( co ), msg, 0 TSRMLS_CC ); \
+        intl_errors_set_custom_msg( COLLATOR_ERROR_P( co ), msg, 0, TSRMLS_C ); \
         RETURN_FALSE;                                                           \
     }                                                                           \
 

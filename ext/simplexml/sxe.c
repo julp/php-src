@@ -46,8 +46,8 @@ PHP_METHOD(ce_SimpleXMLIterator, rewind)
 		return;
 	}
 
-	iter.sxe = php_sxe_fetch_object(getThis() TSRMLS_CC);
-	ce_SimpleXMLElement->iterator_funcs.funcs->rewind((zend_object_iterator*)&iter TSRMLS_CC);
+	iter.sxe = php_sxe_fetch_object(getThis(), TSRMLS_C);
+	ce_SimpleXMLElement->iterator_funcs.funcs->rewind((zend_object_iterator*)&iter, TSRMLS_C);
 }
 /* }}} */
 
@@ -55,7 +55,7 @@ PHP_METHOD(ce_SimpleXMLIterator, rewind)
  Check whether iteration is valid */
 PHP_METHOD(ce_SimpleXMLIterator, valid)
 {
-	php_sxe_object *sxe = php_sxe_fetch_object(getThis() TSRMLS_CC);
+	php_sxe_object *sxe = php_sxe_fetch_object(getThis(), TSRMLS_C);
 	
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
@@ -69,7 +69,7 @@ PHP_METHOD(ce_SimpleXMLIterator, valid)
  Get current element */
 PHP_METHOD(ce_SimpleXMLIterator, current)
 {
-	php_sxe_object *sxe = php_sxe_fetch_object(getThis() TSRMLS_CC);
+	php_sxe_object *sxe = php_sxe_fetch_object(getThis(), TSRMLS_C);
 	
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
@@ -89,7 +89,7 @@ PHP_METHOD(ce_SimpleXMLIterator, key)
 {
 	xmlNodePtr curnode;
 	php_sxe_object *intern;
-	php_sxe_object *sxe = php_sxe_fetch_object(getThis() TSRMLS_CC);
+	php_sxe_object *sxe = php_sxe_fetch_object(getThis(), TSRMLS_C);
 	
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
@@ -99,7 +99,7 @@ PHP_METHOD(ce_SimpleXMLIterator, key)
 		RETURN_FALSE;
 	}
 
-	intern = (php_sxe_object *)zend_object_store_get_object(sxe->iter.data TSRMLS_CC);
+	intern = (php_sxe_object *)zend_object_store_get_object(sxe->iter.data, TSRMLS_C);
 	if (intern != NULL && intern->node != NULL) {
 		curnode = (xmlNodePtr)((php_libxml_node_ptr *)intern->node)->node;
 		RETURN_STRINGL((char*)curnode->name, xmlStrlen(curnode->name), 1);
@@ -119,8 +119,8 @@ PHP_METHOD(ce_SimpleXMLIterator, next)
 		return;
 	}
 
-	iter.sxe = php_sxe_fetch_object(getThis() TSRMLS_CC);
-	ce_SimpleXMLElement->iterator_funcs.funcs->move_forward((zend_object_iterator*)&iter TSRMLS_CC);
+	iter.sxe = php_sxe_fetch_object(getThis(), TSRMLS_C);
+	ce_SimpleXMLElement->iterator_funcs.funcs->move_forward((zend_object_iterator*)&iter, TSRMLS_C);
 }
 /* }}} */
 
@@ -128,7 +128,7 @@ PHP_METHOD(ce_SimpleXMLIterator, next)
  Check whether element has children (elements) */ 
 PHP_METHOD(ce_SimpleXMLIterator, hasChildren)
 {
-	php_sxe_object *sxe = php_sxe_fetch_object(getThis() TSRMLS_CC);
+	php_sxe_object *sxe = php_sxe_fetch_object(getThis(), TSRMLS_C);
 	php_sxe_object *child;
 	xmlNodePtr      node;
 	
@@ -139,7 +139,7 @@ PHP_METHOD(ce_SimpleXMLIterator, hasChildren)
 	if (!sxe->iter.data || sxe->iter.type == SXE_ITER_ATTRLIST) {
 		RETURN_FALSE;
 	}
-	child = php_sxe_fetch_object(sxe->iter.data TSRMLS_CC);
+	child = php_sxe_fetch_object(sxe->iter.data, TSRMLS_C);
 
 	GET_NODE(child, node);
 	if (node) {
@@ -156,7 +156,7 @@ PHP_METHOD(ce_SimpleXMLIterator, hasChildren)
  Get child element iterator */ 
 PHP_METHOD(ce_SimpleXMLIterator, getChildren)
 {
-	php_sxe_object *sxe = php_sxe_fetch_object(getThis() TSRMLS_CC);
+	php_sxe_object *sxe = php_sxe_fetch_object(getThis(), TSRMLS_C);
 	
 	if (zend_parse_parameters_none() == FAILURE) {
 		return;
@@ -199,11 +199,11 @@ PHP_MINIT_FUNCTION(sxe) /* {{{ */
 	ce_SimpleXMLElement = *pce;
 
 	INIT_CLASS_ENTRY_EX(sxi, "SimpleXMLIterator", strlen("SimpleXMLIterator"), funcs_SimpleXMLIterator);
-	ce_SimpleXMLIterator = zend_register_internal_class_ex(&sxi, ce_SimpleXMLElement, NULL TSRMLS_CC);
+	ce_SimpleXMLIterator = zend_register_internal_class_ex(&sxi, ce_SimpleXMLElement, NULL, TSRMLS_C);
 	ce_SimpleXMLIterator->create_object = ce_SimpleXMLElement->create_object;
 
-	zend_class_implements(ce_SimpleXMLIterator TSRMLS_CC, 1, spl_ce_RecursiveIterator);
-	zend_class_implements(ce_SimpleXMLIterator TSRMLS_CC, 1, spl_ce_Countable);
+	zend_class_implements(ce_SimpleXMLIterator, TSRMLS_C, 1, spl_ce_RecursiveIterator);
+	zend_class_implements(ce_SimpleXMLIterator, TSRMLS_C, 1, spl_ce_Countable);
 
 	return SUCCESS;
 }

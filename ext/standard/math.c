@@ -278,7 +278,7 @@ PHP_FUNCTION(abs)
 {
 	zval **value;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &value) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &value) == FAILURE) {
 		return;
 	}
 	convert_scalar_to_number_ex(value);
@@ -302,7 +302,7 @@ PHP_FUNCTION(ceil)
 {
 	zval **value;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &value) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &value) == FAILURE) {
 		return;
 	}
 	convert_scalar_to_number_ex(value);
@@ -323,7 +323,7 @@ PHP_FUNCTION(floor)
 {
 	zval **value;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &value) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &value) == FAILURE) {
 		return;
 	}
 	convert_scalar_to_number_ex(value);
@@ -348,7 +348,7 @@ PHP_FUNCTION(round)
 	long mode = PHP_ROUND_HALF_UP;
 	double return_val;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z|ll", &value, &precision, &mode) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z|ll", &value, &precision, &mode) == FAILURE) {
 		return;
 	}
 
@@ -384,7 +384,7 @@ PHP_FUNCTION(sin)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(sin(num));
@@ -397,7 +397,7 @@ PHP_FUNCTION(cos)
 {
 	double num;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(cos(num));
@@ -410,7 +410,7 @@ PHP_FUNCTION(tan)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(tan(num));
@@ -423,7 +423,7 @@ PHP_FUNCTION(asin)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(asin(num));
@@ -436,7 +436,7 @@ PHP_FUNCTION(acos)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(acos(num));
@@ -449,7 +449,7 @@ PHP_FUNCTION(atan)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(atan(num));
@@ -462,7 +462,7 @@ PHP_FUNCTION(atan2)
 {
 	double num1, num2;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "dd", &num1, &num2) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "dd", &num1, &num2) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(atan2(num1, num2));
@@ -475,7 +475,7 @@ PHP_FUNCTION(sinh)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(sinh(num));
@@ -488,7 +488,7 @@ PHP_FUNCTION(cosh)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(cosh(num));
@@ -501,7 +501,7 @@ PHP_FUNCTION(tanh)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(tanh(num));
@@ -514,7 +514,7 @@ PHP_FUNCTION(asinh)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(php_asinh(num));
@@ -527,7 +527,7 @@ PHP_FUNCTION(acosh)
 {
 	double num;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(php_acosh(num));
@@ -540,7 +540,7 @@ PHP_FUNCTION(atanh)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(php_atanh(num));
@@ -561,7 +561,7 @@ PHP_FUNCTION(is_finite)
 {
 	double dval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &dval) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &dval) == FAILURE) {
 		return;
 	}
 	RETURN_BOOL(zend_finite(dval));
@@ -574,7 +574,7 @@ PHP_FUNCTION(is_infinite)
 {
 	double dval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &dval) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &dval) == FAILURE) {
 		return;
 	}
 	RETURN_BOOL(zend_isinf(dval));
@@ -587,7 +587,7 @@ PHP_FUNCTION(is_nan)
 {
 	double dval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &dval) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &dval) == FAILURE) {
 		return;
 	}
 	RETURN_BOOL(zend_isnan(dval));
@@ -600,13 +600,13 @@ PHP_FUNCTION(pow)
 {
 	zval *zbase, *zexp;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z/z/", &zbase, &zexp) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "z/z/", &zbase, &zexp) == FAILURE) {
 		return;
 	}
 
 	/* make sure we're dealing with numbers */
-	convert_scalar_to_number(zbase TSRMLS_CC);
-	convert_scalar_to_number(zexp TSRMLS_CC);
+	convert_scalar_to_number(zbase, TSRMLS_C);
+	convert_scalar_to_number(zexp, TSRMLS_C);
 
 	/* if both base and exponent were longs, we'll try to get a long out */
 	if (Z_TYPE_P(zbase) == IS_LONG && Z_TYPE_P(zexp) == IS_LONG && Z_LVAL_P(zexp) >= 0) {
@@ -650,7 +650,7 @@ PHP_FUNCTION(exp)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 
@@ -668,7 +668,7 @@ PHP_FUNCTION(expm1)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(php_expm1(num));
@@ -685,7 +685,7 @@ PHP_FUNCTION(log1p)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(php_log1p(num));
@@ -698,14 +698,14 @@ PHP_FUNCTION(log)
 {
 	double num, base = 0;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d|d", &num, &base) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d|d", &num, &base) == FAILURE) {
 		return;
 	}
 	if (ZEND_NUM_ARGS() == 1) {
 		RETURN_DOUBLE(log(num));
 	}
 	if (base <= 0.0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "base must be greater than 0");				
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "base must be greater than 0");				
 		RETURN_FALSE;
 	}
 	if (base == 1) {
@@ -722,7 +722,7 @@ PHP_FUNCTION(log10)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(log10(num));
@@ -735,7 +735,7 @@ PHP_FUNCTION(sqrt)
 {
 	double num;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &num) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &num) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(sqrt(num));
@@ -748,7 +748,7 @@ PHP_FUNCTION(hypot)
 {
 	double num1, num2;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "dd", &num1, &num2) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "dd", &num1, &num2) == FAILURE) {
 		return;
 	}
 #if HAVE_HYPOT
@@ -767,7 +767,7 @@ PHP_FUNCTION(deg2rad)
 {
 	double deg;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &deg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &deg) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE((deg / 180.0) * M_PI);
@@ -780,7 +780,7 @@ PHP_FUNCTION(rad2deg)
 {
 	double rad;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d", &rad) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d", &rad) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE((rad / M_PI) * 180);
@@ -823,7 +823,7 @@ PHPAPI long _php_math_basetolong(zval *arg, int base)
 		{
 			TSRMLS_FETCH();
 
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Number '%s' is too big to fit in long", s);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Number '%s' is too big to fit in long", s);
 			return LONG_MAX;
 		}
 	}
@@ -930,7 +930,7 @@ PHPAPI char * _php_math_longtobase(zval *arg, int base)
  * Convert a zval to a string containing a base(2-36) representation of
  * the number.
  */
-PHPAPI char * _php_math_zvaltobase(zval *arg, int base TSRMLS_DC)
+PHPAPI char * _php_math_zvaltobase(zval *arg, int base, TSRMLS_D)
 {
 	static char digits[] = "0123456789abcdefghijklmnopqrstuvwxyz";
 
@@ -945,7 +945,7 @@ PHPAPI char * _php_math_zvaltobase(zval *arg, int base TSRMLS_DC)
 
 		/* Don't try to convert +/- infinity */
 		if (fvalue == HUGE_VAL || fvalue == -HUGE_VAL) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Number too large");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Number too large");
 			return STR_EMPTY_ALLOC();
 		}
 
@@ -970,7 +970,7 @@ PHP_FUNCTION(bindec)
 {
 	zval **arg;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &arg) == FAILURE) {
 		return;
 	}
 	convert_to_string_ex(arg);
@@ -986,7 +986,7 @@ PHP_FUNCTION(hexdec)
 {
 	zval **arg;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &arg) == FAILURE) {
 		return;
 	}
 	convert_to_string_ex(arg);
@@ -1002,7 +1002,7 @@ PHP_FUNCTION(octdec)
 {
 	zval **arg;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &arg) == FAILURE) {
 		return;
 	}
 	convert_to_string_ex(arg);
@@ -1019,7 +1019,7 @@ PHP_FUNCTION(decbin)
 	zval **arg;
 	char *result;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &arg) == FAILURE) {
 		return;
 	}
 	convert_to_long_ex(arg);
@@ -1035,7 +1035,7 @@ PHP_FUNCTION(decoct)
 	zval **arg;
 	char *result;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &arg) == FAILURE) {
 		return;
 	}
 	convert_to_long_ex(arg);
@@ -1051,7 +1051,7 @@ PHP_FUNCTION(dechex)
 	zval **arg;
 	char *result;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Z", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Z", &arg) == FAILURE) {
 		return;
 	}
 	convert_to_long_ex(arg);
@@ -1068,24 +1068,24 @@ PHP_FUNCTION(base_convert)
 	long frombase, tobase;
 	char *result;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "Zll", &number, &frombase, &tobase) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "Zll", &number, &frombase, &tobase) == FAILURE) {
 		return;
 	}
 	convert_to_string_ex(number);
 	
 	if (frombase < 2 || frombase > 36) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid `from base' (%ld)", frombase);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid `from base' (%ld)", frombase);
 		RETURN_FALSE;
 	}
 	if (tobase < 2 || tobase > 36) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid `to base' (%ld)", tobase);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid `to base' (%ld)", tobase);
 		RETURN_FALSE;
 	}
 
 	if(_php_math_basetozval(*number, frombase, &temp) == FAILURE) {
 		RETURN_FALSE;
 	}
-	result = _php_math_zvaltobase(&temp, tobase TSRMLS_CC);
+	result = _php_math_zvaltobase(&temp, tobase, TSRMLS_C);
 	RETVAL_STRING(result, 0);
 } 
 /* }}} */
@@ -1236,7 +1236,7 @@ PHP_FUNCTION(number_format)
 	char thousand_sep_chr = ',', dec_point_chr = '.';
 	int thousand_sep_len = 0, dec_point_len = 0;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "d|ls!s!", &num, &dec, &dec_point, &dec_point_len, &thousand_sep, &thousand_sep_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "d|ls!s!", &num, &dec, &dec_point, &dec_point_len, &thousand_sep, &thousand_sep_len) == FAILURE) {
 		return;
 	}
 
@@ -1276,7 +1276,7 @@ PHP_FUNCTION(fmod)
 {
 	double num1, num2;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "dd",  &num1, &num2) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "dd",  &num1, &num2) == FAILURE) {
 		return;
 	}
 	RETURN_DOUBLE(fmod(num1, num2));

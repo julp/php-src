@@ -58,34 +58,34 @@ PHP_METHOD(domprocessinginstruction, __construct)
 	int name_len, value_len, name_valid;
 	zend_error_handling error_handling;
 
-	zend_replace_error_handling(EH_THROW, dom_domexception_class_entry, &error_handling TSRMLS_CC);
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ou|u", &id, dom_processinginstruction_class_entry, &name, &name_len, &value, &value_len) == FAILURE) {
-		zend_restore_error_handling(&error_handling TSRMLS_CC);
+	zend_replace_error_handling(EH_THROW, dom_domexception_class_entry, &error_handling, TSRMLS_C);
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ou|u", &id, dom_processinginstruction_class_entry, &name, &name_len, &value, &value_len) == FAILURE) {
+		zend_restore_error_handling(&error_handling, TSRMLS_C);
 		return;
 	}
 
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	zend_restore_error_handling(&error_handling, TSRMLS_C);
 
 	name_valid = xmlValidateName((xmlChar *) name, 0);
 	if (name_valid != 0) {
-		php_dom_throw_error(INVALID_CHARACTER_ERR, 1 TSRMLS_CC);
+		php_dom_throw_error(INVALID_CHARACTER_ERR, 1, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
 	nodep = xmlNewPI((xmlChar *) name, (xmlChar *) value);
 
 	if (!nodep) {
-		php_dom_throw_error(INVALID_STATE_ERR, 1 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 1, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
-	intern = (dom_object *)zend_object_store_get_object(id TSRMLS_CC);
+	intern = (dom_object *)zend_object_store_get_object(id, TSRMLS_C);
 	if (intern != NULL) {
 		oldnode = dom_object_get_node(intern);
 		if (oldnode != NULL) {
-			php_libxml_node_free_resource(oldnode  TSRMLS_CC);
+			php_libxml_node_free_resource(oldnode,  TSRMLS_C);
 		}
-		php_libxml_increment_node_ptr((php_libxml_node_object *)intern, nodep, (void *)intern TSRMLS_CC);
+		php_libxml_increment_node_ptr((php_libxml_node_object *)intern, nodep, (void *)intern, TSRMLS_C);
 	}
 }
 /* }}} end DOMProcessingInstruction::__construct */
@@ -95,14 +95,14 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-1478689192
 Since: 
 */
-int dom_processinginstruction_target_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_processinginstruction_target_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlNodePtr nodep;
 
 	nodep = dom_object_get_node(obj);
 
 	if (nodep == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -119,7 +119,7 @@ readonly=no
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-837822393
 Since: 
 */
-int dom_processinginstruction_data_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_processinginstruction_data_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlNodePtr nodep;
 	xmlChar *content;
@@ -127,7 +127,7 @@ int dom_processinginstruction_data_read(dom_object *obj, zval **retval TSRMLS_DC
 	nodep = dom_object_get_node(obj);
 
 	if (nodep == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -144,7 +144,7 @@ int dom_processinginstruction_data_read(dom_object *obj, zval **retval TSRMLS_DC
 	return SUCCESS;
 }
 
-int dom_processinginstruction_data_write(dom_object *obj, zval *newval TSRMLS_DC)
+int dom_processinginstruction_data_write(dom_object *obj, zval *newval, TSRMLS_D)
 {
 	zval value_copy;
 	xmlNode *nodep;
@@ -152,7 +152,7 @@ int dom_processinginstruction_data_write(dom_object *obj, zval *newval TSRMLS_DC
 	nodep = dom_object_get_node(obj);
 
 	if (nodep == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 

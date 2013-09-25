@@ -35,17 +35,17 @@
 		__n = (__s)->node->node; \
 	} else { \
 		__n = NULL; \
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Node no longer exists"); \
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Node no longer exists"); \
 	} \
 }
 
-PHP_SXE_API zend_object_value sxe_object_new(zend_class_entry *ce TSRMLS_DC);
+PHP_SXE_API zend_object_value sxe_object_new(zend_class_entry *ce, TSRMLS_D);
 /* {{{ php_sxe_fetch_object()
  */
 static inline php_sxe_object *
-php_sxe_fetch_object(zval *object TSRMLS_DC)
+php_sxe_fetch_object(zval *object, TSRMLS_D)
 {
-	return (php_sxe_object *) zend_object_store_get_object(object TSRMLS_CC);
+	return (php_sxe_object *) zend_object_store_get_object(object, TSRMLS_C);
 }
 /* }}} */
 

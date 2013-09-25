@@ -43,7 +43,7 @@ extern zend_class_entry *IntlDateFormatter_ce_ptr;
 		DATE_FORMAT_METHOD_FETCH_OBJECT_NO_CHECK;	\
 	if (dfo->datef_data.udatf == NULL)				\
 	{												\
-		intl_errors_set(&dfo->datef_data.error, U_ILLEGAL_ARGUMENT_ERROR, "Found unconstructed IntlDateFormatter", 0 TSRMLS_CC); \
+		intl_errors_set(&dfo->datef_data.error, U_ILLEGAL_ARGUMENT_ERROR, "Found unconstructed IntlDateFormatter", 0, TSRMLS_C); \
 		RETURN_FALSE;								\
 	}
 

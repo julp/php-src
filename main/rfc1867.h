@@ -68,17 +68,17 @@ typedef struct _multipart_event_end {
 } multipart_event_end;
 
 typedef int (*php_rfc1867_encoding_translation_t)(TSRMLS_D);
-typedef void (*php_rfc1867_get_detect_order_t)(const zend_encoding ***list, size_t *list_size TSRMLS_DC);
-typedef void (*php_rfc1867_set_input_encoding_t)(const zend_encoding *encoding TSRMLS_DC);
-typedef char* (*php_rfc1867_getword_t)(const zend_encoding *encoding, char **line, char stop TSRMLS_DC);
-typedef char* (*php_rfc1867_getword_conf_t)(const zend_encoding *encoding, char *str TSRMLS_DC);
-typedef char* (*php_rfc1867_basename_t)(const zend_encoding *encoding, char *str TSRMLS_DC);
+typedef void (*php_rfc1867_get_detect_order_t)(const zend_encoding ***list, size_t *list_size, TSRMLS_D);
+typedef void (*php_rfc1867_set_input_encoding_t)(const zend_encoding *encoding, TSRMLS_D);
+typedef char* (*php_rfc1867_getword_t)(const zend_encoding *encoding, char **line, char stop, TSRMLS_D);
+typedef char* (*php_rfc1867_getword_conf_t)(const zend_encoding *encoding, char *str, TSRMLS_D);
+typedef char* (*php_rfc1867_basename_t)(const zend_encoding *encoding, char *str, TSRMLS_D);
 
 SAPI_API SAPI_POST_HANDLER_FUNC(rfc1867_post_handler);
 
 void destroy_uploaded_files_hash(TSRMLS_D);
 void php_rfc1867_register_constants(TSRMLS_D);
-extern PHPAPI int (*php_rfc1867_callback)(unsigned int event, void *event_data, void **extra TSRMLS_DC);
+extern PHPAPI int (*php_rfc1867_callback)(unsigned int event, void *event_data, void **extra, TSRMLS_D);
 
 SAPI_API void php_rfc1867_set_multibyte_callbacks(
 					php_rfc1867_encoding_translation_t encoding_translation,

@@ -36,31 +36,31 @@ static zend_object_handlers IntlPartsIterator_handlers;
 
 /* BreakIterator's iterator */
 
-inline BreakIterator *_breakiter_prolog(zend_object_iterator *iter TSRMLS_DC)
+inline BreakIterator *_breakiter_prolog(zend_object_iterator *iter, TSRMLS_D)
 {
 	BreakIterator_object *bio;
 	bio = (BreakIterator_object*)zend_object_store_get_object(
-			(const zval*)iter->data TSRMLS_CC);
-	intl_errors_reset(BREAKITER_ERROR_P(bio) TSRMLS_CC);
+			(const zval*)iter->data, TSRMLS_C);
+	intl_errors_reset(BREAKITER_ERROR_P(bio), TSRMLS_C);
 	if (bio->biter == NULL) {
 		intl_errors_set(BREAKITER_ERROR_P(bio), U_INVALID_STATE_ERROR,
 			"The BreakIterator object backing the PHP iterator is not "
-			"properly constructed", 0 TSRMLS_CC);
+			"properly constructed", 0, TSRMLS_C);
 	}
 	return bio->biter;
 }
 
-static void _breakiterator_destroy_it(zend_object_iterator *iter TSRMLS_DC)
+static void _breakiterator_destroy_it(zend_object_iterator *iter, TSRMLS_D)
 {
 	zval_ptr_dtor((zval**)&iter->data);
 }
 
-static void _breakiterator_move_forward(zend_object_iterator *iter TSRMLS_DC)
+static void _breakiterator_move_forward(zend_object_iterator *iter, TSRMLS_D)
 {
-	BreakIterator *biter = _breakiter_prolog(iter TSRMLS_CC);
+	BreakIterator *biter = _breakiter_prolog(iter, TSRMLS_C);
 	zoi_with_current *zoi_iter = (zoi_with_current*)iter;
 
-	iter->funcs->invalidate_current(iter TSRMLS_CC);
+	iter->funcs->invalidate_current(iter, TSRMLS_C);
 
 	if (biter == NULL) {
 		return;
@@ -73,9 +73,9 @@ static void _breakiterator_move_forward(zend_object_iterator *iter TSRMLS_DC)
 	} //else we've reached the end of the enum, nothing more is required
 }
 
-static void _breakiterator_rewind(zend_object_iterator *iter TSRMLS_DC)
+static void _breakiterator_rewind(zend_object_iterator *iter, TSRMLS_D)
 {
-	BreakIterator *biter = _breakiter_prolog(iter TSRMLS_CC);
+	BreakIterator *biter = _breakiter_prolog(iter, TSRMLS_C);
 	zoi_with_current *zoi_iter = (zoi_with_current*)iter;
 
 	int32_t pos = biter->first();
@@ -94,21 +94,21 @@ static zend_object_iterator_funcs breakiterator_iterator_funcs = {
 };
 
 U_CFUNC zend_object_iterator *_breakiterator_get_iterator(
-	zend_class_entry *ce, zval *object, int by_ref TSRMLS_DC)
+	zend_class_entry *ce, zval *object, int by_ref, TSRMLS_D)
 {
 	BreakIterator_object *bio;
 	if (by_ref) {
 		zend_throw_exception(NULL,
-			"Iteration by reference is not supported", 0 TSRMLS_CC);
+			"Iteration by reference is not supported", 0, TSRMLS_C);
 		return NULL;
 	}
 
-	bio = (BreakIterator_object*)zend_object_store_get_object(object TSRMLS_CC);
+	bio = (BreakIterator_object*)zend_object_store_get_object(object, TSRMLS_C);
 	BreakIterator *biter = bio->biter;
 
 	if (biter == NULL) {
 		zend_throw_exception(NULL,
-			"The BreakIterator is not properly constructed", 0 TSRMLS_CC);
+			"The BreakIterator is not properly constructed", 0, TSRMLS_C);
 		return NULL;
 	}
 
@@ -134,23 +134,23 @@ typedef struct zoi_break_iter_parts {
 	BreakIterator_object *bio; /* so we don't have to fetch it all the time */
 } zoi_break_iter_parts;
 
-static void _breakiterator_parts_destroy_it(zend_object_iterator *iter TSRMLS_DC)
+static void _breakiterator_parts_destroy_it(zend_object_iterator *iter, TSRMLS_D)
 {
 	zval_ptr_dtor(reinterpret_cast<zval**>(&iter->data));
 }
 
-static void _breakiterator_parts_get_current_key(zend_object_iterator *iter, zval *key TSRMLS_DC)
+static void _breakiterator_parts_get_current_key(zend_object_iterator *iter, zval *key, TSRMLS_D)
 {
 	/* the actual work is done in move_forward and rewind */
 	ZVAL_LONG(key, iter->index);
 }
 
-static void _breakiterator_parts_move_forward(zend_object_iterator *iter TSRMLS_DC)
+static void _breakiterator_parts_move_forward(zend_object_iterator *iter, TSRMLS_D)
 {
 	zoi_break_iter_parts *zoi_bit = (zoi_break_iter_parts*)iter;
 	BreakIterator_object *bio = zoi_bit->bio;
 
-	iter->funcs->invalidate_current(iter TSRMLS_CC);
+	iter->funcs->invalidate_current(iter, TSRMLS_C);
 
 	int32_t cur,
 			next;
@@ -191,18 +191,18 @@ static void _breakiterator_parts_move_forward(zend_object_iterator *iter TSRMLS_
 	ZVAL_STRINGL(zoi_bit->zoi_cur.current, res, len, 0);
 }
 
-static void _breakiterator_parts_rewind(zend_object_iterator *iter TSRMLS_DC)
+static void _breakiterator_parts_rewind(zend_object_iterator *iter, TSRMLS_D)
 {
 	zoi_break_iter_parts *zoi_bit = (zoi_break_iter_parts*)iter;
 	BreakIterator_object *bio = zoi_bit->bio;
 
 	if (zoi_bit->zoi_cur.current) {
-		iter->funcs->invalidate_current(iter TSRMLS_CC);
+		iter->funcs->invalidate_current(iter, TSRMLS_C);
 	}
 
 	bio->biter->first();
 
-	iter->funcs->move_forward(iter TSRMLS_CC);
+	iter->funcs->move_forward(iter, TSRMLS_C);
 }
 
 static zend_object_iterator_funcs breakiterator_parts_it_funcs = {
@@ -217,14 +217,14 @@ static zend_object_iterator_funcs breakiterator_parts_it_funcs = {
 
 void IntlIterator_from_BreakIterator_parts(zval *break_iter_zv,
 										   zval *object,
-										   parts_iter_key_type key_type TSRMLS_DC)
+										   parts_iter_key_type key_type, TSRMLS_D)
 {
 	IntlIterator_object *ii;
 
 	zval_add_ref(&break_iter_zv);
 
 	object_init_ex(object, IntlPartsIterator_ce_ptr);
-	ii = (IntlIterator_object*)zend_object_store_get_object(object TSRMLS_CC);
+	ii = (IntlIterator_object*)zend_object_store_get_object(object, TSRMLS_C);
 
 	ii->iterator = (zend_object_iterator*)emalloc(sizeof(zoi_break_iter_parts));
 	ii->iterator->data = break_iter_zv;
@@ -235,23 +235,23 @@ void IntlIterator_from_BreakIterator_parts(zval *break_iter_zv,
 	((zoi_with_current*)ii->iterator)->current = NULL;
 
 	((zoi_break_iter_parts*)ii->iterator)->bio = (BreakIterator_object*)
-		zend_object_store_get_object(break_iter_zv TSRMLS_CC);
+		zend_object_store_get_object(break_iter_zv, TSRMLS_C);
 	assert(((zoi_break_iter_parts*)ii->iterator)->bio->biter != NULL);
 	((zoi_break_iter_parts*)ii->iterator)->key_type = key_type;
 }
 
-U_CFUNC zend_object_value IntlPartsIterator_object_create(zend_class_entry *ce TSRMLS_DC)
+U_CFUNC zend_object_value IntlPartsIterator_object_create(zend_class_entry *ce, TSRMLS_D)
 {
 	zend_object_value		retval;
 
-	retval = IntlIterator_ce_ptr->create_object(ce TSRMLS_CC);
+	retval = IntlIterator_ce_ptr->create_object(ce, TSRMLS_C);
 	retval.handlers = &IntlPartsIterator_handlers;
 
 	return retval;
 }
 
 U_CFUNC zend_function *IntlPartsIterator_get_method(zval **object_ptr,
-		char *method, int method_len, const zend_literal *key TSRMLS_DC)
+		char *method, int method_len, const zend_literal *key, TSRMLS_D)
 {
 	zend_literal local_literal = {0};
 	zend_function *ret;
@@ -271,18 +271,18 @@ U_CFUNC zend_function *IntlPartsIterator_get_method(zval **object_ptr,
 			&& method_len == sizeof("getrulestatus") - 1
 			&& memcmp("getrulestatus", Z_STRVAL(key->constant),	method_len) == 0) {
 		IntlIterator_object *obj = (IntlIterator_object*)
-				zend_object_store_get_object(*object_ptr TSRMLS_CC);
+				zend_object_store_get_object(*object_ptr, TSRMLS_C);
 		if (obj->iterator && obj->iterator->data) {
 			zval *break_iter_zv = static_cast<zval*>(obj->iterator->data);
 			*object_ptr = break_iter_zv;
 			ret = Z_OBJ_HANDLER_P(break_iter_zv, get_method)(object_ptr,
-					method, method_len, key TSRMLS_CC);
+					method, method_len, key, TSRMLS_C);
 			goto end;
 		}
 	}
 
 	ret = std_object_handlers.get_method(object_ptr,
-			method, method_len, key TSRMLS_CC);
+			method, method_len, key, TSRMLS_C);
 
 end:
 	if (key == &local_literal) {
@@ -298,7 +298,7 @@ U_CFUNC PHP_METHOD(IntlPartsIterator, getBreakIterator)
 
 	if (zend_parse_parameters_none() == FAILURE) {
 		intl_error_set(NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"IntlPartsIterator::getBreakIterator: bad arguments", 0 TSRMLS_CC);
+			"IntlPartsIterator::getBreakIterator: bad arguments", 0, TSRMLS_C);
 		return;
 	}
 
@@ -323,7 +323,7 @@ U_CFUNC void breakiterator_register_IntlPartsIterator_class(TSRMLS_D)
 	/* Create and register 'BreakIterator' class. */
 	INIT_CLASS_ENTRY(ce, "IntlPartsIterator", IntlPartsIterator_class_functions);
 	IntlPartsIterator_ce_ptr = zend_register_internal_class_ex(&ce,
-			IntlIterator_ce_ptr, NULL TSRMLS_CC);
+			IntlIterator_ce_ptr, NULL, TSRMLS_C);
 	IntlPartsIterator_ce_ptr->create_object = IntlPartsIterator_object_create;
 
 	memcpy(&IntlPartsIterator_handlers, &IntlIterator_handlers,
@@ -332,7 +332,7 @@ U_CFUNC void breakiterator_register_IntlPartsIterator_class(TSRMLS_D)
 
 #define PARTSITER_DECL_LONG_CONST(name) \
 	zend_declare_class_constant_long(IntlPartsIterator_ce_ptr, #name, \
-		sizeof(#name) - 1, PARTS_ITERATOR_ ## name TSRMLS_CC)
+		sizeof(#name) - 1, PARTS_ITERATOR_ ## name, TSRMLS_C)
 
 	PARTSITER_DECL_LONG_CONST(KEY_SEQUENTIAL);
 	PARTSITER_DECL_LONG_CONST(KEY_LEFT);

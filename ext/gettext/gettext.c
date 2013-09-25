@@ -140,13 +140,13 @@ ZEND_GET_MODULE(php_gettext)
 
 #define PHP_GETTEXT_DOMAIN_LENGTH_CHECK \
 	if (domain_len > PHP_GETTEXT_MAX_DOMAIN_LENGTH) { \
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "domain passed too long"); \
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "domain passed too long"); \
 		RETURN_FALSE; \
 	}
 
 #define PHP_GETTEXT_LENGTH_CHECK(check_name, check_len) \
 	if (check_len > PHP_GETTEXT_MAX_MSGID_LENGTH) { \
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s passed too long", check_name); \
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "%s passed too long", check_name); \
 		RETURN_FALSE; \
 	}
 
@@ -164,7 +164,7 @@ PHP_NAMED_FUNCTION(zif_textdomain)
 	char *domain, *domain_name, *retval;
 	int domain_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &domain, &domain_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &domain, &domain_len) == FAILURE) {
 		return;
 	}
 
@@ -189,7 +189,7 @@ PHP_NAMED_FUNCTION(zif_gettext)
 	char *msgid, *msgstr;
 	int msgid_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &msgid, &msgid_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &msgid, &msgid_len) == FAILURE) {
 		return;
 	}
 
@@ -207,7 +207,7 @@ PHP_NAMED_FUNCTION(zif_dgettext)
 	char *domain, *msgid, *msgstr;
 	int domain_len, msgid_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &domain, &domain_len, &msgid, &msgid_len) == FAILURE)	{
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss", &domain, &domain_len, &msgid, &msgid_len) == FAILURE)	{
 		return;
 	}
 
@@ -228,7 +228,7 @@ PHP_NAMED_FUNCTION(zif_dcgettext)
 	int domain_len, msgid_len;
 	long category;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssl", &domain, &domain_len, &msgid, &msgid_len, &category) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ssl", &domain, &domain_len, &msgid, &msgid_len, &category) == FAILURE) {
 		return;
 	}
 
@@ -249,7 +249,7 @@ PHP_NAMED_FUNCTION(zif_bindtextdomain)
 	int domain_len, dir_len;
 	char *retval, dir_name[MAXPATHLEN];
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &domain, &domain_len, &dir, &dir_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss", &domain, &domain_len, &dir, &dir_len) == FAILURE) {
 		return;
 	}
 
@@ -283,7 +283,7 @@ PHP_NAMED_FUNCTION(zif_ngettext)
 	int msgid1_len, msgid2_len;
 	long count;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ssl", &msgid1, &msgid1_len, &msgid2, &msgid2_len, &count) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ssl", &msgid1, &msgid1_len, &msgid2, &msgid2_len, &count) == FAILURE) {
 		return;
 	}
 
@@ -307,7 +307,7 @@ PHP_NAMED_FUNCTION(zif_dngettext)
 	int domain_len, msgid1_len, msgid2_len;
 	long count;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssl", &domain, &domain_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sssl", &domain, &domain_len,
 		&msgid1, &msgid1_len, &msgid2, &msgid2_len, &count) == FAILURE) {
 		return;
 	}
@@ -335,7 +335,7 @@ PHP_NAMED_FUNCTION(zif_dcngettext)
 
 	RETVAL_FALSE;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sssll", &domain, &domain_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sssll", &domain, &domain_len,
 		&msgid1, &msgid1_len, &msgid2, &msgid2_len, &count, &category) == FAILURE) {
 		return;
 	}
@@ -362,7 +362,7 @@ PHP_NAMED_FUNCTION(zif_bind_textdomain_codeset)
 	char *domain, *codeset, *retval = NULL;
 	int domain_len, codeset_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &domain, &domain_len, &codeset, &codeset_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss", &domain, &domain_len, &codeset, &codeset_len) == FAILURE) {
 		return;
 	}
 

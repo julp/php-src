@@ -54,39 +54,39 @@ typedef struct _dom_object {
 
 PHP_DOM_EXPORT extern zend_class_entry *dom_node_class_entry;
 PHP_DOM_EXPORT dom_object *php_dom_object_get_data(xmlNodePtr obj);
-PHP_DOM_EXPORT zval *php_dom_create_object(xmlNodePtr obj, int *found, zval* return_value, dom_object *domobj TSRMLS_DC);
+PHP_DOM_EXPORT zval *php_dom_create_object(xmlNodePtr obj, int *found, zval* return_value, dom_object *domobj, TSRMLS_D);
 PHP_DOM_EXPORT xmlNodePtr dom_object_get_node(dom_object *obj);
 
 #define DOM_XMLNS_NAMESPACE \
     (const xmlChar *) "http://www.w3.org/2000/xmlns/"
 
 #define NODE_GET_OBJ(__ptr, __id, __prtype, __intern) { \
-	__intern = (php_libxml_node_object *)zend_object_store_get_object(__id TSRMLS_CC); \
+	__intern = (php_libxml_node_object *)zend_object_store_get_object(__id, TSRMLS_C); \
 	if (__intern->node == NULL || !(__ptr = (__prtype)__intern->node->node)) { \
-  		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't fetch %s", __intern->std.ce->name);\
+  		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Couldn't fetch %s", __intern->std.ce->name);\
   		RETURN_NULL();\
   	} \
 }
 
 #define DOC_GET_OBJ(__ptr, __id, __prtype, __intern) { \
-	__intern = (php_libxml_node_object *)zend_object_store_get_object(__id TSRMLS_CC); \
+	__intern = (php_libxml_node_object *)zend_object_store_get_object(__id, TSRMLS_C); \
 	if (__intern->document != NULL) { \
 		if (!(__ptr = (__prtype)__intern->document->ptr)) { \
-  			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't fetch %s", __intern->std.ce->name);\
+  			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Couldn't fetch %s", __intern->std.ce->name);\
   			RETURN_NULL();\
   		} \
 	} \
 }
 
 #define DOM_RET_OBJ(obj, ret, domobject) \
-	if (!php_dom_create_object(obj, ret, return_value, domobject TSRMLS_CC)) { \
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot create required DOM object"); \
+	if (!php_dom_create_object(obj, ret, return_value, domobject, TSRMLS_C)) { \
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot create required DOM object"); \
 		RETURN_FALSE; \
 	}
 
 #define DOM_GET_THIS(zval) \
 	if (NULL == (zval = getThis())) { \
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Underlying object missing"); \
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Underlying object missing"); \
 		RETURN_FALSE; \
 	}
 

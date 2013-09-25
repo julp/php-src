@@ -121,7 +121,7 @@ struct dotnet_runtime_stuff {
 	DISPID create_instance;
 };
 
-static HRESULT dotnet_init(char **p_where TSRMLS_DC)
+static HRESULT dotnet_init(char **p_where, TSRMLS_D)
 {
 	HRESULT hr;
 	struct dotnet_runtime_stuff *stuff;
@@ -199,14 +199,14 @@ PHP_FUNCTION(com_dotnet_create_instance)
 
 	php_com_initialize(TSRMLS_C);
 	if (COMG(dotnet_runtime_stuff) == NULL) {
-		hr = dotnet_init(&where TSRMLS_CC);
+		hr = dotnet_init(&where, TSRMLS_C);
 		if (FAILED(hr)) {
 			char buf[1024];
 			char *err = php_win32_error_to_msg(hr);
 			snprintf(buf, sizeof(buf), "Failed to init .Net runtime [%s] %s", where, err);
 			if (err)
 				LocalFree(err);
-			php_com_throw_exception(hr, buf TSRMLS_CC);
+			php_com_throw_exception(hr, buf, TSRMLS_C);
 			ZVAL_NULL(object);
 			return;
 		}
@@ -216,17 +216,17 @@ PHP_FUNCTION(com_dotnet_create_instance)
 
 	obj = CDNO_FETCH(object);
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|l",
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss|l",
 			&assembly_name, &assembly_name_len,
 			&datatype_name, &datatype_name_len,
 			&obj->code_page)) {
-		php_com_throw_exception(E_INVALIDARG, "Could not create .Net object - invalid arguments!" TSRMLS_CC);
+		php_com_throw_exception(E_INVALIDARG, "Could not create .Net object - invalid arguments!", TSRMLS_C);
 		ZVAL_NULL(object);
 		return;
 	}
 
-	oletype = php_com_string_to_olestring(datatype_name, datatype_name_len, obj->code_page TSRMLS_CC);
-	oleassembly = php_com_string_to_olestring(assembly_name, assembly_name_len, obj->code_page TSRMLS_CC);
+	oletype = php_com_string_to_olestring(datatype_name, datatype_name_len, obj->code_page, TSRMLS_C);
+	oleassembly = php_com_string_to_olestring(assembly_name, assembly_name_len, obj->code_page, TSRMLS_C);
 	oletype_sys = SysAllocString(oletype);
 	oleassembly_sys = SysAllocString(oleassembly);
 	where = "CreateInstance";
@@ -286,7 +286,7 @@ PHP_FUNCTION(com_dotnet_create_instance)
 		if (err && err[0]) {
 			LocalFree(err);
 		}
-		php_com_throw_exception(hr, buf TSRMLS_CC);
+		php_com_throw_exception(hr, buf, TSRMLS_C);
 		ZVAL_NULL(object);
 		return;
 	}

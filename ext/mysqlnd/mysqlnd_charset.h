@@ -22,10 +22,10 @@
 #define MYSQLND_CHARSET_H
 
 PHPAPI ulong mysqlnd_cset_escape_quotes(const MYSQLND_CHARSET * const charset, char *newstr,
-										const char *escapestr, size_t escapestr_len TSRMLS_DC);
+										const char *escapestr, size_t escapestr_len, TSRMLS_D);
 
 PHPAPI ulong mysqlnd_cset_escape_slashes(const MYSQLND_CHARSET * const cset, char *newstr,
-										 const char *escapestr, size_t escapestr_len TSRMLS_DC);
+										 const char *escapestr, size_t escapestr_len, TSRMLS_D);
 
 struct st_mysqlnd_plugin_charsets
 {
@@ -34,8 +34,8 @@ struct st_mysqlnd_plugin_charsets
 	{
 		const MYSQLND_CHARSET * (*const find_charset_by_nr)(unsigned int charsetnr);
 		const MYSQLND_CHARSET * (*const find_charset_by_name)(const char * const name);
-		unsigned long 			(*const escape_quotes)(const MYSQLND_CHARSET * const cset, char * newstr, const char * escapestr, size_t escapestr_len TSRMLS_DC);
-		unsigned long			(*const escape_slashes)(const MYSQLND_CHARSET * const cset, char * newstr, const char * escapestr, size_t escapestr_len TSRMLS_DC);
+		unsigned long 			(*const escape_quotes)(const MYSQLND_CHARSET * const cset, char * newstr, const char * escapestr, size_t escapestr_len, TSRMLS_D);
+		unsigned long			(*const escape_slashes)(const MYSQLND_CHARSET * const cset, char * newstr, const char * escapestr, size_t escapestr_len, TSRMLS_D);
 	} methods;
 };
 

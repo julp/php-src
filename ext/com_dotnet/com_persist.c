@@ -45,12 +45,12 @@ typedef struct {
 } php_istream;
 
 static int le_istream;
-static void istream_destructor(php_istream *stm TSRMLS_DC);
+static void istream_destructor(php_istream *stm, TSRMLS_D);
 
-static void istream_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+static void istream_dtor(zend_rsrc_list_entry *rsrc, TSRMLS_D)
 {
 	php_istream *stm = (php_istream *)rsrc->ptr;
-	istream_destructor(stm TSRMLS_CC);
+	istream_destructor(stm, TSRMLS_C);
 }
 
 #define FETCH_STM()	\
@@ -249,7 +249,7 @@ static struct IStreamVtbl php_istream_vtbl = {
 	stm_clone
 };
 
-static void istream_destructor(php_istream *stm TSRMLS_DC)
+static void istream_destructor(php_istream *stm, TSRMLS_D)
 {
 	if (stm->id) {
 		int id = stm->id;
@@ -268,7 +268,7 @@ static void istream_destructor(php_istream *stm TSRMLS_DC)
 }
 /* }}} */
 
-PHP_COM_DOTNET_API IStream *php_com_wrapper_export_stream(php_stream *stream TSRMLS_DC)
+PHP_COM_DOTNET_API IStream *php_com_wrapper_export_stream(php_stream *stream, TSRMLS_D)
 {
 	php_istream *stm = (php_istream*)CoTaskMemAlloc(sizeof(*stm));
 
@@ -282,7 +282,7 @@ PHP_COM_DOTNET_API IStream *php_com_wrapper_export_stream(php_stream *stream TSR
 	stm->stream = stream;
 
 	zend_list_addref(stream->rsrc_id);
-	stm->id = zend_list_insert(stm, le_istream TSRMLS_CC);
+	stm->id = zend_list_insert(stm, le_istream, TSRMLS_C);
 
 	return (IStream*)stm;
 }
@@ -291,9 +291,9 @@ PHP_COM_DOTNET_API IStream *php_com_wrapper_export_stream(php_stream *stream TSR
 #define CPH_SME(fname, arginfo)	PHP_ME(com_persist, fname, arginfo, ZEND_ACC_ALLOW_STATIC|ZEND_ACC_PUBLIC)
 #define CPH_METHOD(fname)		static PHP_METHOD(com_persist, fname)
 	
-#define CPH_FETCH()				php_com_persist_helper *helper = (php_com_persist_helper*)zend_object_store_get_object(getThis() TSRMLS_CC);
+#define CPH_FETCH()				php_com_persist_helper *helper = (php_com_persist_helper*)zend_object_store_get_object(getThis(), TSRMLS_C);
 
-#define CPH_NO_OBJ()			if (helper->unk == NULL) { php_com_throw_exception(E_INVALIDARG, "No COM object is associated with this helper instance" TSRMLS_CC); return; }
+#define CPH_NO_OBJ()			if (helper->unk == NULL) { php_com_throw_exception(E_INVALIDARG, "No COM object is associated with this helper instance", TSRMLS_C); return; }
 
 typedef struct {
 	zend_object			std;
@@ -349,16 +349,16 @@ CPH_METHOD(GetCurFileName)
 		if (res == S_OK) {
 			Z_TYPE_P(return_value) = IS_STRING;
 			Z_STRVAL_P(return_value) = php_com_olestring_to_string(olename,
-				   &Z_STRLEN_P(return_value), helper->codepage TSRMLS_CC);
+				   &Z_STRLEN_P(return_value), helper->codepage, TSRMLS_C);
 			CoTaskMemFree(olename);
 			return;
 		} else if (res == S_FALSE) {
 			CoTaskMemFree(olename);
 			RETURN_FALSE;
 		}
-		php_com_throw_exception(res, NULL TSRMLS_CC);
+		php_com_throw_exception(res, NULL, TSRMLS_C);
 	} else {
-		php_com_throw_exception(res, NULL TSRMLS_CC);
+		php_com_throw_exception(res, NULL, TSRMLS_C);
 	}
 }
 /* }}} */
@@ -379,24 +379,24 @@ CPH_METHOD(SaveToFile)
 
 	res = get_persist_file(helper);
 	if (helper->ipf) {
-		if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p!|b",
+		if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "p!|b",
 					&filename, &filename_len, &remember)) {
-			php_com_throw_exception(E_INVALIDARG, "Invalid arguments" TSRMLS_CC);
+			php_com_throw_exception(E_INVALIDARG, "Invalid arguments", TSRMLS_C);
 			return;
 		}
 
 		if (filename) {
-			fullpath = expand_filepath(filename, NULL TSRMLS_CC);
+			fullpath = expand_filepath(filename, NULL, TSRMLS_C);
 			if (!fullpath) {
 				RETURN_FALSE;
 			}
 	
-			if (php_check_open_basedir(fullpath TSRMLS_CC)) {
+			if (php_check_open_basedir(fullpath, TSRMLS_C)) {
 				efree(fullpath);
 				RETURN_FALSE;
 			}
 
-			olefilename = php_com_string_to_olestring(filename, strlen(fullpath), helper->codepage TSRMLS_CC);
+			olefilename = php_com_string_to_olestring(filename, strlen(fullpath), helper->codepage, TSRMLS_C);
 			efree(fullpath);
 		}
 		res = IPersistFile_Save(helper->ipf, olefilename, remember);
@@ -418,11 +418,11 @@ CPH_METHOD(SaveToFile)
 		}
 
 		if (FAILED(res)) {
-			php_com_throw_exception(res, NULL TSRMLS_CC);
+			php_com_throw_exception(res, NULL, TSRMLS_C);
 		}
 
 	} else {
-		php_com_throw_exception(res, NULL TSRMLS_CC);
+		php_com_throw_exception(res, NULL, TSRMLS_C);
 	}
 }
 /* }}} */
@@ -443,33 +443,33 @@ CPH_METHOD(LoadFromFile)
 	res = get_persist_file(helper);
 	if (helper->ipf) {
 
-		if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "p|l",
+		if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "p|l",
 					&filename, &filename_len, &flags)) {
-			php_com_throw_exception(E_INVALIDARG, "Invalid arguments" TSRMLS_CC);
+			php_com_throw_exception(E_INVALIDARG, "Invalid arguments", TSRMLS_C);
 			return;
 		}
 
-		if (!(fullpath = expand_filepath(filename, NULL TSRMLS_CC))) {
+		if (!(fullpath = expand_filepath(filename, NULL, TSRMLS_C))) {
 			RETURN_FALSE;
 		}
 
-		if (php_check_open_basedir(fullpath TSRMLS_CC)) {
+		if (php_check_open_basedir(fullpath, TSRMLS_C)) {
 			efree(fullpath);
 			RETURN_FALSE;
 		}
 
-		olefilename = php_com_string_to_olestring(fullpath, strlen(fullpath), helper->codepage TSRMLS_CC);
+		olefilename = php_com_string_to_olestring(fullpath, strlen(fullpath), helper->codepage, TSRMLS_C);
 		efree(fullpath);
 			
 		res = IPersistFile_Load(helper->ipf, olefilename, flags);
 		efree(olefilename);
 
 		if (FAILED(res)) {
-			php_com_throw_exception(res, NULL TSRMLS_CC);
+			php_com_throw_exception(res, NULL, TSRMLS_C);
 		}
 		
 	} else {
-		php_com_throw_exception(res, NULL TSRMLS_CC);
+		php_com_throw_exception(res, NULL, TSRMLS_C);
 	}
 }
 /* }}} */
@@ -492,13 +492,13 @@ CPH_METHOD(GetMaxStreamSize)
 		if (helper->ips) {
 			res = IPersistStream_GetSizeMax(helper->ips, &size);
 		} else {
-			php_com_throw_exception(res, NULL TSRMLS_CC);
+			php_com_throw_exception(res, NULL, TSRMLS_C);
 			return;
 		}
 	}
 
 	if (res != S_OK) {
-		php_com_throw_exception(res, NULL TSRMLS_CC);
+		php_com_throw_exception(res, NULL, TSRMLS_C);
 	} else {
 		/* TODO: handle 64 bit properly */
 		RETURN_LONG((LONG)size.QuadPart);
@@ -520,12 +520,12 @@ CPH_METHOD(InitNew)
 		res = IPersistStreamInit_InitNew(helper->ipsi);
 
 		if (res != S_OK) {
-			php_com_throw_exception(res, NULL TSRMLS_CC);
+			php_com_throw_exception(res, NULL, TSRMLS_C);
 		} else {
 			RETURN_TRUE;
 		}
 	} else {
-		php_com_throw_exception(res, NULL TSRMLS_CC);
+		php_com_throw_exception(res, NULL, TSRMLS_C);
 	}
 }
 /* }}} */
@@ -540,21 +540,21 @@ CPH_METHOD(LoadFromStream)
 	HRESULT res;
 	CPH_FETCH();
 	
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zstm)) {
-		php_com_throw_exception(E_INVALIDARG, "invalid arguments" TSRMLS_CC);
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &zstm)) {
+		php_com_throw_exception(E_INVALIDARG, "invalid arguments", TSRMLS_C);
 		return;
 	}
 
 	php_stream_from_zval_no_verify(stream, &zstm);
 	
 	if (stream == NULL) {
-		php_com_throw_exception(E_INVALIDARG, "expected a stream" TSRMLS_CC);
+		php_com_throw_exception(E_INVALIDARG, "expected a stream", TSRMLS_C);
 		return;
 	}
 
-	stm = php_com_wrapper_export_stream(stream TSRMLS_CC);
+	stm = php_com_wrapper_export_stream(stream, TSRMLS_C);
 	if (stm == NULL) {
-		php_com_throw_exception(E_UNEXPECTED, "failed to wrap stream" TSRMLS_CC);
+		php_com_throw_exception(E_UNEXPECTED, "failed to wrap stream", TSRMLS_C);
 		return;
 	}
 	
@@ -568,7 +568,7 @@ CPH_METHOD(LoadFromStream)
 		res = OleLoadFromStream(stm, &IID_IDispatch, &disp);
 
 		if (SUCCEEDED(res)) {
-			php_com_wrap_dispatch(return_value, disp, COMG(code_page) TSRMLS_CC);	
+			php_com_wrap_dispatch(return_value, disp, COMG(code_page), TSRMLS_C);	
 		}
 	} else {
 		res = get_persist_stream_init(helper);
@@ -584,7 +584,7 @@ CPH_METHOD(LoadFromStream)
 	IStream_Release(stm);
 
 	if (FAILED(res)) {
-		php_com_throw_exception(res, NULL TSRMLS_CC);
+		php_com_throw_exception(res, NULL, TSRMLS_C);
 		RETURN_NULL();
 	}
 }
@@ -602,21 +602,21 @@ CPH_METHOD(SaveToStream)
 	
 	CPH_NO_OBJ();
 	
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zstm)) {
-		php_com_throw_exception(E_INVALIDARG, "invalid arguments" TSRMLS_CC);
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &zstm)) {
+		php_com_throw_exception(E_INVALIDARG, "invalid arguments", TSRMLS_C);
 		return;
 	}
 
 	php_stream_from_zval_no_verify(stream, &zstm);
 	
 	if (stream == NULL) {
-		php_com_throw_exception(E_INVALIDARG, "expected a stream" TSRMLS_CC);
+		php_com_throw_exception(E_INVALIDARG, "expected a stream", TSRMLS_C);
 		return;
 	}
 
-	stm = php_com_wrapper_export_stream(stream TSRMLS_CC);
+	stm = php_com_wrapper_export_stream(stream, TSRMLS_C);
 	if (stm == NULL) {
-		php_com_throw_exception(E_UNEXPECTED, "failed to wrap stream" TSRMLS_CC);
+		php_com_throw_exception(E_UNEXPECTED, "failed to wrap stream", TSRMLS_C);
 		return;
 	}
 	
@@ -633,7 +633,7 @@ CPH_METHOD(SaveToStream)
 	IStream_Release(stm);
 
 	if (FAILED(res)) {
-		php_com_throw_exception(res, NULL TSRMLS_CC);
+		php_com_throw_exception(res, NULL, TSRMLS_C);
 		return;
 	}
 
@@ -649,9 +649,9 @@ CPH_METHOD(__construct)
 	zval *zobj = NULL;
 	CPH_FETCH();
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|O!",
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|O!",
 				&zobj, php_com_variant_class_entry)) {
-		php_com_throw_exception(E_INVALIDARG, "invalid arguments" TSRMLS_CC);
+		php_com_throw_exception(E_INVALIDARG, "invalid arguments", TSRMLS_C);
 		return;
 	}
 
@@ -662,7 +662,7 @@ CPH_METHOD(__construct)
 	obj = CDNO_FETCH(zobj);
 
 	if (V_VT(&obj->v) != VT_DISPATCH || V_DISPATCH(&obj->v) == NULL) {
-		php_com_throw_exception(E_INVALIDARG, "parameter must represent an IDispatch COM object" TSRMLS_CC);
+		php_com_throw_exception(E_INVALIDARG, "parameter must represent an IDispatch COM object", TSRMLS_C);
 		return;
 	}
 
@@ -688,7 +688,7 @@ static const zend_function_entry com_persist_helper_methods[] = {
 	PHP_FE_END
 };
 
-static void helper_free_storage(void *obj TSRMLS_DC)
+static void helper_free_storage(void *obj, TSRMLS_D)
 {
 	php_com_persist_helper *object = (php_com_persist_helper*)obj;
 
@@ -704,12 +704,12 @@ static void helper_free_storage(void *obj TSRMLS_DC)
 	if (object->unk) {
 		IUnknown_Release(object->unk);
 	}
-	zend_object_std_dtor(&object->std TSRMLS_CC);
+	zend_object_std_dtor(&object->std, TSRMLS_C);
 	efree(object);
 }
 
 
-static void helper_clone(void *obj, void **clone_ptr TSRMLS_DC)
+static void helper_clone(void *obj, void **clone_ptr, TSRMLS_D)
 {
 	php_com_persist_helper *clone, *object = (php_com_persist_helper*)obj;
 
@@ -717,7 +717,7 @@ static void helper_clone(void *obj, void **clone_ptr TSRMLS_DC)
 	memcpy(clone, object, sizeof(*object));
 	*clone_ptr = clone;
 
-	zend_object_std_init(&clone->std, object->std.ce TSRMLS_CC);
+	zend_object_std_init(&clone->std, object->std.ce, TSRMLS_C);
 
 	if (clone->ipf) {
 		IPersistFile_AddRef(clone->ipf);
@@ -733,7 +733,7 @@ static void helper_clone(void *obj, void **clone_ptr TSRMLS_DC)
 	}
 }
 
-static zend_object_value helper_new(zend_class_entry *ce TSRMLS_DC)
+static zend_object_value helper_new(zend_class_entry *ce, TSRMLS_D)
 {
 	php_com_persist_helper *helper;
 	zend_object_value retval;
@@ -741,9 +741,9 @@ static zend_object_value helper_new(zend_class_entry *ce TSRMLS_DC)
 	helper = emalloc(sizeof(*helper));
 	memset(helper, 0, sizeof(*helper));
 
-	zend_object_std_init(&helper->std, helper_ce TSRMLS_CC);
+	zend_object_std_init(&helper->std, helper_ce, TSRMLS_C);
 	
-	retval.handle = zend_objects_store_put(helper, NULL, helper_free_storage, helper_clone TSRMLS_CC);
+	retval.handle = zend_objects_store_put(helper, NULL, helper_free_storage, helper_clone, TSRMLS_C);
 	retval.handlers = &helper_handlers;
 
 	return retval;
@@ -758,7 +758,7 @@ int php_com_persist_minit(INIT_FUNC_ARGS)
 
 	INIT_CLASS_ENTRY(ce, "COMPersistHelper", com_persist_helper_methods);
 	ce.create_object = helper_new;
-	helper_ce = zend_register_internal_class(&ce TSRMLS_CC);
+	helper_ce = zend_register_internal_class(&ce, TSRMLS_C);
 	helper_ce->ce_flags |= ZEND_ACC_FINAL;
 
 	le_istream = zend_register_list_destructors_ex(istream_dtor,

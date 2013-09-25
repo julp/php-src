@@ -43,6 +43,6 @@ extern zend_class_entry *Locale_ce_ptr;
 
 #define LOCALE_METHOD_INIT_VARS       \
     zval*             	object  = NULL;   \
-    intl_error_reset( NULL TSRMLS_CC ); \
+    intl_error_reset( NULL, TSRMLS_C ); \
 
 #endif // #ifndef LOCALE_CLASS_H

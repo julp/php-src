@@ -79,7 +79,7 @@ PHP_SOCKETS_API int php_sockets_le_socket(void);
 			(socket)->error = _err; \
 			SOCKETS_G(last_error) = _err; \
 			if (_err != EAGAIN && _err != EWOULDBLOCK && _err != EINPROGRESS) { \
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s [%d]: %s", msg, _err, sockets_strerror(_err TSRMLS_CC)); \
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "%s [%d]: %s", msg, _err, sockets_strerror(_err, TSRMLS_C)); \
 			} \
 		} while (0)
 
@@ -102,8 +102,8 @@ enum sockopt_return {
 	SOCKOPT_SUCCESS
 };
 
-char *sockets_strerror(int error TSRMLS_DC);
-php_socket *socket_import_file_descriptor(PHP_SOCKET sock TSRMLS_DC);
+char *sockets_strerror(int error, TSRMLS_D);
+php_socket *socket_import_file_descriptor(PHP_SOCKET sock, TSRMLS_D);
 
 #else
 #define phpext_sockets_ptr NULL

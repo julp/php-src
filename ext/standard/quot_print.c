@@ -205,7 +205,7 @@ PHP_FUNCTION(quoted_printable_decode)
 	char *arg1, *str_in, *str_out;
 	int arg1_len, i = 0, j = 0, k;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &arg1, &arg1_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &arg1, &arg1_len) == FAILURE) {
 		return;
 	}
     
@@ -266,7 +266,7 @@ PHP_FUNCTION(quoted_printable_encode)
 	int str_len;
 	size_t new_str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &str, &str_len) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) != SUCCESS) {
 		return;
 	}
 

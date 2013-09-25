@@ -335,7 +335,7 @@ int zend_shared_memdup_size(void *source, size_t size)
 	return ZEND_ALIGNED_SIZE(size);
 }
 
-void *_zend_shared_memdup(void *source, size_t size, zend_bool free_source TSRMLS_DC)
+void *_zend_shared_memdup(void *source, size_t size, zend_bool free_source, TSRMLS_D)
 {
 	void **old_p, *retval;
 
@@ -476,7 +476,7 @@ const char *zend_accel_get_shared_model(void)
 	return g_shared_model;
 }
 
-void zend_accel_shared_protect(int mode TSRMLS_DC)
+void zend_accel_shared_protect(int mode, TSRMLS_D)
 {
 #ifdef HAVE_MPROTECT
 	int i;

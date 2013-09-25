@@ -56,7 +56,7 @@ enum {
 ZEND_DECLARE_MODULE_GLOBALS(pcre)
 
 
-static void pcre_handle_exec_error(int pcre_code TSRMLS_DC) /* {{{ */
+static void pcre_handle_exec_error(int pcre_code, TSRMLS_D) /* {{{ */
 {
 	int preg_code = 0;
 
@@ -167,7 +167,7 @@ static PHP_MSHUTDOWN_FUNCTION(pcre)
 /* }}} */
 
 /* {{{ static pcre_clean_cache */
-static int pcre_clean_cache(void *data, void *arg TSRMLS_DC)
+static int pcre_clean_cache(void *data, void *arg, TSRMLS_D)
 {
 	int *num_clean = (int *)arg;
 
@@ -181,7 +181,7 @@ static int pcre_clean_cache(void *data, void *arg TSRMLS_DC)
 /* }}} */
 
 /* {{{ static make_subpats_table */
-static char **make_subpats_table(int num_subpats, pcre_cache_entry *pce TSRMLS_DC)
+static char **make_subpats_table(int num_subpats, pcre_cache_entry *pce, TSRMLS_D)
 {
 	pcre_extra *extra = pce->extra;
 	int name_cnt = 0, name_size, ni = 0;
@@ -192,7 +192,7 @@ static char **make_subpats_table(int num_subpats, pcre_cache_entry *pce TSRMLS_D
 
 	rc = pcre_fullinfo(pce->re, extra, PCRE_INFO_NAMECOUNT, &name_cnt);
 	if (rc < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
 		efree(subpat_names);
 		return NULL;
 	}
@@ -203,7 +203,7 @@ static char **make_subpats_table(int num_subpats, pcre_cache_entry *pce TSRMLS_D
 		rc2 = pcre_fullinfo(pce->re, extra, PCRE_INFO_NAMEENTRYSIZE, &name_size);
 		rc = rc2 ? rc2 : rc1;
 		if (rc < 0) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
 			efree(subpat_names);
 			return NULL;
 		}
@@ -212,7 +212,7 @@ static char **make_subpats_table(int num_subpats, pcre_cache_entry *pce TSRMLS_D
 			name_idx = 0xff * (unsigned char)name_table[0] + (unsigned char)name_table[1];
 			subpat_names[name_idx] = name_table + 2;
 			if (is_numeric_string(subpat_names[name_idx], strlen(subpat_names[name_idx]), NULL, NULL, 0) > 0) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Numeric named subpatterns are not allowed");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Numeric named subpatterns are not allowed");
 				efree(subpat_names);
 				return NULL;
 			}
@@ -226,7 +226,7 @@ static char **make_subpats_table(int num_subpats, pcre_cache_entry *pce TSRMLS_D
 
 /* {{{ pcre_get_compiled_regex_cache
  */
-PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_len TSRMLS_DC)
+PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_len, TSRMLS_D)
 {
 	pcre				*re = NULL;
 	pcre_extra			*extra;
@@ -283,7 +283,7 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_le
 	   get to the end without encountering a delimiter. */
 	while (isspace((int)*(unsigned char *)p)) p++;
 	if (*p == 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, 
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, 
 						 p < regex + regex_len ? "Null byte in regex" : "Empty regular expression");
 		return NULL;
 	}
@@ -292,7 +292,7 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_le
 	   or a backslash. */
 	delimiter = *p++;
 	if (isalnum((int)*(unsigned char *)&delimiter) || delimiter == '\\') {
-		php_error_docref(NULL TSRMLS_CC,E_WARNING, "Delimiter must not be alphanumeric or backslash");
+		php_error_docref(NULL, TSRMLS_C,E_WARNING, "Delimiter must not be alphanumeric or backslash");
 		return NULL;
 	}
 
@@ -332,11 +332,11 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_le
 
 	if (*pp == 0) {
 		if (pp < regex + regex_len) {
-			php_error_docref(NULL TSRMLS_CC,E_WARNING, "Null byte in regex");
+			php_error_docref(NULL, TSRMLS_C,E_WARNING, "Null byte in regex");
 		} else if (start_delimiter == end_delimiter) {
-			php_error_docref(NULL TSRMLS_CC,E_WARNING, "No ending delimiter '%c' found", delimiter);
+			php_error_docref(NULL, TSRMLS_C,E_WARNING, "No ending delimiter '%c' found", delimiter);
 		} else {
-			php_error_docref(NULL TSRMLS_CC,E_WARNING, "No ending matching delimiter '%c' found", delimiter);
+			php_error_docref(NULL, TSRMLS_C,E_WARNING, "No ending matching delimiter '%c' found", delimiter);
 		}
 		return NULL;
 	}
@@ -381,9 +381,9 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_le
 
 			default:
 				if (pp[-1]) {
-					php_error_docref(NULL TSRMLS_CC,E_WARNING, "Unknown modifier '%c'", pp[-1]);
+					php_error_docref(NULL, TSRMLS_C,E_WARNING, "Unknown modifier '%c'", pp[-1]);
 				} else {
-					php_error_docref(NULL TSRMLS_CC,E_WARNING, "Null byte in regex");
+					php_error_docref(NULL, TSRMLS_C,E_WARNING, "Null byte in regex");
 				}
 				efree(pattern);
 				return NULL;
@@ -403,7 +403,7 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_le
 					  tables);
 
 	if (re == NULL) {
-		php_error_docref(NULL TSRMLS_CC,E_WARNING, "Compilation failed: %s at offset %d", error, erroffset);
+		php_error_docref(NULL, TSRMLS_C,E_WARNING, "Compilation failed: %s at offset %d", error, erroffset);
 		efree(pattern);
 		if (tables) {
 			pefree((void*)tables, 1);
@@ -419,7 +419,7 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_le
 			extra->flags |= PCRE_EXTRA_MATCH_LIMIT | PCRE_EXTRA_MATCH_LIMIT_RECURSION;
 		}
 		if (error != NULL) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Error while studying pattern");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Error while studying pattern");
 		}
 	} else {
 		extra = NULL;
@@ -434,7 +434,7 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_le
 	 */
 	if (zend_hash_num_elements(&PCRE_G(pcre_cache)) == PCRE_CACHE_SIZE) {
 		int num_clean = PCRE_CACHE_SIZE / 8;
-		zend_hash_apply_with_argument(&PCRE_G(pcre_cache), pcre_clean_cache, &num_clean TSRMLS_CC);
+		zend_hash_apply_with_argument(&PCRE_G(pcre_cache), pcre_clean_cache, &num_clean, TSRMLS_C);
 	}
 
 	/* Store the compiled pattern and extra info in the cache. */
@@ -472,9 +472,9 @@ PHPAPI pcre_cache_entry* pcre_get_compiled_regex_cache(char *regex, int regex_le
 
 /* {{{ pcre_get_compiled_regex
  */
-PHPAPI pcre* pcre_get_compiled_regex(char *regex, pcre_extra **extra, int *preg_options TSRMLS_DC)
+PHPAPI pcre* pcre_get_compiled_regex(char *regex, pcre_extra **extra, int *preg_options, TSRMLS_D)
 {
-	pcre_cache_entry * pce = pcre_get_compiled_regex_cache(regex, strlen(regex) TSRMLS_CC);
+	pcre_cache_entry * pce = pcre_get_compiled_regex_cache(regex, strlen(regex), TSRMLS_C);
 
 	if (extra) {
 		*extra = pce ? pce->extra : NULL;
@@ -489,9 +489,9 @@ PHPAPI pcre* pcre_get_compiled_regex(char *regex, pcre_extra **extra, int *preg_
 
 /* {{{ pcre_get_compiled_regex_ex
  */
-PHPAPI pcre* pcre_get_compiled_regex_ex(char *regex, pcre_extra **extra, int *preg_options, int *compile_options TSRMLS_DC)
+PHPAPI pcre* pcre_get_compiled_regex_ex(char *regex, pcre_extra **extra, int *preg_options, int *compile_options, TSRMLS_D)
 {
-	pcre_cache_entry * pce = pcre_get_compiled_regex_cache(regex, strlen(regex) TSRMLS_CC);
+	pcre_cache_entry * pce = pcre_get_compiled_regex_cache(regex, strlen(regex), TSRMLS_C);
 	
 	if (extra) {
 		*extra = pce ? pce->extra : NULL;
@@ -540,24 +540,24 @@ static void php_do_pcre_match(INTERNAL_FUNCTION_PARAMETERS, int global) /* {{{ *
 	long			  flags = 0;		/* Match control flags */
 	long			  start_offset = 0;	/* Where the new search starts */
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|zll", &regex, &regex_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss|zll", &regex, &regex_len,
 							  &subject, &subject_len, &subpats, &flags, &start_offset) == FAILURE) {
 		RETURN_FALSE;
 	}
 	
 	/* Compile regex or get it from cache. */
-	if ((pce = pcre_get_compiled_regex_cache(regex, regex_len TSRMLS_CC)) == NULL) {
+	if ((pce = pcre_get_compiled_regex_cache(regex, regex_len, TSRMLS_C)) == NULL) {
 		RETURN_FALSE;
 	}
 
 	php_pcre_match_impl(pce, subject, subject_len, return_value, subpats, 
-		global, ZEND_NUM_ARGS() >= 4, flags, start_offset TSRMLS_CC);
+		global, ZEND_NUM_ARGS() >= 4, flags, start_offset, TSRMLS_C);
 }
 /* }}} */
 
 /* {{{ php_pcre_match_impl() */
 PHPAPI void php_pcre_match_impl(pcre_cache_entry *pce, char *subject, int subject_len, zval *return_value,
-	zval *subpats, int global, int use_flags, long flags, long start_offset TSRMLS_DC)
+	zval *subpats, int global, int use_flags, long flags, long start_offset, TSRMLS_D)
 {
 	zval			*result_set,		/* Holds a set of subpatterns after
 										   a global match */
@@ -598,7 +598,7 @@ PHPAPI void php_pcre_match_impl(pcre_cache_entry *pce, char *subject, int subjec
 		}
 		if ((global && (subpats_order < PREG_PATTERN_ORDER || subpats_order > PREG_SET_ORDER)) ||
 			(!global && subpats_order != 0)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid flags specified");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid flags specified");
 			return;
 		}
 	} else {
@@ -623,7 +623,7 @@ PHPAPI void php_pcre_match_impl(pcre_cache_entry *pce, char *subject, int subjec
 	/* Calculate the size of the offsets array, and allocate memory for it. */
 	rc = pcre_fullinfo(pce->re, extra, PCRE_INFO_CAPTURECOUNT, &num_subpats);
 	if (rc < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
 		RETURN_FALSE;
 	}
 	num_subpats++;
@@ -634,7 +634,7 @@ PHPAPI void php_pcre_match_impl(pcre_cache_entry *pce, char *subject, int subjec
 	 * allocate the table, even though there may be no named subpatterns. This
 	 * avoids somewhat more complicated logic in the inner loops.
 	 */
-	subpat_names = make_subpats_table(num_subpats, pce TSRMLS_CC);
+	subpat_names = make_subpats_table(num_subpats, pce, TSRMLS_C);
 	if (!subpat_names) {
 		RETURN_FALSE;
 	}
@@ -664,7 +664,7 @@ PHPAPI void php_pcre_match_impl(pcre_cache_entry *pce, char *subject, int subjec
 
 		/* Check for too many substrings condition. */
 		if (count == 0) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Matched, but too many substrings");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Matched, but too many substrings");
 			count = size_offsets/3;
 		}
 
@@ -679,7 +679,7 @@ PHPAPI void php_pcre_match_impl(pcre_cache_entry *pce, char *subject, int subjec
 					efree(subpat_names);
 					efree(offsets);
 					if (match_sets) efree(match_sets);
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "Get subpatterns list failed");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING, "Get subpatterns list failed");
 					RETURN_FALSE;
 				}
 
@@ -759,7 +759,7 @@ PHPAPI void php_pcre_match_impl(pcre_cache_entry *pce, char *subject, int subjec
 			} else
 				break;
 		} else {
-			pcre_handle_exec_error(count TSRMLS_CC);
+			pcre_handle_exec_error(count, TSRMLS_C);
 			break;
 		}
 		
@@ -855,7 +855,7 @@ static int preg_get_backref(char **str, int *backref)
 
 /* {{{ preg_do_repl_func
  */
-static int preg_do_repl_func(zval *function, char *subject, int *offsets, char **subpat_names, int count, char **result TSRMLS_DC)
+static int preg_do_repl_func(zval *function, char *subject, int *offsets, char **subpat_names, int count, char **result, TSRMLS_D)
 {
 	zval		*retval_ptr;		/* Function return value */
 	zval	   **args[1];			/* Argument to pass to function */
@@ -873,14 +873,14 @@ static int preg_do_repl_func(zval *function, char *subject, int *offsets, char *
 	}
 	args[0] = &subpats;
 
-	if (call_user_function_ex(EG(function_table), NULL, function, &retval_ptr, 1, args, 0, NULL TSRMLS_CC) == SUCCESS && retval_ptr) {
+	if (call_user_function_ex(EG(function_table), NULL, function, &retval_ptr, 1, args, 0, NULL, TSRMLS_C) == SUCCESS && retval_ptr) {
 		convert_to_string_ex(&retval_ptr);
 		*result = estrndup(Z_STRVAL_P(retval_ptr), Z_STRLEN_P(retval_ptr));
 		result_len = Z_STRLEN_P(retval_ptr);
 		zval_ptr_dtor(&retval_ptr);
 	} else {
 		if (!EG(exception)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to call custom replacement function");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to call custom replacement function");
 		}
 		result_len = offsets[1] - offsets[0];
 		*result = estrndup(&subject[offsets[0]], result_len);
@@ -895,7 +895,7 @@ static int preg_do_repl_func(zval *function, char *subject, int *offsets, char *
 /* {{{ preg_do_eval
  */
 static int preg_do_eval(char *eval_str, int eval_str_len, char *subject,
-						int *offsets, int count, char **result TSRMLS_DC)
+						int *offsets, int count, char **result, TSRMLS_D)
 {
 	zval		 retval;			/* Return value from evaluation */
 	char		*eval_str_end,		/* End of eval string */
@@ -933,7 +933,7 @@ static int preg_do_eval(char *eval_str, int eval_str_len, char *subject,
 					match = subject + offsets[backref<<1];
 					match_len = offsets[(backref<<1)+1] - offsets[backref<<1];
 					if (match_len) {
-						esc_match = php_addslashes(match, match_len, &esc_match_len, 0 TSRMLS_CC);
+						esc_match = php_addslashes(match, match_len, &esc_match_len, 0, TSRMLS_C);
 					} else {
 						esc_match = match;
 						esc_match_len = 0;
@@ -958,11 +958,11 @@ static int preg_do_eval(char *eval_str, int eval_str_len, char *subject,
 	smart_str_appendl(&code, segment, walk - segment);
 	smart_str_0(&code);
 
-	compiled_string_description = zend_make_compiled_string_description("regexp code" TSRMLS_CC);
+	compiled_string_description = zend_make_compiled_string_description("regexp code", TSRMLS_C);
 	/* Run the code */
-	if (zend_eval_stringl(code.c, code.len, &retval, compiled_string_description TSRMLS_CC) == FAILURE) {
+	if (zend_eval_stringl(code.c, code.len, &retval, compiled_string_description, TSRMLS_C) == FAILURE) {
 		efree(compiled_string_description);
-		php_error_docref(NULL TSRMLS_CC,E_ERROR, "Failed evaluating code: %s%s", PHP_EOL, code.c);
+		php_error_docref(NULL, TSRMLS_C,E_ERROR, "Failed evaluating code: %s%s", PHP_EOL, code.c);
 		/* zend_error() does not return in this case */
 	}
 	efree(compiled_string_description);
@@ -985,23 +985,23 @@ static int preg_do_eval(char *eval_str, int eval_str_len, char *subject,
 PHPAPI char *php_pcre_replace(char *regex,   int regex_len,
 							  char *subject, int subject_len,
 							  zval *replace_val, int is_callable_replace,
-							  int *result_len, int limit, int *replace_count TSRMLS_DC)
+							  int *result_len, int limit, int *replace_count, TSRMLS_D)
 {
 	pcre_cache_entry	*pce;			    /* Compiled regular expression */
 
 	/* Compile regex or get it from cache. */
-	if ((pce = pcre_get_compiled_regex_cache(regex, regex_len TSRMLS_CC)) == NULL) {
+	if ((pce = pcre_get_compiled_regex_cache(regex, regex_len, TSRMLS_C)) == NULL) {
 		return NULL;
 	}
 
 	return php_pcre_replace_impl(pce, subject, subject_len, replace_val, 
-		is_callable_replace, result_len, limit, replace_count TSRMLS_CC);
+		is_callable_replace, result_len, limit, replace_count, TSRMLS_C);
 }
 /* }}} */
 
 /* {{{ php_pcre_replace_impl() */
 PHPAPI char *php_pcre_replace_impl(pcre_cache_entry *pce, char *subject, int subject_len, zval *replace_val, 
-	int is_callable_replace, int *result_len, int limit, int *replace_count TSRMLS_DC)
+	int is_callable_replace, int *result_len, int limit, int *replace_count, TSRMLS_D)
 {
 	pcre_extra		*extra = pce->extra;/* Holds results of studying */
 	pcre_extra		 extra_data;		/* Used locally for exec options */
@@ -1043,7 +1043,7 @@ PHPAPI char *php_pcre_replace_impl(pcre_cache_entry *pce, char *subject, int sub
 	eval = pce->preg_options & PREG_REPLACE_EVAL;
 	if (is_callable_replace) {
 		if (eval) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Modifier /e cannot be used with replacement callback");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Modifier /e cannot be used with replacement callback");
 			return NULL;
 		}
 	} else {
@@ -1053,13 +1053,13 @@ PHPAPI char *php_pcre_replace_impl(pcre_cache_entry *pce, char *subject, int sub
 	}
 
 	if (eval) {
-		php_error_docref(NULL TSRMLS_CC, E_DEPRECATED, "The /e modifier is deprecated, use preg_replace_callback instead");
+		php_error_docref(NULL, TSRMLS_C, E_DEPRECATED, "The /e modifier is deprecated, use preg_replace_callback instead");
 	}
 
 	/* Calculate the size of the offsets array, and allocate memory for it. */
 	rc = pcre_fullinfo(pce->re, extra, PCRE_INFO_CAPTURECOUNT, &num_subpats);
 	if (rc < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
 		return NULL;
 	}
 	num_subpats++;
@@ -1070,7 +1070,7 @@ PHPAPI char *php_pcre_replace_impl(pcre_cache_entry *pce, char *subject, int sub
 	 * allocate the table, even though there may be no named subpatterns. This
 	 * avoids somewhat more complicated logic in the inner loops.
 	 */
-	subpat_names = make_subpats_table(num_subpats, pce TSRMLS_CC);
+	subpat_names = make_subpats_table(num_subpats, pce, TSRMLS_C);
 	if (!subpat_names) {
 		return NULL;
 	}
@@ -1096,7 +1096,7 @@ PHPAPI char *php_pcre_replace_impl(pcre_cache_entry *pce, char *subject, int sub
 
 		/* Check for too many substrings condition. */
 		if (count == 0) {
-			php_error_docref(NULL TSRMLS_CC,E_NOTICE, "Matched, but too many substrings");
+			php_error_docref(NULL, TSRMLS_C,E_NOTICE, "Matched, but too many substrings");
 			count = size_offsets/3;
 		}
 
@@ -1114,11 +1114,11 @@ PHPAPI char *php_pcre_replace_impl(pcre_cache_entry *pce, char *subject, int sub
 			/* If evaluating, do it and add the return string's length */
 			if (eval) {
 				eval_result_len = preg_do_eval(replace, replace_len, subject,
-											   offsets, count, &eval_result TSRMLS_CC);
+											   offsets, count, &eval_result, TSRMLS_C);
 				new_len += eval_result_len;
 			} else if (is_callable_replace) {
 				/* Use custom function to get replacement string and its length. */
-				eval_result_len = preg_do_repl_func(replace_val, subject, offsets, subpat_names, count, &eval_result TSRMLS_CC);
+				eval_result_len = preg_do_repl_func(replace_val, subject, offsets, subpat_names, count, &eval_result, TSRMLS_C);
 				new_len += eval_result_len;
 			} else { /* do regular substitution */
 				walk = replace;
@@ -1218,7 +1218,7 @@ PHPAPI char *php_pcre_replace_impl(pcre_cache_entry *pce, char *subject, int sub
 				break;
 			}
 		} else {
-			pcre_handle_exec_error(count TSRMLS_CC);
+			pcre_handle_exec_error(count, TSRMLS_C);
 			efree(result);
 			result = NULL;
 			break;
@@ -1243,7 +1243,7 @@ PHPAPI char *php_pcre_replace_impl(pcre_cache_entry *pce, char *subject, int sub
 
 /* {{{ php_replace_in_subject
  */
-static char *php_replace_in_subject(zval *regex, zval *replace, zval **subject, int *result_len, int limit, int is_callable_replace, int *replace_count TSRMLS_DC)
+static char *php_replace_in_subject(zval *regex, zval *replace, zval **subject, int *result_len, int limit, int is_callable_replace, int *replace_count, TSRMLS_D)
 {
 	zval		**regex_entry,
 				**replace_entry = NULL,
@@ -1301,7 +1301,7 @@ static char *php_replace_in_subject(zval *regex, zval *replace, zval **subject, 
 										   is_callable_replace,
 										   result_len,
 										   limit,
-										   replace_count TSRMLS_CC)) != NULL) {
+										   replace_count, TSRMLS_C)) != NULL) {
 				efree(subject_value);
 				subject_value = result;
 				subject_len = *result_len;
@@ -1323,7 +1323,7 @@ static char *php_replace_in_subject(zval *regex, zval *replace, zval **subject, 
 								  is_callable_replace,
 								  result_len,
 								  limit,
-								  replace_count TSRMLS_CC);
+								  replace_count, TSRMLS_C);
 		return result;
 	}
 }
@@ -1348,12 +1348,12 @@ static void preg_replace_impl(INTERNAL_FUNCTION_PARAMETERS, int is_callable_repl
 	int				 replace_count=0, old_replace_count;
 	
 	/* Get function parameters and do error-checking. */
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ZZZ|lZ", &regex, &replace, &subject, &limit, &zcount) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ZZZ|lZ", &regex, &replace, &subject, &limit, &zcount) == FAILURE) {
 		return;
 	}
 	
 	if (!is_callable_replace && Z_TYPE_PP(replace) == IS_ARRAY && Z_TYPE_PP(regex) != IS_ARRAY) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Parameter mismatch, pattern is a string while replacement is an array");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Parameter mismatch, pattern is a string while replacement is an array");
 		RETURN_FALSE;
 	}
 
@@ -1362,8 +1362,8 @@ static void preg_replace_impl(INTERNAL_FUNCTION_PARAMETERS, int is_callable_repl
 		convert_to_string_ex(replace);
 	}
 	if (is_callable_replace) {
-		if (!zend_is_callable(*replace, 0, &callback_name TSRMLS_CC)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Requires argument 2, '%s', to be a valid callback", callback_name);
+		if (!zend_is_callable(*replace, 0, &callback_name, TSRMLS_C)) {
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Requires argument 2, '%s', to be a valid callback", callback_name);
 			efree(callback_name);
 			MAKE_COPY_ZVAL(subject, return_value);
 			return;
@@ -1391,7 +1391,7 @@ static void preg_replace_impl(INTERNAL_FUNCTION_PARAMETERS, int is_callable_repl
 		while (zend_hash_get_current_data(Z_ARRVAL_PP(subject), (void **)&subject_entry) == SUCCESS) {
 			SEPARATE_ZVAL(subject_entry);
 			old_replace_count = replace_count;
-			if ((result = php_replace_in_subject(*regex, *replace, subject_entry, &result_len, limit_val, is_callable_replace, &replace_count TSRMLS_CC)) != NULL) {
+			if ((result = php_replace_in_subject(*regex, *replace, subject_entry, &result_len, limit_val, is_callable_replace, &replace_count, TSRMLS_C)) != NULL) {
 				if (!is_filter || replace_count > old_replace_count) {
 					/* Add to return array */
 					switch(zend_hash_get_current_key(Z_ARRVAL_PP(subject), &string_key, &num_key, 0))
@@ -1413,7 +1413,7 @@ static void preg_replace_impl(INTERNAL_FUNCTION_PARAMETERS, int is_callable_repl
 		}
 	} else {	/* if subject is not an array */
 		old_replace_count = replace_count;
-		if ((result = php_replace_in_subject(*regex, *replace, subject, &result_len, limit_val, is_callable_replace, &replace_count TSRMLS_CC)) != NULL) {
+		if ((result = php_replace_in_subject(*regex, *replace, subject, &result_len, limit_val, is_callable_replace, &replace_count, TSRMLS_C)) != NULL) {
 			if (!is_filter || replace_count > old_replace_count) {
 				RETVAL_STRINGL(result, result_len, 0);
 			} else {
@@ -1466,24 +1466,24 @@ static PHP_FUNCTION(preg_split)
 	pcre_cache_entry	*pce;			/* Compiled regular expression */
 
 	/* Get function parameters and do error checking */	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|ll", &regex, &regex_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss|ll", &regex, &regex_len,
 							  &subject, &subject_len, &limit_val, &flags) == FAILURE) {
 		RETURN_FALSE;
 	}
 	
 	/* Compile regex or get it from cache. */
-	if ((pce = pcre_get_compiled_regex_cache(regex, regex_len TSRMLS_CC)) == NULL) {
+	if ((pce = pcre_get_compiled_regex_cache(regex, regex_len, TSRMLS_C)) == NULL) {
 		RETURN_FALSE;
 	}
 
-	php_pcre_split_impl(pce, subject, subject_len, return_value, limit_val, flags TSRMLS_CC);
+	php_pcre_split_impl(pce, subject, subject_len, return_value, limit_val, flags, TSRMLS_C);
 }
 /* }}} */
 
 /* {{{ php_pcre_split
  */
 PHPAPI void php_pcre_split_impl(pcre_cache_entry *pce, char *subject, int subject_len, zval *return_value,
-	long limit_val, long flags TSRMLS_DC)
+	long limit_val, long flags, TSRMLS_D)
 {
 	pcre_extra		*extra = NULL;		/* Holds results of studying */
 	pcre			*re_bump = NULL;	/* Regex instance for empty matches */
@@ -1523,7 +1523,7 @@ PHPAPI void php_pcre_split_impl(pcre_cache_entry *pce, char *subject, int subjec
 	/* Calculate the size of the offsets array, and allocate memory for it. */
 	rc = pcre_fullinfo(pce->re, extra, PCRE_INFO_CAPTURECOUNT, &size_offsets);
 	if (rc < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
 		RETURN_FALSE;
 	}
 	size_offsets = (size_offsets + 1) * 3;
@@ -1546,7 +1546,7 @@ PHPAPI void php_pcre_split_impl(pcre_cache_entry *pce, char *subject, int subjec
 
 		/* Check for too many substrings condition. */
 		if (count == 0) {
-			php_error_docref(NULL TSRMLS_CC,E_NOTICE, "Matched, but too many substrings");
+			php_error_docref(NULL, TSRMLS_C,E_NOTICE, "Matched, but too many substrings");
 			count = size_offsets/3;
 		}
 				
@@ -1597,7 +1597,7 @@ PHPAPI void php_pcre_split_impl(pcre_cache_entry *pce, char *subject, int subjec
 					if (re_bump == NULL) {
 						int dummy;
 
-						if ((re_bump = pcre_get_compiled_regex("/./us", &extra_bump, &dummy TSRMLS_CC)) == NULL) {
+						if ((re_bump = pcre_get_compiled_regex("/./us", &extra_bump, &dummy, TSRMLS_C)) == NULL) {
 							RETURN_FALSE;
 						}
 					}
@@ -1605,7 +1605,7 @@ PHPAPI void php_pcre_split_impl(pcre_cache_entry *pce, char *subject, int subjec
 							  subject_len, start_offset,
 							  exoptions, offsets, size_offsets);
 					if (count < 1) {
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unknown error");
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unknown error");
 						RETURN_FALSE;
 					}
 				} else {
@@ -1615,7 +1615,7 @@ PHPAPI void php_pcre_split_impl(pcre_cache_entry *pce, char *subject, int subjec
 			} else
 				break;
 		} else {
-			pcre_handle_exec_error(count TSRMLS_CC);
+			pcre_handle_exec_error(count, TSRMLS_C);
 			break;
 		}
 
@@ -1666,7 +1666,7 @@ static PHP_FUNCTION(preg_quote)
 	zend_bool quote_delim = 0; /* Whether to quote additional delim char */
 	
 	/* Get the arguments and check for errors */
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s", &in_str, &in_str_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|s", &in_str, &in_str_len,
 							  &delim, &delim_len) == FAILURE) {
 		return;
 	}
@@ -1747,21 +1747,21 @@ static PHP_FUNCTION(preg_grep)
 	pcre_cache_entry	*pce;			/* Compiled regular expression */
 
 	/* Get arguments and do error checking */
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sa|l", &regex, &regex_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sa|l", &regex, &regex_len,
 							  &input, &flags) == FAILURE) {
 		return;
 	}
 	
 	/* Compile regex or get it from cache. */
-	if ((pce = pcre_get_compiled_regex_cache(regex, regex_len TSRMLS_CC)) == NULL) {
+	if ((pce = pcre_get_compiled_regex_cache(regex, regex_len, TSRMLS_C)) == NULL) {
 		RETURN_FALSE;
 	}
 	
-	php_pcre_grep_impl(pce, input, return_value, flags TSRMLS_CC);
+	php_pcre_grep_impl(pce, input, return_value, flags, TSRMLS_C);
 }
 /* }}} */
 
-PHPAPI void  php_pcre_grep_impl(pcre_cache_entry *pce, zval *input, zval *return_value, long flags TSRMLS_DC) /* {{{ */
+PHPAPI void  php_pcre_grep_impl(pcre_cache_entry *pce, zval *input, zval *return_value, long flags, TSRMLS_D) /* {{{ */
 {
 	zval		   **entry;				/* An entry in the input array */
 	pcre_extra		*extra = pce->extra;/* Holds results of studying */
@@ -1787,7 +1787,7 @@ PHPAPI void  php_pcre_grep_impl(pcre_cache_entry *pce, zval *input, zval *return
 	/* Calculate the size of the offsets array, and allocate memory for it. */
 	rc = pcre_fullinfo(pce->re, extra, PCRE_INFO_CAPTURECOUNT, &size_offsets);
 	if (rc < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Internal pcre_fullinfo() error %d", rc);
 		RETURN_FALSE;
 	}
 	size_offsets = (size_offsets + 1) * 3;
@@ -1815,10 +1815,10 @@ PHPAPI void  php_pcre_grep_impl(pcre_cache_entry *pce, zval *input, zval *return
 
 		/* Check for too many substrings condition. */
 		if (count == 0) {
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Matched, but too many substrings");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Matched, but too many substrings");
 			count = size_offsets/3;
 		} else if (count < 0 && count != PCRE_ERROR_NOMATCH) {
-			pcre_handle_exec_error(count TSRMLS_CC);
+			pcre_handle_exec_error(count, TSRMLS_C);
 			break;
 		}
 
@@ -1858,7 +1858,7 @@ PHPAPI void  php_pcre_grep_impl(pcre_cache_entry *pce, zval *input, zval *return
    Returns the error code of the last regexp execution. */
 static PHP_FUNCTION(preg_last_error)
 {
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "") == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "") == FAILURE) {
 		return;
 	}
 

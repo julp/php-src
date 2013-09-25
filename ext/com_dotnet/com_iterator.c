@@ -41,7 +41,7 @@ struct php_com_iterator {
 	zval *zdata;
 };
 
-static void com_iter_dtor(zend_object_iterator *iter TSRMLS_DC)
+static void com_iter_dtor(zend_object_iterator *iter, TSRMLS_D)
 {
 	struct php_com_iterator *I = (struct php_com_iterator*)iter->data;
 	
@@ -56,7 +56,7 @@ static void com_iter_dtor(zend_object_iterator *iter TSRMLS_DC)
 	efree(I);
 }
 
-static int com_iter_valid(zend_object_iterator *iter TSRMLS_DC)
+static int com_iter_valid(zend_object_iterator *iter, TSRMLS_D)
 {
 	struct php_com_iterator *I = (struct php_com_iterator*)iter->data;
 
@@ -67,14 +67,14 @@ static int com_iter_valid(zend_object_iterator *iter TSRMLS_DC)
 	return FAILURE;
 }
 
-static void com_iter_get_data(zend_object_iterator *iter, zval ***data TSRMLS_DC)
+static void com_iter_get_data(zend_object_iterator *iter, zval ***data, TSRMLS_D)
 {
 	struct php_com_iterator *I = (struct php_com_iterator*)iter->data;
 
 	*data = &I->zdata;
 }
 
-static void com_iter_get_key(zend_object_iterator *iter, zval *key TSRMLS_DC)
+static void com_iter_get_key(zend_object_iterator *iter, zval *key, TSRMLS_D)
 {
 	struct php_com_iterator *I = (struct php_com_iterator*)iter->data;
 
@@ -85,7 +85,7 @@ static void com_iter_get_key(zend_object_iterator *iter, zval *key TSRMLS_DC)
 	}
 }
 
-static int com_iter_move_forwards(zend_object_iterator *iter TSRMLS_DC)
+static int com_iter_move_forwards(zend_object_iterator *iter, TSRMLS_D)
 {
 	struct php_com_iterator *I = (struct php_com_iterator*)iter->data;
 	unsigned long n_fetched;
@@ -115,15 +115,15 @@ static int com_iter_move_forwards(zend_object_iterator *iter TSRMLS_DC)
 			return FAILURE;
 		}
 		I->key++;
-		if (php_com_safearray_get_elem(&I->safe_array, &I->v, (LONG)I->key TSRMLS_CC) == 0) {
+		if (php_com_safearray_get_elem(&I->safe_array, &I->v, (LONG)I->key, TSRMLS_C) == 0) {
 			I->key = (ulong)-1;
 			return FAILURE;
 		}
 	}
 
 	MAKE_STD_ZVAL(ptr);
-	php_com_zval_from_variant(ptr, &I->v, I->code_page TSRMLS_CC);
-	/* php_com_wrap_variant(ptr, &I->v, I->code_page TSRMLS_CC); */
+	php_com_zval_from_variant(ptr, &I->v, I->code_page, TSRMLS_C);
+	/* php_com_wrap_variant(ptr, &I->v, I->code_page, TSRMLS_C); */
 	I->zdata = ptr;
 	return SUCCESS;
 }
@@ -138,7 +138,7 @@ static zend_object_iterator_funcs com_iter_funcs = {
 	NULL
 };
 
-zend_object_iterator *php_com_iter_get(zend_class_entry *ce, zval *object, int by_ref TSRMLS_DC)
+zend_object_iterator *php_com_iter_get(zend_class_entry *ce, zval *object, int by_ref, TSRMLS_D)
 {
 	php_com_dotnet_object *obj;
 	struct php_com_iterator *I;
@@ -155,7 +155,7 @@ zend_object_iterator *php_com_iter_get(zend_class_entry *ce, zval *object, int b
 	obj = CDNO_FETCH(object);
 
 	if (V_VT(&obj->v) != VT_DISPATCH && !V_ISARRAY(&obj->v)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "variant is not an object or array VT=%d", V_VT(&obj->v));
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "variant is not an object or array VT=%d", V_VT(&obj->v));
 		return NULL;
 	}
 
@@ -177,7 +177,7 @@ zend_object_iterator *php_com_iter_get(zend_class_entry *ce, zval *object, int b
 		dims = SafeArrayGetDim(V_ARRAY(&obj->v));
 
 		if (dims != 1) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING,
+			php_error_docref(NULL, TSRMLS_C, E_WARNING,
 				   "Can only handle single dimension variant arrays (this array has %d)", dims);
 			goto fail;
 		}
@@ -191,10 +191,10 @@ zend_object_iterator *php_com_iter_get(zend_class_entry *ce, zval *object, int b
 		SafeArrayGetUBound(V_ARRAY(&I->safe_array), 1, &I->sa_max);
 
 		/* pre-fetch the element */
-		if (php_com_safearray_get_elem(&I->safe_array, &I->v, bound TSRMLS_CC)) {
+		if (php_com_safearray_get_elem(&I->safe_array, &I->v, bound, TSRMLS_C)) {
 			I->key = bound;
 			MAKE_STD_ZVAL(ptr);
-			php_com_zval_from_variant(ptr, &I->v, I->code_page TSRMLS_CC);
+			php_com_zval_from_variant(ptr, &I->v, I->code_page, TSRMLS_C);
 			I->zdata = ptr;
 		} else {
 			I->key = (ulong)-1;
@@ -228,7 +228,7 @@ zend_object_iterator *php_com_iter_get(zend_class_entry *ce, zval *object, int b
 			/* indicate that we have element 0 */
 			I->key = 0;
 			MAKE_STD_ZVAL(ptr);
-			php_com_zval_from_variant(ptr, &I->v, I->code_page TSRMLS_CC);
+			php_com_zval_from_variant(ptr, &I->v, I->code_page, TSRMLS_C);
 			I->zdata = ptr;
 		} else {
 			/* indicate that there are no more items */

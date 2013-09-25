@@ -143,9 +143,9 @@ PHP_RSHUTDOWN_FUNCTION(user_filters);
 PHP_RSHUTDOWN_FUNCTION(browscap);
 
 /* Left for BC (not binary safe!) */
-PHPAPI int _php_error_log(int opt_err, char *message, char *opt, char *headers TSRMLS_DC);
-PHPAPI int _php_error_log_ex(int opt_err, char *message, int message_len, char *opt, char *headers TSRMLS_DC);
-PHPAPI int php_prefix_varname(zval *result, zval *prefix, char *var_name, int var_name_len, zend_bool add_underscore TSRMLS_DC);
+PHPAPI int _php_error_log(int opt_err, char *message, char *opt, char *headers, TSRMLS_D);
+PHPAPI int _php_error_log_ex(int opt_err, char *message, int message_len, char *opt, char *headers, TSRMLS_D);
+PHPAPI int php_prefix_varname(zval *result, zval *prefix, char *var_name, int var_name_len, zend_bool add_underscore, TSRMLS_D);
 
 #if SIZEOF_INT == 4
 /* Most 32-bit and 64-bit systems have 32-bit ints */
@@ -257,8 +257,8 @@ typedef struct _php_shutdown_function_entry {
 	int arg_count;
 } php_shutdown_function_entry;
 
-PHPAPI extern zend_bool register_user_shutdown_function(char *function_name, size_t function_len, php_shutdown_function_entry *shutdown_function_entry TSRMLS_DC);
-PHPAPI extern zend_bool remove_user_shutdown_function(char *function_name, size_t function_len TSRMLS_DC);
-PHPAPI extern zend_bool append_user_shutdown_function(php_shutdown_function_entry shutdown_function_entry TSRMLS_DC);
+PHPAPI extern zend_bool register_user_shutdown_function(char *function_name, size_t function_len, php_shutdown_function_entry *shutdown_function_entry, TSRMLS_D);
+PHPAPI extern zend_bool remove_user_shutdown_function(char *function_name, size_t function_len, TSRMLS_D);
+PHPAPI extern zend_bool append_user_shutdown_function(php_shutdown_function_entry shutdown_function_entry, TSRMLS_D);
 
 #endif /* BASIC_FUNCTIONS_H */

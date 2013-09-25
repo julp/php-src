@@ -72,27 +72,27 @@ PHP_METHOD(domtext, __construct)
 	int value_len;
 	zend_error_handling error_handling;
 
-	zend_replace_error_handling(EH_THROW, dom_domexception_class_entry, &error_handling TSRMLS_CC);
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O|u", &id, dom_text_class_entry, &value, &value_len) == FAILURE) {
-		zend_restore_error_handling(&error_handling TSRMLS_CC);
+	zend_replace_error_handling(EH_THROW, dom_domexception_class_entry, &error_handling, TSRMLS_C);
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "O|u", &id, dom_text_class_entry, &value, &value_len) == FAILURE) {
+		zend_restore_error_handling(&error_handling, TSRMLS_C);
 		return;
 	}
 
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	zend_restore_error_handling(&error_handling, TSRMLS_C);
 	nodep = xmlNewText((xmlChar *) value);
 
 	if (!nodep) {
-		php_dom_throw_error(INVALID_STATE_ERR, 1 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 1, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
-	intern = (dom_object *)zend_object_store_get_object(id TSRMLS_CC);
+	intern = (dom_object *)zend_object_store_get_object(id, TSRMLS_C);
 	if (intern != NULL) {
 		oldnode = dom_object_get_node(intern);
 		if (oldnode != NULL) {
-			php_libxml_node_free_resource(oldnode  TSRMLS_CC);
+			php_libxml_node_free_resource(oldnode,  TSRMLS_C);
 		}
-		php_libxml_increment_node_ptr((php_libxml_node_object *)intern, nodep, (void *)intern TSRMLS_CC);
+		php_libxml_increment_node_ptr((php_libxml_node_object *)intern, nodep, (void *)intern, TSRMLS_C);
 	}
 }
 /* }}} end DOMText::__construct */
@@ -102,7 +102,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-Text3-wholeText
 Since: DOM Level 3
 */
-int dom_text_whole_text_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_text_whole_text_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlNodePtr node;
 	xmlChar *wholetext = NULL;
@@ -110,7 +110,7 @@ int dom_text_whole_text_read(dom_object *obj, zval **retval TSRMLS_DC)
 	node = dom_object_get_node(obj);
 
 	if (node == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -155,7 +155,7 @@ PHP_FUNCTION(dom_text_split_text)
 	int         length;
 	dom_object	*intern;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ol", &id, dom_text_class_entry, &offset) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ol", &id, dom_text_class_entry, &offset) == FAILURE) {
 		return;
 	}
 	DOM_GET_OBJ(node, id, xmlNodePtr, intern);
@@ -196,7 +196,7 @@ PHP_FUNCTION(dom_text_split_text)
 		nnode->type = XML_TEXT_NODE;
 	}
 	
-	return_value = php_dom_create_object(nnode, &ret, return_value, intern TSRMLS_CC);
+	return_value = php_dom_create_object(nnode, &ret, return_value, intern, TSRMLS_C);
 }
 /* }}} end dom_text_split_text */
 
@@ -210,7 +210,7 @@ PHP_FUNCTION(dom_text_is_whitespace_in_element_content)
 	xmlNodePtr  node;
 	dom_object	*intern;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O", &id, dom_text_class_entry) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "O", &id, dom_text_class_entry) == FAILURE) {
 		return;
 	}
 	DOM_GET_OBJ(node, id, xmlNodePtr, intern);

@@ -151,7 +151,7 @@ static char *ErrorMessages[] =
  * Returns NULL on error, or the new char* buffer on success.
  * You have to take care and efree() the buffer on your own.
  */
-static char *php_win32_mail_trim_header(char *header TSRMLS_DC)
+static char *php_win32_mail_trim_header(char *header, TSRMLS_D)
 {
 
 #if HAVE_PCRE || HAVE_BUNDLED_PCRE
@@ -173,7 +173,7 @@ static char *php_win32_mail_trim_header(char *header TSRMLS_DC)
 							  0,
 							  &result_len,
 							  -1,
-							  NULL TSRMLS_CC);
+							  NULL, TSRMLS_C);
 	if (NULL == result) {
 		FREE_ZVAL(replace);
 		return NULL;
@@ -187,7 +187,7 @@ static char *php_win32_mail_trim_header(char *header TSRMLS_DC)
 							   0,
 							   &result_len,
 							   -1,
-							   NULL TSRMLS_CC);
+							   NULL, TSRMLS_C);
 	efree(result);
 	FREE_ZVAL(replace);
 	return result2;
@@ -212,7 +212,7 @@ static char *php_win32_mail_trim_header(char *header TSRMLS_DC)
 //********************************************************************/
 PHPAPI int TSendMail(char *host, int *error, char **error_message,
 			  char *headers, char *Subject, char *mailTo, char *data,
-			  char *mailCc, char *mailBcc, char *mailRPath TSRMLS_DC)
+			  char *mailCc, char *mailBcc, char *mailRPath, TSRMLS_D)
 {
 	int ret;
 	char *RPath = NULL;
@@ -238,7 +238,7 @@ PHPAPI int TSendMail(char *host, int *error, char **error_message,
 		size_t i;
 
 		/* Use PCRE to trim the header into the right format */
-		if (NULL == (headers = php_win32_mail_trim_header(headers TSRMLS_CC))) {
+		if (NULL == (headers = php_win32_mail_trim_header(headers, TSRMLS_C))) {
 			*error = W32_SM_PCRE_ERROR;
 			return FAILURE;
 		}
@@ -302,7 +302,7 @@ PHPAPI int TSendMail(char *host, int *error, char **error_message,
 			MailHost, !INI_INT("smtp_port") ? 25 : INI_INT("smtp_port"));
 		return FAILURE;
 	} else {
-		ret = SendText(RPath, Subject, mailTo, mailCc, mailBcc, data, headers, headers_lc, error_message TSRMLS_CC);
+		ret = SendText(RPath, Subject, mailTo, mailCc, mailBcc, data, headers, headers_lc, error_message, TSRMLS_C);
 		TSMClose();
 		if (RPath) {
 			efree(RPath);
@@ -380,7 +380,7 @@ PHPAPI char *GetSMErrorText(int index)
 // History:
 //*******************************************************************/
 static int SendText(char *RPath, char *Subject, char *mailTo, char *mailCc, char *mailBcc, char *data, 
-			 char *headers, char *headers_lc, char **error_message TSRMLS_DC)
+			 char *headers, char *headers_lc, char **error_message, TSRMLS_D)
 {
 	int res;
 	char *p;
@@ -606,9 +606,9 @@ static int SendText(char *RPath, char *Subject, char *mailTo, char *mailCc, char
 
 	/* send message header */
 	if (Subject == NULL) {
-		res = PostHeader(RPath, "No Subject", mailTo, stripped_header TSRMLS_CC);
+		res = PostHeader(RPath, "No Subject", mailTo, stripped_header, TSRMLS_C);
 	} else {
-		res = PostHeader(RPath, Subject, mailTo, stripped_header TSRMLS_CC);
+		res = PostHeader(RPath, Subject, mailTo, stripped_header, TSRMLS_C);
 	}
 	if (stripped_header) {
 		efree(stripped_header);
@@ -682,7 +682,7 @@ static int addToHeader(char **header_buffer, const char *specifier, char *string
 // Author/Date:  jcar 20/9/96
 // History:
 //********************************************************************/
-static int PostHeader(char *RPath, char *Subject, char *mailTo, char *xheaders TSRMLS_DC)
+static int PostHeader(char *RPath, char *Subject, char *mailTo, char *xheaders, TSRMLS_D)
 {
 	/* Print message header according to RFC 822 */
 	/* Return-path, Received, Date, From, Subject, Sender, To, cc */
@@ -705,7 +705,7 @@ static int PostHeader(char *RPath, char *Subject, char *mailTo, char *xheaders T
 
 	if (!xheaders || !strstr(headers_lc, "date:")) {
 		time_t tNow = time(NULL);
-		char *dt = php_format_date("r", 1, tNow, 1 TSRMLS_CC);
+		char *dt = php_format_date("r", 1, tNow, 1, TSRMLS_C);
 
 		snprintf(header_buffer, MAIL_BUFFER_SIZE, "Date: %s\r\n", dt);
 		efree(dt);

@@ -44,13 +44,13 @@ ps_module ps_mod_user = {
 	ZVAL_STRINGL(a, vl, ln, 1);						\
 }
 
-static zval *ps_call_handler(zval *func, int argc, zval **argv TSRMLS_DC)
+static zval *ps_call_handler(zval *func, int argc, zval **argv, TSRMLS_D)
 {
 	int i;
 	zval *retval = NULL;
 
 	MAKE_STD_ZVAL(retval);
-	if (call_user_function(EG(function_table), NULL, func, retval, argc, argv TSRMLS_CC) == FAILURE) {
+	if (call_user_function(EG(function_table), NULL, func, retval, argc, argv, TSRMLS_C) == FAILURE) {
 		zval_ptr_dtor(&retval);
 		retval = NULL;
 	}
@@ -82,7 +82,7 @@ PS_OPEN_FUNC(user)
 	STDVARS;
 	
 	if (PSF(open) == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,
 			"user session functions not defined");
 			
 		return FAILURE;
@@ -91,7 +91,7 @@ PS_OPEN_FUNC(user)
 	SESS_ZVAL_STRING((char*)save_path, args[0]);
 	SESS_ZVAL_STRING((char*)session_name, args[1]);
 
-	retval = ps_call_handler(PSF(open), 2, args TSRMLS_CC);
+	retval = ps_call_handler(PSF(open), 2, args, TSRMLS_C);
 	PS(mod_user_implemented) = 1;
 
 	FINISH;
@@ -108,7 +108,7 @@ PS_CLOSE_FUNC(user)
 	}
 
 	zend_try {
-		retval = ps_call_handler(PSF(close), 0, NULL TSRMLS_CC);
+		retval = ps_call_handler(PSF(close), 0, NULL, TSRMLS_C);
 	} zend_catch {
 		bailout = 1;
 	} zend_end_try();
@@ -132,7 +132,7 @@ PS_READ_FUNC(user)
 
 	SESS_ZVAL_STRING((char*)key, args[0]);
 
-	retval = ps_call_handler(PSF(read), 1, args TSRMLS_CC);
+	retval = ps_call_handler(PSF(read), 1, args, TSRMLS_C);
 
 	if (retval) {
 		if (Z_TYPE_P(retval) == IS_STRING) {
@@ -154,7 +154,7 @@ PS_WRITE_FUNC(user)
 	SESS_ZVAL_STRING((char*)key, args[0]);
 	SESS_ZVAL_STRINGN((char*)val, vallen, args[1]);
 
-	retval = ps_call_handler(PSF(write), 2, args TSRMLS_CC);
+	retval = ps_call_handler(PSF(write), 2, args, TSRMLS_C);
 
 	FINISH;
 }
@@ -166,7 +166,7 @@ PS_DESTROY_FUNC(user)
 
 	SESS_ZVAL_STRING((char*)key, args[0]);
 
-	retval = ps_call_handler(PSF(destroy), 1, args TSRMLS_CC);
+	retval = ps_call_handler(PSF(destroy), 1, args, TSRMLS_C);
 
 	FINISH;
 }
@@ -178,7 +178,7 @@ PS_GC_FUNC(user)
 
 	SESS_ZVAL_LONG(maxlifetime, args[0]);
 
-	retval = ps_call_handler(PSF(gc), 1, args TSRMLS_CC);
+	retval = ps_call_handler(PSF(gc), 1, args, TSRMLS_C);
 
 	FINISH;
 }

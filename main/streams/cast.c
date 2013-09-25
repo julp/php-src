@@ -197,7 +197,7 @@ void php_stream_mode_sanitize_fdopen_fopencookie(php_stream *stream, char *resul
 /* }}} */
 
 /* {{{ php_stream_cast */
-PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show_err TSRMLS_DC)
+PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show_err, TSRMLS_D)
 {
 	int flags = castas & PHP_STREAM_CAST_MASK;
 	castas &= ~PHP_STREAM_CAST_MASK;
@@ -208,7 +208,7 @@ PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show
 		if (stream->ops->seek && (stream->flags & PHP_STREAM_FLAG_NO_SEEK) == 0) {
 			off_t dummy;
 
-			stream->ops->seek(stream, stream->position, SEEK_SET, &dummy TSRMLS_CC);
+			stream->ops->seek(stream, stream->position, SEEK_SET, &dummy, TSRMLS_C);
 			stream->readpos = stream->writepos = 0;
 		}
 	}
@@ -228,7 +228,7 @@ PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show
 		if (php_stream_is(stream, PHP_STREAM_IS_STDIO) &&
 			stream->ops->cast &&
 			!php_stream_is_filtered(stream) &&
-			stream->ops->cast(stream, castas, ret TSRMLS_CC) == SUCCESS
+			stream->ops->cast(stream, castas, ret, TSRMLS_C) == SUCCESS
 		) {
 			goto exit_success;
 		}
@@ -265,12 +265,12 @@ PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show
 			b) no memory
 			-> lets bail
 		*/
-		php_error_docref(NULL TSRMLS_CC, E_ERROR, "fopencookie failed");
+		php_error_docref(NULL, TSRMLS_C, E_ERROR, "fopencookie failed");
 		return FAILURE;
 #endif
 
-		if (!php_stream_is_filtered(stream) && stream->ops->cast && stream->ops->cast(stream, castas, NULL TSRMLS_CC) == SUCCESS) {
-			if (FAILURE == stream->ops->cast(stream, castas, ret TSRMLS_CC)) {
+		if (!php_stream_is_filtered(stream) && stream->ops->cast && stream->ops->cast(stream, castas, NULL, TSRMLS_C) == SUCCESS) {
+			if (FAILURE == stream->ops->cast(stream, castas, ret, TSRMLS_C)) {
 				return FAILURE;
 			}
 			goto exit_success;
@@ -304,9 +304,9 @@ PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show
 	}
 
 	if (php_stream_is_filtered(stream)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "cannot cast a filtered stream on this system");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "cannot cast a filtered stream on this system");
 		return FAILURE;
-	} else if (stream->ops->cast && stream->ops->cast(stream, castas, ret TSRMLS_CC) == SUCCESS) {
+	} else if (stream->ops->cast && stream->ops->cast(stream, castas, ret, TSRMLS_C) == SUCCESS) {
 		goto exit_success;
 	}
 
@@ -319,7 +319,7 @@ PHPAPI int _php_stream_cast(php_stream *stream, int castas, void **ret, int show
 			"select()able descriptor"
 		};
 
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "cannot represent a stream of type %s as a %s", stream->ops->label, cast_names[castas]);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "cannot represent a stream of type %s as a %s", stream->ops->label, cast_names[castas]);
 	}
 
 	return FAILURE;
@@ -334,7 +334,7 @@ exit_success:
 		 * will be accessing the stream.  Emit a warning so that the end-user will
 		 * know that they should try something else */
 
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "%ld bytes of buffered data lost during stream conversion!", (long)(stream->writepos - stream->readpos));
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "%ld bytes of buffered data lost during stream conversion!", (long)(stream->writepos - stream->readpos));
 	}
 
 	if (castas == PHP_STREAM_AS_STDIO && ret) {
@@ -351,7 +351,7 @@ exit_success:
 /* }}} */
 
 /* {{{ php_stream_open_wrapper_as_file */
-PHPAPI FILE * _php_stream_open_wrapper_as_file(char *path, char *mode, int options, char **opened_path STREAMS_DC TSRMLS_DC)
+PHPAPI FILE * _php_stream_open_wrapper_as_file(char *path, char *mode, int options, char **opened_path STREAMS_DC, TSRMLS_D)
 {
 	FILE *fp = NULL;
 	php_stream *stream = NULL;
@@ -374,7 +374,7 @@ PHPAPI FILE * _php_stream_open_wrapper_as_file(char *path, char *mode, int optio
 /* }}} */
 
 /* {{{ php_stream_make_seekable */
-PHPAPI int _php_stream_make_seekable(php_stream *origstream, php_stream **newstream, int flags STREAMS_DC TSRMLS_DC)
+PHPAPI int _php_stream_make_seekable(php_stream *origstream, php_stream **newstream, int flags STREAMS_DC, TSRMLS_D)
 {
 	if (newstream == NULL) {
 		return PHP_STREAM_FAILED;

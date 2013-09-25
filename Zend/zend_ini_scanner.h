@@ -29,9 +29,9 @@
 BEGIN_EXTERN_C()
 int zend_ini_scanner_get_lineno(TSRMLS_D);
 char *zend_ini_scanner_get_filename(TSRMLS_D);
-int zend_ini_open_file_for_scanning(zend_file_handle *fh, int scanner_mode TSRMLS_DC);
-int zend_ini_prepare_string_for_scanning(char *str, int scanner_mode TSRMLS_DC);
-int ini_lex(zval *ini_lval TSRMLS_DC);
+int zend_ini_open_file_for_scanning(zend_file_handle *fh, int scanner_mode, TSRMLS_D);
+int zend_ini_prepare_string_for_scanning(char *str, int scanner_mode, TSRMLS_D);
+int ini_lex(zval *ini_lval, TSRMLS_D);
 void shutdown_ini_scanner(TSRMLS_D);
 END_EXTERN_C()
 

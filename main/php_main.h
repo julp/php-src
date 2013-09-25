@@ -37,18 +37,18 @@ PHPAPI int php_module_shutdown_wrapper(sapi_module_struct *sapi_globals);
 PHPAPI int php_request_startup_for_hook(TSRMLS_D);
 PHPAPI void php_request_shutdown_for_hook(void *dummy);
 
-PHPAPI int php_register_extensions(zend_module_entry **ptr, int count TSRMLS_DC);
+PHPAPI int php_register_extensions(zend_module_entry **ptr, int count, TSRMLS_D);
 
-PHPAPI int php_execute_script(zend_file_handle *primary_file TSRMLS_DC);
-PHPAPI int php_execute_simple_script(zend_file_handle *primary_file, zval **ret TSRMLS_DC);
+PHPAPI int php_execute_script(zend_file_handle *primary_file, TSRMLS_D);
+PHPAPI int php_execute_simple_script(zend_file_handle *primary_file, zval **ret, TSRMLS_D);
 PHPAPI int php_handle_special_queries(TSRMLS_D);
-PHPAPI int php_lint_script(zend_file_handle *file TSRMLS_DC);
+PHPAPI int php_lint_script(zend_file_handle *file, TSRMLS_D);
 
 PHPAPI void php_handle_aborted_connection(void);
-PHPAPI int php_handle_auth_data(const char *auth TSRMLS_DC);
+PHPAPI int php_handle_auth_data(const char *auth, TSRMLS_D);
 
-PHPAPI void php_html_puts(const char *str, uint siz TSRMLS_DC);
-PHPAPI int php_stream_open_for_zend_ex(const char *filename, zend_file_handle *handle, int mode TSRMLS_DC);
+PHPAPI void php_html_puts(const char *str, uint siz, TSRMLS_D);
+PHPAPI int php_stream_open_for_zend_ex(const char *filename, zend_file_handle *handle, int mode, TSRMLS_D);
 
 extern void php_call_shutdown_functions(TSRMLS_D);
 extern void php_free_shutdown_functions(TSRMLS_D);

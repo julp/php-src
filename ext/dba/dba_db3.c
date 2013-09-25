@@ -39,7 +39,7 @@ static void php_dba_db3_errcall_fcn(const char *errpfx, char *msg)
 {
 	TSRMLS_FETCH();
 	
-	php_error_docref(NULL TSRMLS_CC, E_NOTICE, "%s%s", errpfx?errpfx:"", msg);
+	php_error_docref(NULL, TSRMLS_C, E_NOTICE, "%s%s", errpfx?errpfx:"", msg);
 }
 
 #define DB3_DATA dba_db3_data *dba = info->dbf
@@ -187,7 +187,7 @@ DBA_FIRSTKEY_FUNC(db3)
 	}
 
 	/* we should introduce something like PARAM_PASSTHRU... */
-	return dba_nextkey_db3(info, newlen TSRMLS_CC);
+	return dba_nextkey_db3(info, newlen, TSRMLS_C);
 }
 
 DBA_NEXTKEY_FUNC(db3)

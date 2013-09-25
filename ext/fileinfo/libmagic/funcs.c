@@ -453,7 +453,7 @@ file_replace(struct magic_set *ms, const char *pat, const char *rep)
 	ZVAL_STRINGL(patt, pat, strlen(pat), 0);
 	opts |= PCRE_MULTILINE;
 	convert_libmagic_pattern(patt, opts);
-	if ((pce = pcre_get_compiled_regex_cache(Z_STRVAL_P(patt), Z_STRLEN_P(patt) TSRMLS_CC)) == NULL) {
+	if ((pce = pcre_get_compiled_regex_cache(Z_STRVAL_P(patt), Z_STRLEN_P(patt), TSRMLS_C)) == NULL) {
 		zval_dtor(patt);
 		FREE_ZVAL(patt);
 		return -1;
@@ -463,7 +463,7 @@ file_replace(struct magic_set *ms, const char *pat, const char *rep)
 	ZVAL_STRINGL(repl, rep, strlen(rep), 0);
 
 	res = php_pcre_replace_impl(pce, ms->o.buf, strlen(ms->o.buf), repl,
-			0, &res_len, -1, &rep_cnt TSRMLS_CC);
+			0, &res_len, -1, &rep_cnt, TSRMLS_C);
 
 	FREE_ZVAL(repl);
 	zval_dtor(patt);

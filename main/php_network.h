@@ -224,13 +224,13 @@ typedef struct {
 #endif
 
 BEGIN_EXTERN_C()
-PHPAPI int php_network_getaddresses(const char *host, int socktype, struct sockaddr ***sal, char **error_string TSRMLS_DC);
+PHPAPI int php_network_getaddresses(const char *host, int socktype, struct sockaddr ***sal, char **error_string, TSRMLS_D);
 PHPAPI void php_network_freeaddresses(struct sockaddr **sal);
 
 PHPAPI php_socket_t php_network_connect_socket_to_host(const char *host, unsigned short port,
 		int socktype, int asynchronous, struct timeval *timeout, char **error_string,
 		int *error_code, char *bindto, unsigned short bindport 
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 PHPAPI int php_network_connect_socket(php_socket_t sockfd,
 		const struct sockaddr *addr,
@@ -245,7 +245,7 @@ PHPAPI int php_network_connect_socket(php_socket_t sockfd,
 
 PHPAPI php_socket_t php_network_bind_socket_to_local_addr(const char *host, unsigned port,
 		int socktype, char **error_string, int *error_code
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 PHPAPI php_socket_t php_network_accept_incoming(php_socket_t srvsock,
 		char **textaddr, long *textaddrlen,
@@ -254,19 +254,19 @@ PHPAPI php_socket_t php_network_accept_incoming(php_socket_t srvsock,
 		struct timeval *timeout,
 		char **error_string,
 		int *error_code
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 PHPAPI int php_network_get_sock_name(php_socket_t sock, 
 		char **textaddr, long *textaddrlen,
 		struct sockaddr **addr,
 		socklen_t *addrlen
-		TSRMLS_DC);
+		,TSRMLS_D);
 	
 PHPAPI int php_network_get_peer_name(php_socket_t sock, 
 		char **textaddr, long *textaddrlen,
 		struct sockaddr **addr,
 		socklen_t *addrlen
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 PHPAPI void php_any_addr(int family, php_sockaddr_storage *addr, unsigned short port);
 PHPAPI int php_sockaddr_size(php_sockaddr_storage *addr);
@@ -285,10 +285,10 @@ extern php_stream_ops php_stream_generic_socket_ops;
 #define PHP_STREAM_IS_SOCKET	(&php_stream_socket_ops)
 
 BEGIN_EXTERN_C()
-PHPAPI php_stream *_php_stream_sock_open_from_socket(php_socket_t socket, const char *persistent_id STREAMS_DC TSRMLS_DC );
+PHPAPI php_stream *_php_stream_sock_open_from_socket(php_socket_t socket, const char *persistent_id STREAMS_DC, TSRMLS_D );
 /* open a connection to a host using php_hostconnect and return a stream */
 PHPAPI php_stream *_php_stream_sock_open_host(const char *host, unsigned short port,
-		int socktype, struct timeval *timeout, const char *persistent_id STREAMS_DC TSRMLS_DC);
+		int socktype, struct timeval *timeout, const char *persistent_id STREAMS_DC, TSRMLS_D);
 PHPAPI void php_network_populate_name_from_sockaddr(
 		/* input address */
 		struct sockaddr *sa, socklen_t sl,
@@ -297,19 +297,19 @@ PHPAPI void php_network_populate_name_from_sockaddr(
 		/* output address */
 		struct sockaddr **addr,
 		socklen_t *addrlen
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 PHPAPI int php_network_parse_network_address_with_port(const char *addr,
-		long addrlen, struct sockaddr *sa, socklen_t *sl TSRMLS_DC);
+		long addrlen, struct sockaddr *sa, socklen_t *sl, TSRMLS_D);
 END_EXTERN_C()
 
-#define php_stream_sock_open_from_socket(socket, persistent)	_php_stream_sock_open_from_socket((socket), (persistent) STREAMS_CC TSRMLS_CC)
-#define php_stream_sock_open_host(host, port, socktype, timeout, persistent)	_php_stream_sock_open_host((host), (port), (socktype), (timeout), (persistent) STREAMS_CC TSRMLS_CC)
+#define php_stream_sock_open_from_socket(socket, persistent)	_php_stream_sock_open_from_socket((socket), (persistent) STREAMS_CC, TSRMLS_C)
+#define php_stream_sock_open_host(host, port, socktype, timeout, persistent)	_php_stream_sock_open_host((host), (port), (socktype), (timeout), (persistent) STREAMS_CC, TSRMLS_C)
 
 /* {{{ memory debug */
-#define php_stream_sock_open_from_socket_rel(socket, persistent)	_php_stream_sock_open_from_socket((socket), (persistent) STREAMS_REL_CC TSRMLS_CC)
-#define php_stream_sock_open_host_rel(host, port, socktype, timeout, persistent)	_php_stream_sock_open_host((host), (port), (socktype), (timeout), (persistent) STREAMS_REL_CC TSRMLS_CC)
-#define php_stream_sock_open_unix_rel(path, pathlen, persistent, timeval)	_php_stream_sock_open_unix((path), (pathlen), (persistent), (timeval) STREAMS_REL_CC TSRMLS_CC)
+#define php_stream_sock_open_from_socket_rel(socket, persistent)	_php_stream_sock_open_from_socket((socket), (persistent) STREAMS_REL_CC, TSRMLS_C)
+#define php_stream_sock_open_host_rel(host, port, socktype, timeout, persistent)	_php_stream_sock_open_host((host), (port), (socktype), (timeout), (persistent) STREAMS_REL_CC, TSRMLS_C)
+#define php_stream_sock_open_unix_rel(path, pathlen, persistent, timeval)	_php_stream_sock_open_unix((path), (pathlen), (persistent), (timeval) STREAMS_REL_CC, TSRMLS_C)
 
 /* }}} */
 

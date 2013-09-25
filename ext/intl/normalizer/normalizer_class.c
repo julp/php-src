@@ -58,7 +58,7 @@ void normalizer_register_Normalizer_class( TSRMLS_D )
 	/* Create and register 'Normalizer' class. */
 	INIT_CLASS_ENTRY( ce, "Normalizer", Normalizer_class_functions );
 	ce.create_object = NULL;
-	Normalizer_ce_ptr = zend_register_internal_class( &ce TSRMLS_CC );
+	Normalizer_ce_ptr = zend_register_internal_class( &ce, TSRMLS_C );
 
 	/* Declare 'Normalizer' class properties. */
 	if( !Normalizer_ce_ptr )

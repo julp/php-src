@@ -50,15 +50,15 @@ typedef struct {
 	CALENDAR_METHOD_FETCH_OBJECT_NO_CHECK; \
 	if (co->ucal == NULL) \
 	{ \
-		intl_errors_set(&co->err, U_ILLEGAL_ARGUMENT_ERROR, "Found unconstructed IntlCalendar", 0 TSRMLS_CC); \
+		intl_errors_set(&co->err, U_ILLEGAL_ARGUMENT_ERROR, "Found unconstructed IntlCalendar", 0, TSRMLS_C); \
 		RETURN_FALSE; \
 	}
 
-void calendar_object_create(zval *object, Calendar *calendar TSRMLS_DC);
+void calendar_object_create(zval *object, Calendar *calendar, TSRMLS_D);
 
-Calendar *calendar_fetch_native_calendar(zval *object TSRMLS_DC);
+Calendar *calendar_fetch_native_calendar(zval *object, TSRMLS_D);
 
-void calendar_object_construct(zval *object, Calendar *calendar TSRMLS_DC);
+void calendar_object_construct(zval *object, Calendar *calendar, TSRMLS_D);
 
 void calendar_register_IntlCalendar_class(TSRMLS_D);
 

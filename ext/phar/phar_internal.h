@@ -359,7 +359,7 @@ struct _phar_entry_fp {
 	phar_entry_fp_info *manifest;
 };
 
-static inline php_stream *phar_get_entrypfp(phar_entry_info *entry TSRMLS_DC)
+static inline php_stream *phar_get_entrypfp(phar_entry_info *entry, TSRMLS_D)
 {
 	if (!entry->is_persistent) {
 		return entry->phar->fp;
@@ -367,7 +367,7 @@ static inline php_stream *phar_get_entrypfp(phar_entry_info *entry TSRMLS_DC)
 	return PHAR_GLOBALS->cached_fp[entry->phar->phar_pos].fp;
 }
 
-static inline php_stream *phar_get_entrypufp(phar_entry_info *entry TSRMLS_DC)
+static inline php_stream *phar_get_entrypufp(phar_entry_info *entry, TSRMLS_D)
 {
 	if (!entry->is_persistent) {
 		return entry->phar->ufp;
@@ -375,7 +375,7 @@ static inline php_stream *phar_get_entrypufp(phar_entry_info *entry TSRMLS_DC)
 	return PHAR_GLOBALS->cached_fp[entry->phar->phar_pos].ufp;
 }
 
-static inline void phar_set_entrypfp(phar_entry_info *entry, php_stream *fp TSRMLS_DC)
+static inline void phar_set_entrypfp(phar_entry_info *entry, php_stream *fp, TSRMLS_D)
 {
 	if (!entry->phar->is_persistent) {
 		entry->phar->fp =  fp;
@@ -385,7 +385,7 @@ static inline void phar_set_entrypfp(phar_entry_info *entry, php_stream *fp TSRM
 	PHAR_GLOBALS->cached_fp[entry->phar->phar_pos].fp = fp;
 }
 
-static inline void phar_set_entrypufp(phar_entry_info *entry, php_stream *fp TSRMLS_DC)
+static inline void phar_set_entrypufp(phar_entry_info *entry, php_stream *fp, TSRMLS_D)
 {
 	if (!entry->phar->is_persistent) {
 		entry->phar->ufp =  fp;
@@ -395,7 +395,7 @@ static inline void phar_set_entrypufp(phar_entry_info *entry, php_stream *fp TSR
 	PHAR_GLOBALS->cached_fp[entry->phar->phar_pos].ufp = fp;
 }
 
-static inline php_stream *phar_get_pharfp(phar_archive_data *phar TSRMLS_DC)
+static inline php_stream *phar_get_pharfp(phar_archive_data *phar, TSRMLS_D)
 {
 	if (!phar->is_persistent) {
 		return phar->fp;
@@ -403,7 +403,7 @@ static inline php_stream *phar_get_pharfp(phar_archive_data *phar TSRMLS_DC)
 	return PHAR_GLOBALS->cached_fp[phar->phar_pos].fp;
 }
 
-static inline php_stream *phar_get_pharufp(phar_archive_data *phar TSRMLS_DC)
+static inline php_stream *phar_get_pharufp(phar_archive_data *phar, TSRMLS_D)
 {
 	if (!phar->is_persistent) {
 		return phar->ufp;
@@ -411,7 +411,7 @@ static inline php_stream *phar_get_pharufp(phar_archive_data *phar TSRMLS_DC)
 	return PHAR_GLOBALS->cached_fp[phar->phar_pos].ufp;
 }
 
-static inline void phar_set_pharfp(phar_archive_data *phar, php_stream *fp TSRMLS_DC)
+static inline void phar_set_pharfp(phar_archive_data *phar, php_stream *fp, TSRMLS_D)
 {
 	if (!phar->is_persistent) {
 		phar->fp =  fp;
@@ -421,7 +421,7 @@ static inline void phar_set_pharfp(phar_archive_data *phar, php_stream *fp TSRML
 	PHAR_GLOBALS->cached_fp[phar->phar_pos].fp = fp;
 }
 
-static inline void phar_set_pharufp(phar_archive_data *phar, php_stream *fp TSRMLS_DC)
+static inline void phar_set_pharufp(phar_archive_data *phar, php_stream *fp, TSRMLS_D)
 {
 	if (!phar->is_persistent) {
 		phar->ufp =  fp;
@@ -431,7 +431,7 @@ static inline void phar_set_pharufp(phar_archive_data *phar, php_stream *fp TSRM
 	PHAR_GLOBALS->cached_fp[phar->phar_pos].ufp = fp;
 }
 
-static inline void phar_set_fp_type(phar_entry_info *entry, enum phar_fp_type type, off_t offset TSRMLS_DC)
+static inline void phar_set_fp_type(phar_entry_info *entry, enum phar_fp_type type, off_t offset, TSRMLS_D)
 {
 	phar_entry_fp_info *data;
 
@@ -445,7 +445,7 @@ static inline void phar_set_fp_type(phar_entry_info *entry, enum phar_fp_type ty
 	data->offset = offset;
 }
 
-static inline enum phar_fp_type phar_get_fp_type(phar_entry_info *entry TSRMLS_DC)
+static inline enum phar_fp_type phar_get_fp_type(phar_entry_info *entry, TSRMLS_D)
 {
 	if (!entry->is_persistent) {
 		return entry->fp_type;
@@ -453,7 +453,7 @@ static inline enum phar_fp_type phar_get_fp_type(phar_entry_info *entry TSRMLS_D
 	return PHAR_GLOBALS->cached_fp[entry->phar->phar_pos].manifest[entry->manifest_pos].fp_type;
 }
 
-static inline off_t phar_get_fp_offset(phar_entry_info *entry TSRMLS_DC)
+static inline off_t phar_get_fp_offset(phar_entry_info *entry, TSRMLS_D)
 {
 	if (!entry->is_persistent) {
 		return entry->offset;
@@ -517,12 +517,12 @@ union _phar_entry_object {
 
 #ifndef PHAR_MAIN
 # if PHP_VERSION_ID >= 50300
-extern char *(*phar_save_resolve_path)(const char *filename, int filename_len TSRMLS_DC);
+extern char *(*phar_save_resolve_path)(const char *filename, int filename_len, TSRMLS_D);
 # endif
 #endif
 
 #if PHP_VERSION_ID < 50209
-static inline size_t phar_stream_copy_to_stream(php_stream *src, php_stream *dest, size_t maxlen, size_t *len STREAMS_DC TSRMLS_DC)
+static inline size_t phar_stream_copy_to_stream(php_stream *src, php_stream *dest, size_t maxlen, size_t *len STREAMS_DC, TSRMLS_D)
 {
 	size_t ret = php_stream_copy_to_stream(src, dest, maxlen);
 	if (len) {
@@ -534,7 +534,7 @@ static inline size_t phar_stream_copy_to_stream(php_stream *src, php_stream *des
 	return FAILURE;
 }
 #else
-# define phar_stream_copy_to_stream(src, dest, maxlen, len)	_php_stream_copy_to_stream_ex((src), (dest), (maxlen), (len) STREAMS_CC TSRMLS_CC)
+# define phar_stream_copy_to_stream(src, dest, maxlen, len)	_php_stream_copy_to_stream_ex((src), (dest), (maxlen), (len) STREAMS_CC, TSRMLS_C)
 
 #endif
 
@@ -546,13 +546,13 @@ typedef zstr phar_zstr;
 	b = ZSTR(a);
 #define PHAR_STR_FREE(a) \
 	efree(a);
-static inline int phar_make_unicode(zstr *c_var, char *arKey, uint nKeyLength TSRMLS_DC)
+static inline int phar_make_unicode(zstr *c_var, char *arKey, uint nKeyLength, TSRMLS_D)
 {
 	int c_var_len;
 	UConverter *conv = ZEND_U_CONVERTER(UG(runtime_encoding_conv));
 
 	c_var->u = NULL;
-	if (zend_string_to_unicode(conv, &c_var->u, &c_var_len, arKey, nKeyLength TSRMLS_CC) == FAILURE) {
+	if (zend_string_to_unicode(conv, &c_var->u, &c_var_len, arKey, nKeyLength, TSRMLS_C) == FAILURE) {
 
 		if (c_var->u) {
 			efree(c_var->u);
@@ -562,14 +562,14 @@ static inline int phar_make_unicode(zstr *c_var, char *arKey, uint nKeyLength TS
 	}
 	return c_var_len;
 }
-static inline int phar_find_key(HashTable *_SERVER, char *key, int len, void **stuff TSRMLS_DC)
+static inline int phar_find_key(HashTable *_SERVER, char *key, int len, void **stuff, TSRMLS_D)
 {
 	if (SUCCESS == zend_hash_find(_SERVER, key, len, stuff)) {
 		return 1;
 	} else {
 		int s = len;
 		zstr var;
-		s = phar_make_unicode(&var, key, len TSRMLS_CC);
+		s = phar_make_unicode(&var, key, len, TSRMLS_C);
 		if (SUCCESS == zend_u_hash_find(_SERVER, IS_UNICODE, var, s, stuff)) {
 			efree(var.u);
 			return 1;
@@ -614,7 +614,7 @@ static inline int phar_validate_alias(const char *alias, int alias_len) /* {{{ *
 }
 /* }}} */
 
-static inline void phar_set_inode(phar_entry_info *entry TSRMLS_DC) /* {{{ */
+static inline void phar_set_inode(phar_entry_info *entry, TSRMLS_D) /* {{{ */
 {
 	char tmp[MAXPATHLEN];
 	int tmp_len;
@@ -629,72 +629,72 @@ static inline void phar_set_inode(phar_entry_info *entry TSRMLS_DC) /* {{{ */
 void phar_request_initialize(TSRMLS_D);
 
 void phar_object_init(TSRMLS_D);
-void phar_destroy_phar_data(phar_archive_data *phar TSRMLS_DC);
+void phar_destroy_phar_data(phar_archive_data *phar, TSRMLS_D);
 
-int phar_open_entry_file(phar_archive_data *phar, phar_entry_info *entry, char **error TSRMLS_DC);
-int phar_postprocess_file(phar_entry_data *idata, php_uint32 crc32, char **error, int process_zip TSRMLS_DC);
-int phar_open_from_filename(char *fname, int fname_len, char *alias, int alias_len, int options, phar_archive_data** pphar, char **error TSRMLS_DC);
-int phar_open_or_create_filename(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error TSRMLS_DC);
-int phar_create_or_parse_filename(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error TSRMLS_DC);
-int phar_open_executed_filename(char *alias, int alias_len, char **error TSRMLS_DC);
-int phar_free_alias(phar_archive_data *phar, char *alias, int alias_len TSRMLS_DC);
-int phar_get_archive(phar_archive_data **archive, char *fname, int fname_len, char *alias, int alias_len, char **error TSRMLS_DC);
-int phar_open_parsed_phar(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error TSRMLS_DC);
-int phar_verify_signature(php_stream *fp, size_t end_of_phar, php_uint32 sig_type, char *sig, int sig_len, char *fname, char **signature, int *signature_len, char **error TSRMLS_DC);
-int phar_create_signature(phar_archive_data *phar, php_stream *fp, char **signature, int *signature_length, char **error TSRMLS_DC);
+int phar_open_entry_file(phar_archive_data *phar, phar_entry_info *entry, char **error, TSRMLS_D);
+int phar_postprocess_file(phar_entry_data *idata, php_uint32 crc32, char **error, int process_zip, TSRMLS_D);
+int phar_open_from_filename(char *fname, int fname_len, char *alias, int alias_len, int options, phar_archive_data** pphar, char **error, TSRMLS_D);
+int phar_open_or_create_filename(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error, TSRMLS_D);
+int phar_create_or_parse_filename(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error, TSRMLS_D);
+int phar_open_executed_filename(char *alias, int alias_len, char **error, TSRMLS_D);
+int phar_free_alias(phar_archive_data *phar, char *alias, int alias_len, TSRMLS_D);
+int phar_get_archive(phar_archive_data **archive, char *fname, int fname_len, char *alias, int alias_len, char **error, TSRMLS_D);
+int phar_open_parsed_phar(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error, TSRMLS_D);
+int phar_verify_signature(php_stream *fp, size_t end_of_phar, php_uint32 sig_type, char *sig, int sig_len, char *fname, char **signature, int *signature_len, char **error, TSRMLS_D);
+int phar_create_signature(phar_archive_data *phar, php_stream *fp, char **signature, int *signature_length, char **error, TSRMLS_D);
 
 /* utility functions */
-char *phar_create_default_stub(const char *index_php, const char *web_index, size_t *len, char **error TSRMLS_DC);
+char *phar_create_default_stub(const char *index_php, const char *web_index, size_t *len, char **error, TSRMLS_D);
 char *phar_decompress_filter(phar_entry_info * entry, int return_unknown);
 char *phar_compress_filter(phar_entry_info * entry, int return_unknown);
 
-void phar_remove_virtual_dirs(phar_archive_data *phar, char *filename, int filename_len TSRMLS_DC);
-void phar_add_virtual_dirs(phar_archive_data *phar, char *filename, int filename_len TSRMLS_DC);
-int phar_mount_entry(phar_archive_data *phar, char *filename, int filename_len, char *path, int path_len TSRMLS_DC);
-char *phar_find_in_include_path(char *file, int file_len, phar_archive_data **pphar TSRMLS_DC);
-char *phar_fix_filepath(char *path, int *new_len, int use_cwd TSRMLS_DC);
-phar_entry_info * phar_open_jit(phar_archive_data *phar, phar_entry_info *entry, char **error TSRMLS_DC);
-int phar_parse_metadata(char **buffer, zval **metadata, int zip_metadata_len TSRMLS_DC);
+void phar_remove_virtual_dirs(phar_archive_data *phar, char *filename, int filename_len, TSRMLS_D);
+void phar_add_virtual_dirs(phar_archive_data *phar, char *filename, int filename_len, TSRMLS_D);
+int phar_mount_entry(phar_archive_data *phar, char *filename, int filename_len, char *path, int path_len, TSRMLS_D);
+char *phar_find_in_include_path(char *file, int file_len, phar_archive_data **pphar, TSRMLS_D);
+char *phar_fix_filepath(char *path, int *new_len, int use_cwd, TSRMLS_D);
+phar_entry_info * phar_open_jit(phar_archive_data *phar, phar_entry_info *entry, char **error, TSRMLS_D);
+int phar_parse_metadata(char **buffer, zval **metadata, int zip_metadata_len, TSRMLS_D);
 void destroy_phar_manifest_entry(void *pDest);
-int phar_seek_efp(phar_entry_info *entry, off_t offset, int whence, off_t position, int follow_links TSRMLS_DC);
-php_stream *phar_get_efp(phar_entry_info *entry, int follow_links TSRMLS_DC);
-int phar_copy_entry_fp(phar_entry_info *source, phar_entry_info *dest, char **error TSRMLS_DC);
-int phar_open_entry_fp(phar_entry_info *entry, char **error, int follow_links TSRMLS_DC);
-phar_entry_info *phar_get_link_source(phar_entry_info *entry TSRMLS_DC);
-int phar_create_writeable_entry(phar_archive_data *phar, phar_entry_info *entry, char **error TSRMLS_DC);
-int phar_separate_entry_fp(phar_entry_info *entry, char **error TSRMLS_DC);
-int phar_open_archive_fp(phar_archive_data *phar TSRMLS_DC);
-int phar_copy_on_write(phar_archive_data **pphar TSRMLS_DC);
+int phar_seek_efp(phar_entry_info *entry, off_t offset, int whence, off_t position, int follow_links, TSRMLS_D);
+php_stream *phar_get_efp(phar_entry_info *entry, int follow_links, TSRMLS_D);
+int phar_copy_entry_fp(phar_entry_info *source, phar_entry_info *dest, char **error, TSRMLS_D);
+int phar_open_entry_fp(phar_entry_info *entry, char **error, int follow_links, TSRMLS_D);
+phar_entry_info *phar_get_link_source(phar_entry_info *entry, TSRMLS_D);
+int phar_create_writeable_entry(phar_archive_data *phar, phar_entry_info *entry, char **error, TSRMLS_D);
+int phar_separate_entry_fp(phar_entry_info *entry, char **error, TSRMLS_D);
+int phar_open_archive_fp(phar_archive_data *phar, TSRMLS_D);
+int phar_copy_on_write(phar_archive_data **pphar, TSRMLS_D);
 
 /* tar functions in tar.c */
 int phar_is_tar(char *buf, char *fname);
-int phar_parse_tarfile(php_stream* fp, char *fname, int fname_len, char *alias, int alias_len, phar_archive_data** pphar, int is_data, php_uint32 compression, char **error TSRMLS_DC);
-int phar_open_or_create_tar(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error TSRMLS_DC);
-int phar_tar_flush(phar_archive_data *phar, char *user_stub, long len, int defaultstub, char **error TSRMLS_DC);
+int phar_parse_tarfile(php_stream* fp, char *fname, int fname_len, char *alias, int alias_len, phar_archive_data** pphar, int is_data, php_uint32 compression, char **error, TSRMLS_D);
+int phar_open_or_create_tar(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error, TSRMLS_D);
+int phar_tar_flush(phar_archive_data *phar, char *user_stub, long len, int defaultstub, char **error, TSRMLS_D);
 
 /* zip functions in zip.c */
-int phar_parse_zipfile(php_stream *fp, char *fname, int fname_len, char *alias, int alias_len, phar_archive_data** pphar, char **error TSRMLS_DC);
-int phar_open_or_create_zip(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error TSRMLS_DC);
-int phar_zip_flush(phar_archive_data *archive, char *user_stub, long len, int defaultstub, char **error TSRMLS_DC);
+int phar_parse_zipfile(php_stream *fp, char *fname, int fname_len, char *alias, int alias_len, phar_archive_data** pphar, char **error, TSRMLS_D);
+int phar_open_or_create_zip(char *fname, int fname_len, char *alias, int alias_len, int is_data, int options, phar_archive_data** pphar, char **error, TSRMLS_D);
+int phar_zip_flush(phar_archive_data *archive, char *user_stub, long len, int defaultstub, char **error, TSRMLS_D);
 
 #ifdef PHAR_MAIN
-static int phar_open_from_fp(php_stream* fp, char *fname, int fname_len, char *alias, int alias_len, int options, phar_archive_data** pphar, int is_data, char **error TSRMLS_DC);
+static int phar_open_from_fp(php_stream* fp, char *fname, int fname_len, char *alias, int alias_len, int options, phar_archive_data** pphar, int is_data, char **error, TSRMLS_D);
 extern php_stream_wrapper php_stream_phar_wrapper;
 #else
 extern HashTable cached_phars;
 extern HashTable cached_alias;
 #endif
 
-int phar_archive_delref(phar_archive_data *phar TSRMLS_DC);
-int phar_entry_delref(phar_entry_data *idata TSRMLS_DC);
+int phar_archive_delref(phar_archive_data *phar, TSRMLS_D);
+int phar_entry_delref(phar_entry_data *idata, TSRMLS_D);
 
-phar_entry_info *phar_get_entry_info(phar_archive_data *phar, char *path, int path_len, char **error, int security TSRMLS_DC);
-phar_entry_info *phar_get_entry_info_dir(phar_archive_data *phar, char *path, int path_len, char dir, char **error, int security TSRMLS_DC);
-phar_entry_data *phar_get_or_create_entry_data(char *fname, int fname_len, char *path, int path_len, char *mode, char allow_dir, char **error, int security TSRMLS_DC);
-int phar_get_entry_data(phar_entry_data **ret, char *fname, int fname_len, char *path, int path_len, char *mode, char allow_dir, char **error, int security TSRMLS_DC);
-int phar_flush(phar_archive_data *archive, char *user_stub, long len, int convert, char **error TSRMLS_DC);
-int phar_detect_phar_fname_ext(const char *filename, int filename_len, const char **ext_str, int *ext_len, int executable, int for_create, int is_complete TSRMLS_DC);
-int phar_split_fname(char *filename, int filename_len, char **arch, int *arch_len, char **entry, int *entry_len, int executable, int for_create TSRMLS_DC);
+phar_entry_info *phar_get_entry_info(phar_archive_data *phar, char *path, int path_len, char **error, int security, TSRMLS_D);
+phar_entry_info *phar_get_entry_info_dir(phar_archive_data *phar, char *path, int path_len, char dir, char **error, int security, TSRMLS_D);
+phar_entry_data *phar_get_or_create_entry_data(char *fname, int fname_len, char *path, int path_len, char *mode, char allow_dir, char **error, int security, TSRMLS_D);
+int phar_get_entry_data(phar_entry_data **ret, char *fname, int fname_len, char *path, int path_len, char *mode, char allow_dir, char **error, int security, TSRMLS_D);
+int phar_flush(phar_archive_data *archive, char *user_stub, long len, int convert, char **error, TSRMLS_D);
+int phar_detect_phar_fname_ext(const char *filename, int filename_len, const char **ext_str, int *ext_len, int executable, int for_create, int is_complete, TSRMLS_D);
+int phar_split_fname(char *filename, int filename_len, char **arch, int *arch_len, char **entry, int *entry_len, int executable, int for_create, TSRMLS_D);
 
 typedef enum {
 	pcr_use_query,

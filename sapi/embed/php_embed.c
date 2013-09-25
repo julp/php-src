@@ -61,7 +61,7 @@ static inline size_t php_embed_single_write(const char *str, uint str_length)
 }
 
 
-static int php_embed_ub_write(const char *str, uint str_length TSRMLS_DC)
+static int php_embed_ub_write(const char *str, uint str_length, TSRMLS_D)
 {
 	const char *ptr = str;
 	uint remaining = str_length;
@@ -86,18 +86,18 @@ static void php_embed_flush(void *server_context)
 	}
 }
 
-static void php_embed_send_header(sapi_header_struct *sapi_header, void *server_context TSRMLS_DC)
+static void php_embed_send_header(sapi_header_struct *sapi_header, void *server_context, TSRMLS_D)
 {
 }
 
-static void php_embed_log_message(char *message TSRMLS_DC)
+static void php_embed_log_message(char *message, TSRMLS_D)
 {
 	fprintf (stderr, "%s\n", message);
 }
 
-static void php_embed_register_variables(zval *track_vars_array TSRMLS_DC)
+static void php_embed_register_variables(zval *track_vars_array, TSRMLS_D)
 {
-	php_import_environment_variables(track_vars_array TSRMLS_CC);
+	php_import_environment_variables(track_vars_array, TSRMLS_C);
 }
 
 static int php_embed_startup(sapi_module_struct *sapi_module)
@@ -152,7 +152,7 @@ static const zend_function_entry additional_functions[] = {
 	{NULL, NULL, NULL}
 };
 
-EMBED_SAPI_API int php_embed_init(int argc, char **argv PTSRMLS_DC)
+EMBED_SAPI_API int php_embed_init(int argc, char **argv P,TSRMLS_D)
 {
 	zend_llist global_vars;
 #ifdef ZTS
@@ -212,7 +212,7 @@ EMBED_SAPI_API int php_embed_init(int argc, char **argv PTSRMLS_DC)
   
   SG(headers_sent) = 1;
   SG(request_info).no_headers = 1;
-  php_register_variable("PHP_SELF", "-", NULL TSRMLS_CC);
+  php_register_variable("PHP_SELF", "-", NULL, TSRMLS_C);
 
   return SUCCESS;
 }

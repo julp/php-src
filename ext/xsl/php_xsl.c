@@ -72,11 +72,11 @@ ZEND_GET_MODULE(xsl)
 #endif
 
 /* {{{ xsl_objects_free_storage */
-void xsl_objects_free_storage(void *object TSRMLS_DC)
+void xsl_objects_free_storage(void *object, TSRMLS_D)
 {
 	xsl_object *intern = (xsl_object *)object;
 
-	zend_object_std_dtor(&intern->std TSRMLS_CC);
+	zend_object_std_dtor(&intern->std, TSRMLS_C);
 
 	zend_hash_destroy(intern->parameter);
 	FREE_HASHTABLE(intern->parameter);
@@ -90,7 +90,7 @@ void xsl_objects_free_storage(void *object TSRMLS_DC)
 	}
 
 	if (intern->doc) {
-		php_libxml_decrement_doc_ref(intern->doc TSRMLS_CC);
+		php_libxml_decrement_doc_ref(intern->doc, TSRMLS_C);
 		efree(intern->doc);
 	}
 
@@ -111,7 +111,7 @@ void xsl_objects_free_storage(void *object TSRMLS_DC)
 /* }}} */
 
 /* {{{ xsl_objects_new */
-zend_object_value xsl_objects_new(zend_class_entry *class_type TSRMLS_DC)
+zend_object_value xsl_objects_new(zend_class_entry *class_type, TSRMLS_D)
 {
 	zend_object_value retval;
 	xsl_object *intern;
@@ -129,13 +129,13 @@ zend_object_value xsl_objects_new(zend_class_entry *class_type TSRMLS_DC)
 	intern->securityPrefs = XSL_SECPREF_DEFAULT;
 	intern->securityPrefsSet = 0;
 
-	zend_object_std_init(&intern->std, class_type TSRMLS_CC);
+	zend_object_std_init(&intern->std, class_type, TSRMLS_C);
 	object_properties_init(&intern->std, class_type);
 	ALLOC_HASHTABLE(intern->parameter);
 	zend_hash_init(intern->parameter, 0, NULL, ZVAL_PTR_DTOR, 0);
 	ALLOC_HASHTABLE(intern->registered_phpfunctions);
 	zend_hash_init(intern->registered_phpfunctions, 0, NULL, ZVAL_PTR_DTOR, 0);
-	retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t) xsl_objects_free_storage, NULL TSRMLS_CC);
+	retval.handle = zend_objects_store_put(intern, (zend_objects_store_dtor_t)zend_objects_destroy_object, (zend_objects_free_object_storage_t) xsl_objects_free_storage, NULL, TSRMLS_C);
 	intern->handle = retval.handle;
 	retval.handlers = &xsl_object_handlers;
 	return retval;
@@ -207,25 +207,25 @@ zval *xsl_object_get_data(void *obj)
 /* }}} */
 
 /* {{{ xsl_object_set_data */
-static void xsl_object_set_data(void *obj, zval *wrapper TSRMLS_DC)
+static void xsl_object_set_data(void *obj, zval *wrapper, TSRMLS_D)
 {
 	((xsltStylesheetPtr) obj)->_private = wrapper;
 }
 /* }}} */
 
 /* {{{ php_xsl_set_object */
-void php_xsl_set_object(zval *wrapper, void *obj TSRMLS_DC)
+void php_xsl_set_object(zval *wrapper, void *obj, TSRMLS_D)
 {
 	xsl_object *object;
 
-	object = (xsl_object *)zend_objects_get_address(wrapper TSRMLS_CC);
+	object = (xsl_object *)zend_objects_get_address(wrapper, TSRMLS_C);
 	object->ptr = obj;
-	xsl_object_set_data(obj, wrapper TSRMLS_CC);
+	xsl_object_set_data(obj, wrapper, TSRMLS_C);
 }
 /* }}} */
 
 /* {{{ php_xsl_create_object */
-zval *php_xsl_create_object(xsltStylesheetPtr obj, int *found, zval *wrapper_in, zval *return_value  TSRMLS_DC)
+zval *php_xsl_create_object(xsltStylesheetPtr obj, int *found, zval *wrapper_in, zval *return_value,  TSRMLS_D)
 {
 	zval *wrapper;
 	zend_class_entry *ce;
@@ -260,7 +260,7 @@ zval *php_xsl_create_object(xsltStylesheetPtr obj, int *found, zval *wrapper_in,
 	if(!wrapper_in) {
 		object_init_ex(wrapper, ce);
 	}
-	php_xsl_set_object(wrapper, (void *) obj TSRMLS_CC);
+	php_xsl_set_object(wrapper, (void *) obj, TSRMLS_C);
 	return (wrapper);
 }
 /* }}} */

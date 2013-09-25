@@ -32,19 +32,19 @@ typedef struct _intl_error {
 } intl_error;
 
 intl_error* intl_error_create( TSRMLS_D );
-void        intl_error_init( intl_error* err TSRMLS_DC );
-void        intl_error_reset( intl_error* err TSRMLS_DC );
-void        intl_error_set_code( intl_error* err, UErrorCode err_code TSRMLS_DC );
-void        intl_error_set_custom_msg( intl_error* err, char* msg, int copyMsg TSRMLS_DC );
-void        intl_error_set( intl_error* err, UErrorCode code, char* msg, int copyMsg TSRMLS_DC );
-UErrorCode  intl_error_get_code( intl_error* err TSRMLS_DC );
-char*       intl_error_get_message( intl_error* err TSRMLS_DC );
+void        intl_error_init( intl_error* err, TSRMLS_D );
+void        intl_error_reset( intl_error* err, TSRMLS_D );
+void        intl_error_set_code( intl_error* err, UErrorCode err_code, TSRMLS_D );
+void        intl_error_set_custom_msg( intl_error* err, char* msg, int copyMsg, TSRMLS_D );
+void        intl_error_set( intl_error* err, UErrorCode code, char* msg, int copyMsg, TSRMLS_D );
+UErrorCode  intl_error_get_code( intl_error* err, TSRMLS_D );
+char*       intl_error_get_message( intl_error* err, TSRMLS_D );
 
 // Wrappers to synchonize object's and global error structures.
-void        intl_errors_reset( intl_error* err TSRMLS_DC );
-void        intl_errors_set_custom_msg( intl_error* err, char* msg, int copyMsg TSRMLS_DC );
-void        intl_errors_set_code( intl_error* err, UErrorCode err_code TSRMLS_DC );
-void        intl_errors_set( intl_error* err, UErrorCode code, char* msg, int copyMsg TSRMLS_DC );
+void        intl_errors_reset( intl_error* err, TSRMLS_D );
+void        intl_errors_set_custom_msg( intl_error* err, char* msg, int copyMsg, TSRMLS_D );
+void        intl_errors_set_code( intl_error* err, UErrorCode err_code, TSRMLS_D );
+void        intl_errors_set( intl_error* err, UErrorCode code, char* msg, int copyMsg, TSRMLS_D );
 
 // Other error helpers
 smart_str	intl_parse_error_to_string( UParseError* pe );

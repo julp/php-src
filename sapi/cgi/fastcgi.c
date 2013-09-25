@@ -324,13 +324,13 @@ static char *fcgi_hash_get(fcgi_hash *h, unsigned int hash_value, char *var, uns
 	return NULL;
 }
 
-static void fcgi_hash_apply(fcgi_hash *h, fcgi_apply_func func, void *arg TSRMLS_DC)
+static void fcgi_hash_apply(fcgi_hash *h, fcgi_apply_func func, void *arg, TSRMLS_D)
 {
 	fcgi_hash_bucket *p	= h->list;
 
 	while (p) {
 		if (EXPECTED(p->val != NULL)) {
-			func(p->var, p->var_len, p->val, p->val_len, arg TSRMLS_CC);
+			func(p->var, p->var_len, p->val, p->val_len, arg, TSRMLS_C);
 		}
 		p = p->list_next;
 	}
@@ -1491,9 +1491,9 @@ char* fcgi_quick_putenv(fcgi_request *req, char* var, int var_len, unsigned int 
 	}
 }
 
-void fcgi_loadenv(fcgi_request *req, fcgi_apply_func func, zval *array TSRMLS_DC)
+void fcgi_loadenv(fcgi_request *req, fcgi_apply_func func, zval *array, TSRMLS_D)
 {
-	fcgi_hash_apply(&req->env, func, array TSRMLS_CC);
+	fcgi_hash_apply(&req->env, func, array, TSRMLS_C);
 }
 
 #ifdef _WIN32

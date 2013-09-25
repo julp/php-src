@@ -389,7 +389,7 @@ static void utf16_to_utf8(smart_str *buf, unsigned short utf16)
     }
 }
 
-static void attach_zval(JSON_parser jp, int up, int cur, smart_str *key, int assoc TSRMLS_DC)
+static void attach_zval(JSON_parser jp, int up, int cur, smart_str *key, int assoc, TSRMLS_D)
 {
     zval *root = jp->the_zstack[up];
     zval *child =  jp->the_zstack[cur];
@@ -403,7 +403,7 @@ static void attach_zval(JSON_parser jp, int up, int cur, smart_str *key, int ass
     {
         if (!assoc)
         {
-            add_property_zval_ex(root, (key->len ? key->c : "_empty_"), (key->len ? (key->len + 1) : sizeof("_empty_")), child TSRMLS_CC);
+            add_property_zval_ex(root, (key->len ? key->c : "_empty_"), (key->len ? (key->len + 1) : sizeof("_empty_")), child, TSRMLS_C);
             Z_DELREF_P(child);
         }
         else
@@ -436,7 +436,7 @@ static void attach_zval(JSON_parser jp, int up, int cur, smart_str *key, int ass
     machine with a stack.
 */
 int
-parse_JSON_ex(JSON_parser jp, zval *z, unsigned short utf16_json[], int length, int options TSRMLS_DC)
+parse_JSON_ex(JSON_parser jp, zval *z, unsigned short utf16_json[], int length, int options, TSRMLS_D)
 {
     int next_char;  /* the next character */
     int next_class;  /* the next character class */
@@ -550,7 +550,7 @@ parse_JSON_ex(JSON_parser jp, zval *z, unsigned short utf16_json[], int length, 
                     json_create_zval(&mval, &buf, type, options);
 
                     if (!assoc) {
-                        add_property_zval_ex(jp->the_zstack[jp->top], (key.len ? key.c : "_empty_"), (key.len ? (key.len + 1) : sizeof("_empty_")), mval TSRMLS_CC);
+                        add_property_zval_ex(jp->the_zstack[jp->top], (key.len ? key.c : "_empty_"), (key.len ? (key.len + 1) : sizeof("_empty_")), mval, TSRMLS_C);
                         Z_DELREF_P(mval);
                     } else {
                         add_assoc_zval_ex(jp->the_zstack[jp->top], (key.len ? key.c : ""), (key.len ? (key.len + 1) : sizeof("")), mval);
@@ -614,7 +614,7 @@ parse_JSON_ex(JSON_parser jp, zval *z, unsigned short utf16_json[], int length, 
                     jp->the_zstack[jp->top] = obj;
 
                     if (jp->top > 1) {
-                        attach_zval(jp, jp->top - 1, jp->top, &key, assoc TSRMLS_CC);
+                        attach_zval(jp, jp->top - 1, jp->top, &key, assoc, TSRMLS_C);
                     }
 
                     JSON_RESET_TYPE();
@@ -642,7 +642,7 @@ parse_JSON_ex(JSON_parser jp, zval *z, unsigned short utf16_json[], int length, 
                     jp->the_zstack[jp->top] = arr;
 
                     if (jp->top > 1) {
-                        attach_zval(jp, jp->top - 1, jp->top, &key, assoc TSRMLS_CC);
+                        attach_zval(jp, jp->top - 1, jp->top, &key, assoc, TSRMLS_C);
                     }
 
                     JSON_RESET_TYPE();
@@ -695,7 +695,7 @@ parse_JSON_ex(JSON_parser jp, zval *z, unsigned short utf16_json[], int length, 
                         if (pop(jp, MODE_OBJECT) && push(jp, MODE_KEY)) {
                             if (type != -1) {
                                 if (!assoc) {
-                                    add_property_zval_ex(jp->the_zstack[jp->top], (key.len ? key.c : "_empty_"), (key.len ? (key.len + 1) : sizeof("_empty_")), mval TSRMLS_CC);
+                                    add_property_zval_ex(jp->the_zstack[jp->top], (key.len ? key.c : "_empty_"), (key.len ? (key.len + 1) : sizeof("_empty_")), mval, TSRMLS_C);
                                     Z_DELREF_P(mval);
                                 } else {
                                     add_assoc_zval_ex(jp->the_zstack[jp->top], (key.len ? key.c : ""), (key.len ? (key.len + 1) : sizeof("")), mval);

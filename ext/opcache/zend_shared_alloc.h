@@ -124,7 +124,7 @@ void zend_shared_alloc_shutdown(void);
 void *zend_shared_alloc(size_t size);
 
 /* copy into shared memory */
-void *_zend_shared_memdup(void *p, size_t size, zend_bool free_source TSRMLS_DC);
+void *_zend_shared_memdup(void *p, size_t size, zend_bool free_source, TSRMLS_D);
 int  zend_shared_memdup_size(void *p, size_t size);
 
 typedef union _align_test {
@@ -158,7 +158,7 @@ void zend_shared_alloc_restore_state(void);
 const char *zend_accel_get_shared_model(void);
 
 /* memory write protection */
-void zend_accel_shared_protect(int mode TSRMLS_DC);
+void zend_accel_shared_protect(int mode, TSRMLS_D);
 
 #ifdef USE_MMAP
 extern zend_shared_memory_handlers zend_alloc_mmap_handlers;

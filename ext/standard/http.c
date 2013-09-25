@@ -29,7 +29,7 @@ PHPAPI int php_url_encode_hash_ex(HashTable *ht, smart_str *formstr,
 				const char *num_prefix, int num_prefix_len,
 				const char *key_prefix, int key_prefix_len,
 				const char *key_suffix, int key_suffix_len,
-			  zval *type, char *arg_sep, int enc_type TSRMLS_DC)
+			  zval *type, char *arg_sep, int enc_type, TSRMLS_D)
 {
 	char *key = NULL;
 	char *ekey, *newprefix, *p;
@@ -68,8 +68,8 @@ PHPAPI int php_url_encode_hash_ex(HashTable *ht, smart_str *formstr,
 		if (key && *key == '\0' && type != NULL) {
 			const char *tmp;
 
-			zend_object *zobj = zend_objects_get_address(type TSRMLS_CC);
-			if (zend_check_property_access(zobj, key, key_len TSRMLS_CC) != SUCCESS) {
+			zend_object *zobj = zend_objects_get_address(type, TSRMLS_C);
+			if (zend_check_property_access(zobj, key, key_len, TSRMLS_C) != SUCCESS) {
 				/* private or protected property access outside of the class */
 				continue;
 			}
@@ -77,7 +77,7 @@ PHPAPI int php_url_encode_hash_ex(HashTable *ht, smart_str *formstr,
 		}
 
 		if (zend_hash_get_current_data_ex(ht, (void **)&zdata, NULL) == FAILURE || !zdata || !(*zdata)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Error traversing form data array");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Error traversing form data array");
 			return FAILURE;
 		}
 		if (Z_TYPE_PP(zdata) == IS_ARRAY || Z_TYPE_PP(zdata) == IS_OBJECT) {
@@ -137,7 +137,7 @@ PHPAPI int php_url_encode_hash_ex(HashTable *ht, smart_str *formstr,
 				*p = '\0';
 			}
 			ht->nApplyCount++;
-			php_url_encode_hash_ex(HASH_OF(*zdata), formstr, NULL, 0, newprefix, newprefix_len, "%5D", 3, (Z_TYPE_PP(zdata) == IS_OBJECT ? *zdata : NULL), arg_sep, enc_type TSRMLS_CC);
+			php_url_encode_hash_ex(HASH_OF(*zdata), formstr, NULL, 0, newprefix, newprefix_len, "%5D", 3, (Z_TYPE_PP(zdata) == IS_OBJECT ? *zdata : NULL), arg_sep, enc_type, TSRMLS_C);
 			ht->nApplyCount--;
 			efree(newprefix);
 		} else if (Z_TYPE_PP(zdata) == IS_NULL || Z_TYPE_PP(zdata) == IS_RESOURCE) {
@@ -215,16 +215,16 @@ PHP_FUNCTION(http_build_query)
 	smart_str formstr = {0};
 	long enc_type = PHP_QUERY_RFC1738;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z|ssl", &formdata, &prefix, &prefix_len, &arg_sep, &arg_sep_len, &enc_type) != SUCCESS) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "z|ssl", &formdata, &prefix, &prefix_len, &arg_sep, &arg_sep_len, &enc_type) != SUCCESS) {
 		RETURN_FALSE;
 	}
 
 	if (Z_TYPE_P(formdata) != IS_ARRAY && Z_TYPE_P(formdata) != IS_OBJECT) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Parameter 1 expected to be Array or Object.  Incorrect value given");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Parameter 1 expected to be Array or Object.  Incorrect value given");
 		RETURN_FALSE;
 	}
 
-	if (php_url_encode_hash_ex(HASH_OF(formdata), &formstr, prefix, prefix_len, NULL, 0, NULL, 0, (Z_TYPE_P(formdata) == IS_OBJECT ? formdata : NULL), arg_sep, enc_type TSRMLS_CC) == FAILURE) {
+	if (php_url_encode_hash_ex(HASH_OF(formdata), &formstr, prefix, prefix_len, NULL, 0, NULL, 0, (Z_TYPE_P(formdata) == IS_OBJECT ? formdata : NULL), arg_sep, enc_type, TSRMLS_C) == FAILURE) {
 		if (formstr.c) {
 			efree(formstr.c);
 		}

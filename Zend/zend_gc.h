@@ -140,9 +140,9 @@ extern ZEND_API zend_gc_globals gc_globals;
 
 BEGIN_EXTERN_C()
 ZEND_API int  gc_collect_cycles(TSRMLS_D);
-ZEND_API void gc_zval_possible_root(zval *zv TSRMLS_DC);
-ZEND_API void gc_zobj_possible_root(zval *zv TSRMLS_DC);
-ZEND_API void gc_remove_zval_from_buffer(zval *zv TSRMLS_DC);
+ZEND_API void gc_zval_possible_root(zval *zv, TSRMLS_D);
+ZEND_API void gc_zobj_possible_root(zval *zv, TSRMLS_D);
+ZEND_API void gc_remove_zval_from_buffer(zval *zv, TSRMLS_D);
 ZEND_API void gc_globals_ctor(TSRMLS_D);
 ZEND_API void gc_globals_dtor(TSRMLS_D);
 ZEND_API void gc_init(TSRMLS_D);
@@ -150,21 +150,21 @@ ZEND_API void gc_reset(TSRMLS_D);
 END_EXTERN_C()
 
 #define GC_ZVAL_CHECK_POSSIBLE_ROOT(z) \
-	gc_zval_check_possible_root((z) TSRMLS_CC)
+	gc_zval_check_possible_root((z), TSRMLS_C)
 
 #define GC_REMOVE_FROM_BUFFER(current) \
-	gc_remove_from_buffer((current) TSRMLS_CC)
+	gc_remove_from_buffer((current), TSRMLS_C)
 
 #define GC_REMOVE_ZVAL_FROM_BUFFER(z)					\
 	if (GC_ADDRESS(((zval_gc_info*)z)->u.buffered)) {	\
-		gc_remove_zval_from_buffer(z TSRMLS_CC);		\
+		gc_remove_zval_from_buffer(z, TSRMLS_C);		\
 	}
 
 #define GC_ZOBJ_CHECK_POSSIBLE_ROOT(zobject)									\
 	do {																		\
 		if (EXPECTED(EG(objects_store).object_buckets != NULL) &&				\
 		    EG(objects_store).object_buckets[Z_OBJ_HANDLE_P(zobject)].valid) {	\
-			gc_zobj_possible_root(zobject TSRMLS_CC);							\
+			gc_zobj_possible_root(zobject, TSRMLS_C);							\
 		}																		\
 	} while (0)
 
@@ -177,14 +177,14 @@ END_EXTERN_C()
 		}																\
 	} while (0)
 
-static zend_always_inline void gc_zval_check_possible_root(zval *z TSRMLS_DC)
+static zend_always_inline void gc_zval_check_possible_root(zval *z, TSRMLS_D)
 {
 	if (z->type == IS_ARRAY || z->type == IS_OBJECT) {
-		gc_zval_possible_root(z TSRMLS_CC);
+		gc_zval_possible_root(z, TSRMLS_C);
 	}
 }
 
-static zend_always_inline void gc_remove_from_buffer(gc_root_buffer *root TSRMLS_DC)
+static zend_always_inline void gc_remove_from_buffer(gc_root_buffer *root, TSRMLS_D)
 {
 	root->next->prev = root->prev;
 	root->prev->next = root->next;

@@ -258,7 +258,7 @@ void php_filter_full_special_chars(PHP_INPUT_FILTER_PARAM_DECL)
 	} else {
 		quotes = ENT_NOQUOTES;
 	}
-	buf = php_escape_html_entities_ex(Z_STRVAL_P(value), Z_STRLEN_P(value), &len, 1, quotes, SG(default_charset), 0 TSRMLS_CC);
+	buf = php_escape_html_entities_ex(Z_STRVAL_P(value), Z_STRLEN_P(value), &len, 1, quotes, SG(default_charset), 0, TSRMLS_C);
 	str_efree(Z_STRVAL_P(value));
 	Z_STRVAL_P(value) = buf;
 	Z_STRLEN_P(value) = len;
@@ -371,7 +371,7 @@ void php_filter_magic_quotes(PHP_INPUT_FILTER_PARAM_DECL)
 	int   len;
 	
 	/* just call php_addslashes quotes */
-	buf = php_addslashes(Z_STRVAL_P(value), Z_STRLEN_P(value), &len, 0 TSRMLS_CC);
+	buf = php_addslashes(Z_STRVAL_P(value), Z_STRLEN_P(value), &len, 0, TSRMLS_C);
 
 	str_efree(Z_STRVAL_P(value));
 	Z_STRVAL_P(value) = buf;

@@ -704,7 +704,7 @@ ZEND_API void zend_hash_graceful_reverse_destroy(HashTable *ht)
  * ZEND_HASH_APPLY_REMOVE - delete the element, combineable with the former
  */
 
-ZEND_API void zend_hash_apply(HashTable *ht, apply_func_t apply_func TSRMLS_DC)
+ZEND_API void zend_hash_apply(HashTable *ht, apply_func_t apply_func, TSRMLS_D)
 {
 	Bucket *p;
 
@@ -713,7 +713,7 @@ ZEND_API void zend_hash_apply(HashTable *ht, apply_func_t apply_func TSRMLS_DC)
 	HASH_PROTECT_RECURSION(ht);
 	p = ht->pListHead;
 	while (p != NULL) {
-		int result = apply_func(p->pData TSRMLS_CC);
+		int result = apply_func(p->pData, TSRMLS_C);
 		
 		if (result & ZEND_HASH_APPLY_REMOVE) {
 			p = zend_hash_apply_deleter(ht, p);
@@ -728,7 +728,7 @@ ZEND_API void zend_hash_apply(HashTable *ht, apply_func_t apply_func TSRMLS_DC)
 }
 
 
-ZEND_API void zend_hash_apply_with_argument(HashTable *ht, apply_func_arg_t apply_func, void *argument TSRMLS_DC)
+ZEND_API void zend_hash_apply_with_argument(HashTable *ht, apply_func_arg_t apply_func, void *argument, TSRMLS_D)
 {
 	Bucket *p;
 
@@ -737,7 +737,7 @@ ZEND_API void zend_hash_apply_with_argument(HashTable *ht, apply_func_arg_t appl
 	HASH_PROTECT_RECURSION(ht);
 	p = ht->pListHead;
 	while (p != NULL) {
-		int result = apply_func(p->pData, argument TSRMLS_CC);
+		int result = apply_func(p->pData, argument, TSRMLS_C);
 		
 		if (result & ZEND_HASH_APPLY_REMOVE) {
 			p = zend_hash_apply_deleter(ht, p);
@@ -752,7 +752,7 @@ ZEND_API void zend_hash_apply_with_argument(HashTable *ht, apply_func_arg_t appl
 }
 
 
-ZEND_API void zend_hash_apply_with_arguments(HashTable *ht TSRMLS_DC, apply_func_args_t apply_func, int num_args, ...)
+ZEND_API void zend_hash_apply_with_arguments(HashTable *ht, TSRMLS_D, apply_func_args_t apply_func, int num_args, ...)
 {
 	Bucket *p;
 	va_list args;
@@ -769,7 +769,7 @@ ZEND_API void zend_hash_apply_with_arguments(HashTable *ht TSRMLS_DC, apply_func
 		hash_key.arKey = p->arKey;
 		hash_key.nKeyLength = p->nKeyLength;
 		hash_key.h = p->h;
-		result = apply_func(p->pData TSRMLS_CC, num_args, args, &hash_key);
+		result = apply_func(p->pData, TSRMLS_C, num_args, args, &hash_key);
 
 		if (result & ZEND_HASH_APPLY_REMOVE) {
 			p = zend_hash_apply_deleter(ht, p);
@@ -787,7 +787,7 @@ ZEND_API void zend_hash_apply_with_arguments(HashTable *ht TSRMLS_DC, apply_func
 }
 
 
-ZEND_API void zend_hash_reverse_apply(HashTable *ht, apply_func_t apply_func TSRMLS_DC)
+ZEND_API void zend_hash_reverse_apply(HashTable *ht, apply_func_t apply_func, TSRMLS_D)
 {
 	Bucket *p, *q;
 
@@ -796,7 +796,7 @@ ZEND_API void zend_hash_reverse_apply(HashTable *ht, apply_func_t apply_func TSR
 	HASH_PROTECT_RECURSION(ht);
 	p = ht->pListTail;
 	while (p != NULL) {
-		int result = apply_func(p->pData TSRMLS_CC);
+		int result = apply_func(p->pData, TSRMLS_C);
 
 		q = p;
 		p = p->pListLast;
@@ -1437,7 +1437,7 @@ ZEND_API int zend_hash_update_current_key_ex(HashTable *ht, int key_type, const 
 }
 
 ZEND_API int zend_hash_sort(HashTable *ht, sort_func_t sort_func,
-							compare_func_t compar, int renumber TSRMLS_DC)
+							compare_func_t compar, int renumber, TSRMLS_D)
 {
 	Bucket **arTmp;
 	Bucket *p;
@@ -1460,7 +1460,7 @@ ZEND_API int zend_hash_sort(HashTable *ht, sort_func_t sort_func,
 		i++;
 	}
 
-	(*sort_func)((void *) arTmp, i, sizeof(Bucket *), compar TSRMLS_CC);
+	(*sort_func)((void *) arTmp, i, sizeof(Bucket *), compar, TSRMLS_C);
 
 	HANDLE_BLOCK_INTERRUPTIONS();
 	ht->pListHead = arTmp[0];
@@ -1499,7 +1499,7 @@ ZEND_API int zend_hash_sort(HashTable *ht, sort_func_t sort_func,
 }
 
 
-ZEND_API int zend_hash_compare(HashTable *ht1, HashTable *ht2, compare_func_t compar, zend_bool ordered TSRMLS_DC)
+ZEND_API int zend_hash_compare(HashTable *ht1, HashTable *ht2, compare_func_t compar, zend_bool ordered, TSRMLS_D)
 {
 	Bucket *p1, *p2 = NULL;
 	int result;
@@ -1567,7 +1567,7 @@ ZEND_API int zend_hash_compare(HashTable *ht1, HashTable *ht2, compare_func_t co
 				}
 			}
 		}
-		result = compar(p1->pData, pData2 TSRMLS_CC);
+		result = compar(p1->pData, pData2, TSRMLS_C);
 		if (result!=0) {
 			HASH_UNPROTECT_RECURSION(ht1); 
 			HASH_UNPROTECT_RECURSION(ht2); 
@@ -1585,7 +1585,7 @@ ZEND_API int zend_hash_compare(HashTable *ht1, HashTable *ht2, compare_func_t co
 }
 
 
-ZEND_API int zend_hash_minmax(const HashTable *ht, compare_func_t compar, int flag, void **pData TSRMLS_DC)
+ZEND_API int zend_hash_minmax(const HashTable *ht, compare_func_t compar, int flag, void **pData, TSRMLS_D)
 {
 	Bucket *p, *res;
 
@@ -1599,11 +1599,11 @@ ZEND_API int zend_hash_minmax(const HashTable *ht, compare_func_t compar, int fl
 	res = p = ht->pListHead;
 	while ((p = p->pListNext)) {
 		if (flag) {
-			if (compar(&res, &p TSRMLS_CC) < 0) { /* max */
+			if (compar(&res, &p, TSRMLS_C) < 0) { /* max */
 				res = p;
 			}
 		} else {
-			if (compar(&res, &p TSRMLS_CC) > 0) { /* min */
+			if (compar(&res, &p, TSRMLS_C) > 0) { /* min */
 				res = p;
 			}
 		}

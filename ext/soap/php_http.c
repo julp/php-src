@@ -25,14 +25,14 @@
 #include "ext/standard/php_rand.h"
 
 static char *get_http_header_value(char *headers, char *type);
-static int get_http_body(php_stream *socketd, int close, char *headers,  char **response, int *out_size TSRMLS_DC);
-static int get_http_headers(php_stream *socketd,char **response, int *out_size TSRMLS_DC);
+static int get_http_body(php_stream *socketd, int close, char *headers,  char **response, int *out_size, TSRMLS_D);
+static int get_http_headers(php_stream *socketd,char **response, int *out_size, TSRMLS_D);
 
 #define smart_str_append_const(str, const) \
 	smart_str_appendl(str,const,sizeof(const)-1)
 
 /* Proxy HTTP Authentication */
-int proxy_authentication(zval* this_ptr, smart_str* soap_headers TSRMLS_DC)
+int proxy_authentication(zval* this_ptr, smart_str* soap_headers, TSRMLS_D)
 {
 	zval **login, **password;
 
@@ -59,7 +59,7 @@ int proxy_authentication(zval* this_ptr, smart_str* soap_headers TSRMLS_DC)
 }
 
 /* HTTP Authentication */
-int basic_authentication(zval* this_ptr, smart_str* soap_headers TSRMLS_DC)
+int basic_authentication(zval* this_ptr, smart_str* soap_headers, TSRMLS_D)
 {
 	zval **login, **password;
 
@@ -91,7 +91,7 @@ void http_context_headers(php_stream_context* context,
                           zend_bool has_authorization,
                           zend_bool has_proxy_authorization,
                           zend_bool has_cookies,
-                          smart_str* soap_headers TSRMLS_DC)
+                          smart_str* soap_headers, TSRMLS_D)
 {
 	zval **tmp;
 
@@ -156,7 +156,7 @@ void http_context_headers(php_stream_context* context,
 	}
 }
 
-static php_stream* http_connect(zval* this_ptr, php_url *phpurl, int use_ssl, php_stream_context *context, int *use_proxy TSRMLS_DC)
+static php_stream* http_connect(zval* this_ptr, php_url *phpurl, int use_ssl, php_stream_context *context, int *use_proxy, TSRMLS_D)
 {
 	php_stream *stream;
 	zval **proxy_host, **proxy_port, **tmp;
@@ -253,7 +253,7 @@ static php_stream* http_connect(zval* this_ptr, php_url *phpurl, int use_ssl, ph
 			smart_str_append_unsigned(&soap_headers, phpurl->port);
 		}
 		smart_str_append_const(&soap_headers, "\r\n");
-		proxy_authentication(this_ptr, &soap_headers TSRMLS_CC);
+		proxy_authentication(this_ptr, &soap_headers, TSRMLS_C);
 		smart_str_append_const(&soap_headers, "\r\n");
 		if (php_stream_write(stream, soap_headers.c, soap_headers.len) != soap_headers.len) {
 			php_stream_close(stream);
@@ -262,7 +262,7 @@ static php_stream* http_connect(zval* this_ptr, php_url *phpurl, int use_ssl, ph
  	 	smart_str_free(&soap_headers);
 
  	 	if (stream) {
-			if (!get_http_headers(stream, &http_headers, &http_header_size TSRMLS_CC) || http_headers == NULL) {
+			if (!get_http_headers(stream, &http_headers, &http_header_size, TSRMLS_C) || http_headers == NULL) {
 				php_stream_close(stream);
 				stream = NULL;
 			}
@@ -299,8 +299,8 @@ static php_stream* http_connect(zval* this_ptr, php_url *phpurl, int use_ssl, ph
 						break;
 				}
 			}
-			if (php_stream_xport_crypto_setup(stream, crypto_method, NULL TSRMLS_CC) < 0 ||
-			    php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
+			if (php_stream_xport_crypto_setup(stream, crypto_method, NULL, TSRMLS_C) < 0 ||
+			    php_stream_xport_crypto_enable(stream, 1, TSRMLS_C) < 0) {
 				php_stream_close(stream);
 				stream = NULL;
 			}
@@ -333,7 +333,7 @@ int make_http_soap_request(zval  *this_ptr,
                            char  *soapaction,
                            int    soap_version,
                            char **buffer,
-                           int   *buffer_len TSRMLS_DC)
+                           int   *buffer_len, TSRMLS_D)
 {
 	char *request;
 	smart_str soap_headers = {0};
@@ -400,7 +400,7 @@ int make_http_soap_request(zval  *this_ptr,
 				smart_str_append_const(&soap_headers_z,"Content-Encoding: gzip\r\n");
 				ZVAL_LONG(params[2], 0x1f);
 	    }
-			if (call_user_function(CG(function_table), (zval**)NULL, &func, &retval, n, params TSRMLS_CC) == SUCCESS &&
+			if (call_user_function(CG(function_table), (zval**)NULL, &func, &retval, n, params, TSRMLS_C) == SUCCESS &&
 			    Z_TYPE(retval) == IS_STRING) {
 				request = Z_STRVAL(retval);
 				request_size = Z_STRLEN(retval);
@@ -442,7 +442,7 @@ try_again:
 	if (phpurl == NULL || phpurl->host == NULL) {
 	  if (phpurl != NULL) {php_url_free(phpurl);}
 		if (request != buf) {efree(request);}
-		add_soap_fault(this_ptr, "HTTP", "Unable to parse URL", NULL, NULL TSRMLS_CC);
+		add_soap_fault(this_ptr, "HTTP", "Unable to parse URL", NULL, NULL, TSRMLS_C);
 		smart_str_free(&soap_headers_z);
 		return FALSE;
 	}
@@ -453,17 +453,17 @@ try_again:
 	} else if (phpurl->scheme == NULL || strcmp(phpurl->scheme, "http") != 0) {
 		php_url_free(phpurl);
 		if (request != buf) {efree(request);}
-		add_soap_fault(this_ptr, "HTTP", "Unknown protocol. Only http and https are allowed.", NULL, NULL TSRMLS_CC);
+		add_soap_fault(this_ptr, "HTTP", "Unknown protocol. Only http and https are allowed.", NULL, NULL, TSRMLS_C);
 		smart_str_free(&soap_headers_z);
 		return FALSE;
 	}
 
 	old_allow_url_fopen = PG(allow_url_fopen);
 	PG(allow_url_fopen) = 1;
-	if (use_ssl && php_stream_locate_url_wrapper("https://", NULL, STREAM_LOCATE_WRAPPERS_ONLY TSRMLS_CC) == NULL) {
+	if (use_ssl && php_stream_locate_url_wrapper("https://", NULL, STREAM_LOCATE_WRAPPERS_ONLY, TSRMLS_C) == NULL) {
 		php_url_free(phpurl);
 		if (request != buf) {efree(request);}
-		add_soap_fault(this_ptr, "HTTP", "SSL support is not available in this build", NULL, NULL TSRMLS_CC);
+		add_soap_fault(this_ptr, "HTTP", "SSL support is not available in this build", NULL, NULL, TSRMLS_C);
 		PG(allow_url_fopen) = old_allow_url_fopen;
 		smart_str_free(&soap_headers_z);
 		return FALSE;
@@ -477,7 +477,7 @@ try_again:
 	if (stream != NULL) {
 	  php_url *orig;
 		if (zend_hash_find(Z_OBJPROP_P(this_ptr), "httpurl", sizeof("httpurl"), (void **)&tmp) == SUCCESS &&
-		    (orig = (php_url *) zend_fetch_resource(tmp TSRMLS_CC, -1, "httpurl", NULL, 1, le_url)) != NULL &&
+		    (orig = (php_url *) zend_fetch_resource(tmp, TSRMLS_C, -1, "httpurl", NULL, 1, le_url)) != NULL &&
 		    ((use_proxy && !use_ssl) ||
 		     (((use_ssl && orig->scheme != NULL && strcmp(orig->scheme, "https") == 0) ||
 		      (!use_ssl && orig->scheme == NULL) ||
@@ -505,7 +505,7 @@ try_again:
 	}
 
 	if (!stream) {
-		stream = http_connect(this_ptr, phpurl, use_ssl, context, &use_proxy TSRMLS_CC);
+		stream = http_connect(this_ptr, phpurl, use_ssl, context, &use_proxy, TSRMLS_C);
 		if (stream) {
 			php_stream_auto_cleanup(stream);
 			add_property_resource(this_ptr, "httpsocket", php_stream_get_resource_id(stream));
@@ -513,7 +513,7 @@ try_again:
 		} else {
 			php_url_free(phpurl);
 			if (request != buf) {efree(request);}
-			add_soap_fault(this_ptr, "HTTP", "Could not connect to host", NULL, NULL TSRMLS_CC);
+			add_soap_fault(this_ptr, "HTTP", "Could not connect to host", NULL, NULL, TSRMLS_C);
 			PG(allow_url_fopen) = old_allow_url_fopen;
 			smart_str_free(&soap_headers_z);
 			return FALSE;
@@ -523,7 +523,7 @@ try_again:
 
 	if (stream) {
 		zval **cookies, **login, **password;
-	  int ret = zend_list_insert(phpurl, le_url TSRMLS_CC);
+	  int ret = zend_list_insert(phpurl, le_url, TSRMLS_C);
 
 		add_property_resource(this_ptr, "httpurl", ret);
 		/*zend_list_addref(ret);*/
@@ -800,7 +800,7 @@ try_again:
 
 		/* Proxy HTTP Authentication */
 		if (use_proxy && !use_ssl) {
-			has_proxy_authorization = proxy_authentication(this_ptr, &soap_headers TSRMLS_CC);
+			has_proxy_authorization = proxy_authentication(this_ptr, &soap_headers, TSRMLS_C);
 		}
 
 		/* Send cookies along with request */
@@ -842,7 +842,7 @@ try_again:
 			}
 		}
 
-		http_context_headers(context, has_authorization, has_proxy_authorization, has_cookies, &soap_headers TSRMLS_CC);
+		http_context_headers(context, has_authorization, has_proxy_authorization, has_cookies, &soap_headers, TSRMLS_C);
 
 		smart_str_append_const(&soap_headers, "\r\n");
 		smart_str_0(&soap_headers);
@@ -860,13 +860,13 @@ try_again:
 			zend_hash_del(Z_OBJPROP_P(this_ptr), "httpurl", sizeof("httpurl"));
 			zend_hash_del(Z_OBJPROP_P(this_ptr), "httpsocket", sizeof("httpsocket"));
 			zend_hash_del(Z_OBJPROP_P(this_ptr), "_use_proxy", sizeof("_use_proxy"));
-			add_soap_fault(this_ptr, "HTTP", "Failed Sending HTTP SOAP request", NULL, NULL TSRMLS_CC);
+			add_soap_fault(this_ptr, "HTTP", "Failed Sending HTTP SOAP request", NULL, NULL, TSRMLS_C);
 			smart_str_free(&soap_headers_z);
 			return FALSE;
 		}
 		smart_str_free(&soap_headers);
 	} else {
-		add_soap_fault(this_ptr, "HTTP", "Failed to create stream??", NULL, NULL TSRMLS_CC);
+		add_soap_fault(this_ptr, "HTTP", "Failed to create stream??", NULL, NULL, TSRMLS_C);
 		smart_str_free(&soap_headers_z);
 		return FALSE;
 	}
@@ -880,13 +880,13 @@ try_again:
 	}
 
 	do {
-		if (!get_http_headers(stream, &http_headers, &http_header_size TSRMLS_CC)) {
+		if (!get_http_headers(stream, &http_headers, &http_header_size, TSRMLS_C)) {
 			if (http_headers) {efree(http_headers);}
 			if (request != buf) {efree(request);}
 			php_stream_close(stream);
 			zend_hash_del(Z_OBJPROP_P(this_ptr), "httpsocket", sizeof("httpsocket"));
 			zend_hash_del(Z_OBJPROP_P(this_ptr), "_use_proxy", sizeof("_use_proxy"));
-			add_soap_fault(this_ptr, "HTTP", "Error Fetching http headers", NULL, NULL TSRMLS_CC);
+			add_soap_fault(this_ptr, "HTTP", "Error Fetching http headers", NULL, NULL, TSRMLS_C);
 			smart_str_free(&soap_headers_z);
 			return FALSE;
 		}
@@ -1054,13 +1054,13 @@ try_again:
 		}
 	}	
 
-	if (!get_http_body(stream, http_close, http_headers, &http_body, &http_body_size TSRMLS_CC)) {
+	if (!get_http_body(stream, http_close, http_headers, &http_body, &http_body_size, TSRMLS_C)) {
 		if (request != buf) {efree(request);}
 		php_stream_close(stream);
 		efree(http_headers);
 		zend_hash_del(Z_OBJPROP_P(this_ptr), "httpsocket", sizeof("httpsocket"));
 		zend_hash_del(Z_OBJPROP_P(this_ptr), "_use_proxy", sizeof("_use_proxy"));
-		add_soap_fault(this_ptr, "HTTP", "Error Fetching http body, No Content-Length, connection closed or chunked data", NULL, NULL TSRMLS_CC);
+		add_soap_fault(this_ptr, "HTTP", "Error Fetching http body, No Content-Length, connection closed or chunked data", NULL, NULL, TSRMLS_C);
 		if (http_msg) {
 			efree(http_msg);
 		}
@@ -1116,7 +1116,7 @@ try_again:
 				phpurl = new_url;
 
 				if (--redirect_max < 1) {
-					add_soap_fault(this_ptr, "HTTP", "Redirection limit reached, aborting", NULL, NULL TSRMLS_CC);
+					add_soap_fault(this_ptr, "HTTP", "Redirection limit reached, aborting", NULL, NULL, TSRMLS_C);
 					smart_str_free(&soap_headers_z);
 					return FALSE;
 				}
@@ -1180,7 +1180,7 @@ try_again:
 				php_url *new_url  = emalloc(sizeof(php_url));
 
 				Z_DELREF_P(digest);
-				add_property_zval_ex(this_ptr, "_digest", sizeof("_digest"), digest TSRMLS_CC);
+				add_property_zval_ex(this_ptr, "_digest", sizeof("_digest"), digest, TSRMLS_C);
 
 				*new_url = *phpurl;
 				if (phpurl->scheme) phpurl->scheme = estrdup(phpurl->scheme);
@@ -1222,7 +1222,7 @@ try_again:
 				zval *err;
 				MAKE_STD_ZVAL(err);
 				ZVAL_STRINGL(err, http_body, http_body_size, 1);
-				add_soap_fault(this_ptr, "HTTP", "Didn't receive an xml document", NULL, err TSRMLS_CC);
+				add_soap_fault(this_ptr, "HTTP", "Didn't receive an xml document", NULL, err, TSRMLS_C);
 				efree(content_type);
 				efree(http_headers);
 				efree(http_body);
@@ -1261,10 +1261,10 @@ try_again:
 			if (http_msg) {
 				efree(http_msg);
 			}
-			add_soap_fault(this_ptr, "HTTP", "Unknown Content-Encoding", NULL, NULL TSRMLS_CC);
+			add_soap_fault(this_ptr, "HTTP", "Unknown Content-Encoding", NULL, NULL, TSRMLS_C);
 			return FALSE;
 		}
-		if (call_user_function(CG(function_table), (zval**)NULL, &func, &retval, 1, params TSRMLS_CC) == SUCCESS &&
+		if (call_user_function(CG(function_table), (zval**)NULL, &func, &retval, 1, params, TSRMLS_C) == SUCCESS &&
 		    Z_TYPE(retval) == IS_STRING) {
 			efree(http_body);
 			*buffer = Z_STRVAL(retval);
@@ -1273,7 +1273,7 @@ try_again:
 			efree(content_encoding);
 			efree(http_headers);
 			efree(http_body);
-			add_soap_fault(this_ptr, "HTTP", "Can't uncompress compressed response", NULL, NULL TSRMLS_CC);
+			add_soap_fault(this_ptr, "HTTP", "Can't uncompress compressed response", NULL, NULL, TSRMLS_C);
 			if (http_msg) {
 				efree(http_msg);
 			}
@@ -1307,7 +1307,7 @@ try_again:
 
 		if (error) {
 			efree(*buffer);
-			add_soap_fault(this_ptr, "HTTP", http_msg, NULL, NULL TSRMLS_CC);
+			add_soap_fault(this_ptr, "HTTP", http_msg, NULL, NULL, TSRMLS_C);
 			efree(http_msg);
 			return FALSE;
 		}
@@ -1358,7 +1358,7 @@ static char *get_http_header_value(char *headers, char *type)
 	return NULL;
 }
 
-static int get_http_body(php_stream *stream, int close, char *headers,  char **response, int *out_size TSRMLS_DC)
+static int get_http_body(php_stream *stream, int close, char *headers,  char **response, int *out_size, TSRMLS_D)
 {
 	char *header, *http_buf = NULL;
 	int header_close = close, header_chunked = 0, header_length = 0, http_buf_size = 0;
@@ -1492,7 +1492,7 @@ static int get_http_body(php_stream *stream, int close, char *headers,  char **r
 	return TRUE;
 }
 
-static int get_http_headers(php_stream *stream, char **response, int *out_size TSRMLS_DC)
+static int get_http_headers(php_stream *stream, char **response, int *out_size, TSRMLS_D)
 {
 	int done = FALSE;
 	smart_str tmp_response = {0};

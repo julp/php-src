@@ -52,9 +52,9 @@
 #define GENERATE_SEED() (((long) (time(0) * getpid())) ^ ((long) (1000000.0 * php_combined_lcg(TSRMLS_C))))
 #endif
 
-PHPAPI void php_srand(long seed TSRMLS_DC);
+PHPAPI void php_srand(long seed, TSRMLS_D);
 PHPAPI long php_rand(TSRMLS_D);
-PHPAPI void php_mt_srand(php_uint32 seed TSRMLS_DC);
+PHPAPI void php_mt_srand(php_uint32 seed, TSRMLS_D);
 PHPAPI php_uint32 php_mt_rand(TSRMLS_D);
 
 #endif	/* PHP_RAND_H */

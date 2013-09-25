@@ -49,13 +49,13 @@ typedef struct {
 	TRANSLITERATOR_METHOD_FETCH_OBJECT_NO_CHECK; \
 	if( to->utrans == NULL ) \
 	{ \
-		intl_errors_set( &to->err, U_ILLEGAL_ARGUMENT_ERROR, "Found unconstructed transliterator", 0 TSRMLS_CC ); \
+		intl_errors_set( &to->err, U_ILLEGAL_ARGUMENT_ERROR, "Found unconstructed transliterator", 0, TSRMLS_C ); \
 		RETURN_FALSE; \
 	}
 
 int transliterator_object_construct( zval *object,
 									 UTransliterator *utrans,
-									 UErrorCode *status TSRMLS_DC );
+									 UErrorCode *status, TSRMLS_D );
 
 void transliterator_register_Transliterator_class( TSRMLS_D );
 

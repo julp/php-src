@@ -30,12 +30,12 @@ typedef php_stream *(php_stream_transport_factory_func)(const char *proto, long 
 		char *resourcename, long resourcenamelen,
 		const char *persistent_id, int options, int flags,
 		struct timeval *timeout,
-		php_stream_context *context STREAMS_DC TSRMLS_DC);
+		php_stream_context *context STREAMS_DC, TSRMLS_D);
 typedef php_stream_transport_factory_func *php_stream_transport_factory;
 
 BEGIN_EXTERN_C()
-PHPAPI int php_stream_xport_register(char *protocol, php_stream_transport_factory factory TSRMLS_DC);
-PHPAPI int php_stream_xport_unregister(char *protocol TSRMLS_DC);
+PHPAPI int php_stream_xport_register(char *protocol, php_stream_transport_factory factory, TSRMLS_D);
+PHPAPI int php_stream_xport_unregister(char *protocol, TSRMLS_D);
 
 #define STREAM_XPORT_CLIENT			0
 #define STREAM_XPORT_SERVER			1
@@ -52,16 +52,16 @@ PHPAPI php_stream *_php_stream_xport_create(const char *name, long namelen, int 
 		php_stream_context *context,
 		char **error_string,
 		int *error_code
-		STREAMS_DC TSRMLS_DC);
+		STREAMS_DC, TSRMLS_D);
 
 #define php_stream_xport_create(name, namelen, options, flags, persistent_id, timeout, context, estr, ecode) \
-	_php_stream_xport_create(name, namelen, options, flags, persistent_id, timeout, context, estr, ecode STREAMS_CC TSRMLS_CC)
+	_php_stream_xport_create(name, namelen, options, flags, persistent_id, timeout, context, estr, ecode STREAMS_CC, TSRMLS_C)
 
 /* Bind the stream to a local address */
 PHPAPI int php_stream_xport_bind(php_stream *stream,
 		const char *name, long namelen,
 		char **error_text
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 /* Connect to a remote address */
 PHPAPI int php_stream_xport_connect(php_stream *stream,
@@ -70,13 +70,13 @@ PHPAPI int php_stream_xport_connect(php_stream *stream,
 		struct timeval *timeout,
 		char **error_text,
 		int *error_code
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 /* Prepare to listen */
 PHPAPI int php_stream_xport_listen(php_stream *stream,
 		int backlog,
 		char **error_text
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 /* Get the next client and their address as a string, or the underlying address
  * structure.  You must efree either of these if you request them */
@@ -85,13 +85,13 @@ PHPAPI int php_stream_xport_accept(php_stream *stream, php_stream **client,
 		void **addr, socklen_t *addrlen,
 		struct timeval *timeout,
 		char **error_text
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 /* Get the name of either the socket or it's peer */
 PHPAPI int php_stream_xport_get_name(php_stream *stream, int want_peer,
 		char **textaddr, int *textaddrlen,
 		void **addr, socklen_t *addrlen
-		TSRMLS_DC);
+		,TSRMLS_D);
 
 enum php_stream_xport_send_recv_flags {
 	STREAM_OOB = 1,
@@ -102,12 +102,12 @@ enum php_stream_xport_send_recv_flags {
  * peeking, optionally retrieving OOB data */
 PHPAPI int php_stream_xport_recvfrom(php_stream *stream, char *buf, size_t buflen,
 		long flags, void **addr, socklen_t *addrlen,
-		char **textaddr, int *textaddrlen TSRMLS_DC);
+		char **textaddr, int *textaddrlen, TSRMLS_D);
 
 /* Similar to send() system call; send data to the stream, optionally
  * sending it as OOB data */
 PHPAPI int php_stream_xport_sendto(php_stream *stream, const char *buf, size_t buflen,
-		long flags, void *addr, socklen_t addrlen TSRMLS_DC);
+		long flags, void *addr, socklen_t addrlen, TSRMLS_D);
 
 typedef enum {
 	STREAM_SHUT_RD,
@@ -117,7 +117,7 @@ typedef enum {
 
 /* Similar to shutdown() system call; shut down part of a full-duplex
  * connection */
-PHPAPI int php_stream_xport_shutdown(php_stream *stream, stream_shutdown_t how TSRMLS_DC);
+PHPAPI int php_stream_xport_shutdown(php_stream *stream, stream_shutdown_t how, TSRMLS_D);
 END_EXTERN_C()
 
 
@@ -177,8 +177,8 @@ typedef enum {
 } php_stream_xport_crypt_method_t;
 
 BEGIN_EXTERN_C()
-PHPAPI int php_stream_xport_crypto_setup(php_stream *stream, php_stream_xport_crypt_method_t crypto_method, php_stream *session_stream TSRMLS_DC);
-PHPAPI int php_stream_xport_crypto_enable(php_stream *stream, int activate TSRMLS_DC);
+PHPAPI int php_stream_xport_crypto_setup(php_stream *stream, php_stream_xport_crypt_method_t crypto_method, php_stream *session_stream, TSRMLS_D);
+PHPAPI int php_stream_xport_crypto_enable(php_stream *stream, int activate, TSRMLS_D);
 END_EXTERN_C()
 
 typedef struct _php_stream_xport_crypto_param {

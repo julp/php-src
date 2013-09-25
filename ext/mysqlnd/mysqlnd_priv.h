@@ -155,11 +155,11 @@
 
 #define SET_STMT_ERROR(stmt, a, b, c)	SET_CLIENT_ERROR(*(stmt)->error_info, a, b, c)
 
-#define CONN_GET_STATE(c)		(c)->m->get_state((c) TSRMLS_CC)
-#define CONN_SET_STATE(c, s)	(c)->m->set_state((c), (s) TSRMLS_CC)
+#define CONN_GET_STATE(c)		(c)->m->get_state((c), TSRMLS_C)
+#define CONN_SET_STATE(c, s)	(c)->m->set_state((c), (s), TSRMLS_C)
 
 /* PS stuff */
-typedef void (*ps_field_fetch_func)(zval * zv, const MYSQLND_FIELD * const field, unsigned int pack_len, zend_uchar ** row TSRMLS_DC);
+typedef void (*ps_field_fetch_func)(zval * zv, const MYSQLND_FIELD * const field, unsigned int pack_len, zend_uchar ** row, TSRMLS_D);
 struct st_mysqlnd_perm_bind {
 	ps_field_fetch_func func;
 	/* should be signed int */
@@ -183,14 +183,14 @@ PHPAPI extern MYSQLND_CLASS_METHOD_TABLE_NAME_FORWARD(mysqlnd_res);
 PHPAPI extern MYSQLND_CLASS_METHOD_TABLE_NAME_FORWARD(mysqlnd_protocol);
 PHPAPI extern MYSQLND_CLASS_METHOD_TABLE_NAME_FORWARD(mysqlnd_net);
 
-enum_func_status mysqlnd_handle_local_infile(MYSQLND_CONN_DATA * conn, const char * filename, zend_bool * is_warning TSRMLS_DC);
+enum_func_status mysqlnd_handle_local_infile(MYSQLND_CONN_DATA * conn, const char * filename, zend_bool * is_warning, TSRMLS_D);
 
 
 
 void _mysqlnd_init_ps_subsystem();/* This one is private, mysqlnd_library_init() will call it */
 void _mysqlnd_init_ps_fetch_subsystem();
 
-void ps_fetch_from_1_to_8_bytes(zval * zv, const MYSQLND_FIELD * const field, unsigned int pack_len, zend_uchar ** row, unsigned int byte_count TSRMLS_DC);
+void ps_fetch_from_1_to_8_bytes(zval * zv, const MYSQLND_FIELD * const field, unsigned int pack_len, zend_uchar ** row, unsigned int byte_count, TSRMLS_D);
 
 void mysqlnd_plugin_subsystem_init(TSRMLS_D);
 void mysqlnd_plugin_subsystem_end(TSRMLS_D);
@@ -220,7 +220,7 @@ mysqlnd_auth_handshake(MYSQLND_CONN_DATA * conn,
 						size_t * switch_to_auth_protocol_len,
 						zend_uchar ** switch_to_auth_protocol_data,
 						size_t * switch_to_auth_protocol_data_len
-						TSRMLS_DC);
+						,TSRMLS_D);
 
 enum_func_status
 mysqlnd_auth_change_user(MYSQLND_CONN_DATA * const conn,
@@ -239,7 +239,7 @@ mysqlnd_auth_change_user(MYSQLND_CONN_DATA * const conn,
 								size_t * switch_to_auth_protocol_len,
 								zend_uchar ** switch_to_auth_protocol_data,
 								size_t * switch_to_auth_protocol_data_len
-								TSRMLS_DC);
+								,TSRMLS_D);
 
 #endif	/* MYSQLND_PRIV_H */
 

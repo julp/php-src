@@ -163,9 +163,7 @@ TSRM_API void tsrm_free_interpreter_context(void *context);
 #define TSRMLS_SET_CTX(ctx)		ctx = (void ***) tsrm_ls
 #define TSRMG(id, type, element)	(((type) (*((void ***) tsrm_ls))[TSRM_UNSHUFFLE_RSRC_ID(id)])->element)
 #define TSRMLS_D	void ***tsrm_ls
-#define TSRMLS_DC	, TSRMLS_D
 #define TSRMLS_C	tsrm_ls
-#define TSRMLS_CC	, TSRMLS_C
 
 #ifdef __cplusplus
 }
@@ -176,10 +174,8 @@ TSRM_API void tsrm_free_interpreter_context(void *context);
 #define TSRMLS_FETCH()
 #define TSRMLS_FETCH_FROM_CTX(ctx)
 #define TSRMLS_SET_CTX(ctx)
-#define TSRMLS_D	void
-#define TSRMLS_DC
-#define TSRMLS_C
-#define TSRMLS_CC
+#define TSRMLS_D	void ***ZEND_ATTRIBUTE_UNUSED(tsrm_ls)
+#define TSRMLS_C	NULL
 
 #endif /* ZTS */
 

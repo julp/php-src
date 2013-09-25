@@ -64,34 +64,34 @@ PHP_METHOD(domattr, __construct)
 	int name_len, value_len, name_valid;
 	zend_error_handling error_handling;
 
-	zend_replace_error_handling(EH_THROW, dom_domexception_class_entry, &error_handling TSRMLS_CC);
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ou|u", &id, dom_attr_class_entry, &name, &name_len, &value, &value_len) == FAILURE) {
-		zend_restore_error_handling(&error_handling TSRMLS_CC);
+	zend_replace_error_handling(EH_THROW, dom_domexception_class_entry, &error_handling, TSRMLS_C);
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ou|u", &id, dom_attr_class_entry, &name, &name_len, &value, &value_len) == FAILURE) {
+		zend_restore_error_handling(&error_handling, TSRMLS_C);
 		return;
 	}
 
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
-	intern = (dom_object *)zend_object_store_get_object(id TSRMLS_CC);
+	zend_restore_error_handling(&error_handling, TSRMLS_C);
+	intern = (dom_object *)zend_object_store_get_object(id, TSRMLS_C);
 
 	name_valid = xmlValidateName((xmlChar *) name, 0);
 	if (name_valid != 0) {
-		php_dom_throw_error(INVALID_CHARACTER_ERR, 1 TSRMLS_CC);
+		php_dom_throw_error(INVALID_CHARACTER_ERR, 1, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
 	nodep = xmlNewProp(NULL, (xmlChar *) name, value);
 
 	if (!nodep) {
-		php_dom_throw_error(INVALID_STATE_ERR, 1 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 1, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
 	if (intern != NULL) {
 		oldnode = dom_object_get_node(intern);
 		if (oldnode != NULL) {
-			php_libxml_node_free_resource(oldnode  TSRMLS_CC);
+			php_libxml_node_free_resource(oldnode,  TSRMLS_C);
 		}
-		php_libxml_increment_node_ptr((php_libxml_node_object *)intern, (xmlNodePtr)nodep, (void *)intern TSRMLS_CC);
+		php_libxml_increment_node_ptr((php_libxml_node_object *)intern, (xmlNodePtr)nodep, (void *)intern, TSRMLS_C);
 	}
 }
 
@@ -102,14 +102,14 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-1112119403
 Since: 
 */
-int dom_attr_name_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_attr_name_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlAttrPtr attrp;
 
 	attrp = (xmlAttrPtr) dom_object_get_node(obj);
 
 	if (attrp == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -126,7 +126,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-862529273
 Since: 
 */
-int dom_attr_specified_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_attr_specified_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	/* TODO */
 	ALLOC_ZVAL(*retval);
@@ -141,7 +141,7 @@ readonly=no
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-221662474
 Since: 
 */
-int dom_attr_value_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_attr_value_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlAttrPtr attrp;
 	xmlChar *content;
@@ -149,7 +149,7 @@ int dom_attr_value_read(dom_object *obj, zval **retval TSRMLS_DC)
 	attrp = (xmlAttrPtr) dom_object_get_node(obj);
 
 	if (attrp == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -167,7 +167,7 @@ int dom_attr_value_read(dom_object *obj, zval **retval TSRMLS_DC)
 
 }
 
-int dom_attr_value_write(dom_object *obj, zval *newval TSRMLS_DC)
+int dom_attr_value_write(dom_object *obj, zval *newval, TSRMLS_D)
 {
 	zval value_copy;
 	xmlAttrPtr attrp;
@@ -175,12 +175,12 @@ int dom_attr_value_write(dom_object *obj, zval *newval TSRMLS_DC)
 	attrp = (xmlAttrPtr) dom_object_get_node(obj);
 
 	if (attrp == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
 	if (attrp->children) {
-		node_list_unlink(attrp->children TSRMLS_CC);
+		node_list_unlink(attrp->children, TSRMLS_C);
 	}
 
 	if (newval->type != IS_STRING) {
@@ -208,7 +208,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Attr-ownerElement
 Since: DOM Level 2
 */
-int dom_attr_owner_element_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_attr_owner_element_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlNodePtr nodep, nodeparent;
 	int ret;
@@ -216,7 +216,7 @@ int dom_attr_owner_element_read(dom_object *obj, zval **retval TSRMLS_DC)
 	nodep = dom_object_get_node(obj);
 
 	if (nodep == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -228,8 +228,8 @@ int dom_attr_owner_element_read(dom_object *obj, zval **retval TSRMLS_DC)
 		return SUCCESS;
 	}
 
-	if (NULL == (*retval = php_dom_create_object(nodeparent, &ret, *retval, obj TSRMLS_CC))) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,  "Cannot create required DOM object");
+	if (NULL == (*retval = php_dom_create_object(nodeparent, &ret, *retval, obj, TSRMLS_C))) {
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,  "Cannot create required DOM object");
 		return FAILURE;
 	}
 	return SUCCESS;
@@ -243,9 +243,9 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Attr-schemaTypeInfo
 Since: DOM Level 3
 */
-int dom_attr_schema_type_info_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_attr_schema_type_info_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
-	php_error_docref(NULL TSRMLS_CC, E_WARNING, "Not yet implemented");
+	php_error_docref(NULL, TSRMLS_C, E_WARNING, "Not yet implemented");
 	ALLOC_ZVAL(*retval);
 	ZVAL_NULL(*retval);
 	return SUCCESS;
@@ -263,7 +263,7 @@ PHP_FUNCTION(dom_attr_is_id)
 	dom_object *intern;
 	xmlAttrPtr attrp;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O", &id, dom_attr_class_entry) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "O", &id, dom_attr_class_entry) == FAILURE) {
 		return;
 	}
 

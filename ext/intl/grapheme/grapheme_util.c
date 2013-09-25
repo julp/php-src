@@ -149,7 +149,7 @@ grapheme_substr_ascii(char *str, int str_len, int f, int l, int argc, char **sub
 
 /* {{{ grapheme_strrpos_utf16 - strrpos using utf16 */
 int
-grapheme_strrpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned char*needle, int32_t needle_len, int32_t offset, int f_ignore_case TSRMLS_DC)
+grapheme_strrpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned char*needle, int32_t needle_len, int32_t offset, int f_ignore_case, TSRMLS_D)
 {
     UChar *uhaystack, *puhaystack, *uhaystack_end, *uneedle;
     int32_t uhaystack_len, uneedle_len;
@@ -166,10 +166,10 @@ grapheme_strrpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned c
 
     if ( U_FAILURE( status ) ) {
         /* Set global error code. */
-        intl_error_set_code( NULL, status TSRMLS_CC );
+        intl_error_set_code( NULL, status, TSRMLS_C );
 
         /* Set error messages. */
-        intl_error_set_custom_msg( NULL, "Error converting input string to UTF-16", 0 TSRMLS_CC );
+        intl_error_set_custom_msg( NULL, "Error converting input string to UTF-16", 0, TSRMLS_C );
         if (uhaystack) {
 			efree( uhaystack );
 		}
@@ -183,12 +183,12 @@ grapheme_strrpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned c
     /* get a pointer to the haystack taking into account the offset */
     bi = NULL;
     status = U_ZERO_ERROR;
-    bi = grapheme_get_break_iterator(u_break_iterator_buffer, &status TSRMLS_CC );
+    bi = grapheme_get_break_iterator(u_break_iterator_buffer, &status, TSRMLS_C );
 
     puhaystack = grapheme_get_haystack_offset(bi, uhaystack, uhaystack_len, offset);
 
     if ( NULL == puhaystack ) {
-        intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR, "grapheme_strpos: Offset not contained in string", 1 TSRMLS_CC );
+        intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR, "grapheme_strpos: Offset not contained in string", 1, TSRMLS_C );
         if (uhaystack) {
 			efree( uhaystack );
 		}
@@ -203,10 +203,10 @@ grapheme_strrpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned c
 
     if ( U_FAILURE( status ) ) {
         /* Set global error code. */
-        intl_error_set_code( NULL, status TSRMLS_CC );
+        intl_error_set_code( NULL, status, TSRMLS_C );
 
         /* Set error messages. */
-        intl_error_set_custom_msg( NULL, "Error converting input string to UTF-16", 0 TSRMLS_CC );
+        intl_error_set_custom_msg( NULL, "Error converting input string to UTF-16", 0, TSRMLS_C );
         if (uhaystack) {
 			efree( uhaystack );
 		}
@@ -283,7 +283,7 @@ exit:
 
 /* {{{ grapheme_strpos_utf16 - strrpos using utf16*/
 int
-grapheme_strpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned char*needle, int32_t needle_len, int32_t offset, int32_t *puchar_pos, int f_ignore_case TSRMLS_DC)
+grapheme_strpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned char*needle, int32_t needle_len, int32_t offset, int32_t *puchar_pos, int f_ignore_case, TSRMLS_D)
 {
 	UChar *uhaystack, *puhaystack, *uneedle;
 	int32_t uhaystack_len, uneedle_len;
@@ -303,10 +303,10 @@ grapheme_strpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned ch
 
 	if ( U_FAILURE( status ) ) {
 		/* Set global error code. */
-		intl_error_set_code( NULL, status TSRMLS_CC );
+		intl_error_set_code( NULL, status, TSRMLS_C );
 
 		/* Set error messages. */
-		intl_error_set_custom_msg( NULL, "Error converting input string to UTF-16", 0 TSRMLS_CC );
+		intl_error_set_custom_msg( NULL, "Error converting input string to UTF-16", 0, TSRMLS_C );
 		if (uhaystack) {
 			efree( uhaystack );
 		}
@@ -316,14 +316,14 @@ grapheme_strpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned ch
 	/* get a pointer to the haystack taking into account the offset */
 	bi = NULL;
 	status = U_ZERO_ERROR;
-	bi = grapheme_get_break_iterator(u_break_iterator_buffer, &status TSRMLS_CC );
+	bi = grapheme_get_break_iterator(u_break_iterator_buffer, &status, TSRMLS_C );
 	
 	puhaystack = grapheme_get_haystack_offset(bi, uhaystack, uhaystack_len, offset);
 	uhaystack_len = (uhaystack_len - ( puhaystack - uhaystack));
 
 	if ( NULL == puhaystack ) {
 	
-		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR, "grapheme_strpos: Offset not contained in string", 1 TSRMLS_CC );
+		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR, "grapheme_strpos: Offset not contained in string", 1, TSRMLS_C );
 		if (uhaystack) {
 			efree( uhaystack );
 		}
@@ -343,10 +343,10 @@ grapheme_strpos_utf16(unsigned char *haystack, int32_t haystack_len, unsigned ch
 
 	if ( U_FAILURE( status ) ) {
 		/* Set global error code. */
-		intl_error_set_code( NULL, status TSRMLS_CC );
+		intl_error_set_code( NULL, status, TSRMLS_C );
 
 		/* Set error messages. */
-		intl_error_set_custom_msg( NULL, "Error converting input string to UTF-16", 0 TSRMLS_CC );
+		intl_error_set_custom_msg( NULL, "Error converting input string to UTF-16", 0, TSRMLS_C );
 		if (uhaystack) {
 			efree( uhaystack );
 		}
@@ -394,14 +394,14 @@ int grapheme_ascii_check(const unsigned char *day, int32_t len)
 /* }}} */
 
 /* {{{ grapheme_split_string: find and optionally return grapheme boundaries */
-int grapheme_split_string(const UChar *text, int32_t text_length, int boundary_array[], int boundary_array_len TSRMLS_DC )
+int grapheme_split_string(const UChar *text, int32_t text_length, int boundary_array[], int boundary_array_len, TSRMLS_D )
 {
 	unsigned char u_break_iterator_buffer[U_BRK_SAFECLONE_BUFFERSIZE];
 	UErrorCode		status = U_ZERO_ERROR;
 	int ret_len, pos;
 	UBreakIterator* bi;
 
-	bi = grapheme_get_break_iterator((void*)u_break_iterator_buffer, &status TSRMLS_CC );
+	bi = grapheme_get_break_iterator((void*)u_break_iterator_buffer, &status, TSRMLS_C );
 
 	if( U_FAILURE(status) ) {
 		return -1;
@@ -608,7 +608,7 @@ grapheme_strrpos_ascii(unsigned char *haystack, int32_t haystack_len, unsigned c
 
 /* {{{ grapheme_get_break_iterator: get a clone of the global character break iterator */
 UBreakIterator* 
-grapheme_get_break_iterator(void *stack_buffer, UErrorCode *status TSRMLS_DC )
+grapheme_get_break_iterator(void *stack_buffer, UErrorCode *status, TSRMLS_D )
 {
 	int32_t buffer_size;
 

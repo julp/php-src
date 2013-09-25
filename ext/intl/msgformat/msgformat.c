@@ -35,15 +35,15 @@ static void msgfmt_ctor(INTERNAL_FUNCTION_PARAMETERS)
 	int         spattern_len = 0;
 	zval*       object;
 	MessageFormatter_object* mfo;
-	intl_error_reset( NULL TSRMLS_CC );
+	intl_error_reset( NULL, TSRMLS_C );
 
 	object = return_value;
 	/* Parse parameters. */
-	if( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "ss",
+	if( zend_parse_parameters( ZEND_NUM_ARGS(), TSRMLS_C, "ss",
 		&locale, &locale_len, &pattern, &pattern_len ) == FAILURE )
 	{
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"msgfmt_create: unable to parse input parameters", 0 TSRMLS_CC );
+			"msgfmt_create: unable to parse input parameters", 0, TSRMLS_C );
 		zval_dtor(return_value);
 		RETURN_NULL();
 	}
@@ -71,7 +71,7 @@ static void msgfmt_ctor(INTERNAL_FUNCTION_PARAMETERS)
 #endif
 
 	if ((mfo)->mf_data.orig_format) {
-		msgformat_data_free(&mfo->mf_data TSRMLS_CC);
+		msgformat_data_free(&mfo->mf_data, TSRMLS_C);
 	}
 
 	(mfo)->mf_data.orig_format = estrndup(pattern, pattern_len);
@@ -121,16 +121,16 @@ PHP_FUNCTION( msgfmt_get_error_code )
 	MessageFormatter_object*  mfo     = NULL;
 
 	/* Parse parameters. */
-	if( zend_parse_method_parameters( ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O",
+	if( zend_parse_method_parameters( ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "O",
 		&object, MessageFormatter_ce_ptr ) == FAILURE )
 	{
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"msgfmt_get_error_code: unable to parse input params", 0 TSRMLS_CC );
+			"msgfmt_get_error_code: unable to parse input params", 0, TSRMLS_C );
 
 		RETURN_FALSE;
 	}
 
-	mfo = (MessageFormatter_object *) zend_object_store_get_object( object TSRMLS_CC );
+	mfo = (MessageFormatter_object *) zend_object_store_get_object( object, TSRMLS_C );
 
 	/* Return formatter's last error code. */
 	RETURN_LONG( INTL_DATA_ERROR_CODE(mfo) );
@@ -149,19 +149,19 @@ PHP_FUNCTION( msgfmt_get_error_message )
 	MessageFormatter_object*  mfo     = NULL;
 
 	/* Parse parameters. */
-	if( zend_parse_method_parameters( ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O",
+	if( zend_parse_method_parameters( ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "O",
 		&object, MessageFormatter_ce_ptr ) == FAILURE )
 	{
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"msgfmt_get_error_message: unable to parse input params", 0 TSRMLS_CC );
+			"msgfmt_get_error_message: unable to parse input params", 0, TSRMLS_C );
 
 		RETURN_FALSE;
 	}
 
-	mfo = (MessageFormatter_object *) zend_object_store_get_object( object TSRMLS_CC );
+	mfo = (MessageFormatter_object *) zend_object_store_get_object( object, TSRMLS_C );
 
 	/* Return last error message. */
-	message = intl_error_get_message( &mfo->mf_data.error TSRMLS_CC );
+	message = intl_error_get_message( &mfo->mf_data.error, TSRMLS_C );
 	RETURN_STRING( message, 0);
 }
 /* }}} */

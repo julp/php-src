@@ -40,7 +40,7 @@
 #endif
 
 
-static int fpm_php_trace_dump(struct fpm_child_s *child, FILE *slowlog TSRMLS_DC) /* {{{ */
+static int fpm_php_trace_dump(struct fpm_child_s *child, FILE *slowlog, TSRMLS_D) /* {{{ */
 {
 	int callers_limit = 20;
 	pid_t pid = child->pid;
@@ -154,7 +154,7 @@ void fpm_php_trace(struct fpm_child_s *child) /* {{{ */
 		goto done1;
 	}
 
-	if (0 > fpm_php_trace_dump(child, slowlog TSRMLS_CC)) {
+	if (0 > fpm_php_trace_dump(child, slowlog, TSRMLS_C)) {
 		fprintf(slowlog, "+++ dump failed\n");
 	}
 

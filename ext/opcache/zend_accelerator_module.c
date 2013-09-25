@@ -196,7 +196,7 @@ static ZEND_INI_MH(OnEnable)
 	if (stage == ZEND_INI_STAGE_STARTUP ||
 	    stage == ZEND_INI_STAGE_SHUTDOWN ||
 	    stage == ZEND_INI_STAGE_DEACTIVATE) {
-		return OnUpdateBool(entry, new_value, new_value_length, mh_arg1, mh_arg2, mh_arg3, stage TSRMLS_CC);
+		return OnUpdateBool(entry, new_value, new_value_length, mh_arg1, mh_arg2, mh_arg3, stage, TSRMLS_C);
 	} else {
 		/* It may be only temporary disabled */
 		zend_bool *p;
@@ -270,14 +270,14 @@ static int ZEND_DECLARE_INHERITED_CLASS_DELAYED_HANDLER(ZEND_OPCODE_HANDLER_ARGS
 	if (zend_hash_find(EG(class_table), Z_STRVAL(EX(opline)->op2.u.constant), Z_STRLEN(EX(opline)->op2.u.constant) + 1, (void **)&pce) == FAILURE ||
 	    (zend_hash_find(EG(class_table), Z_STRVAL(EX(opline)->op1.u.constant), Z_STRLEN(EX(opline)->op1.u.constant), (void**)&pce_orig) == SUCCESS &&
 	     *pce != *pce_orig)) {
-		do_bind_inherited_class(EX(opline), EG(class_table), EX_T(EX(opline)->extended_value).class_entry, 0 TSRMLS_CC);
+		do_bind_inherited_class(EX(opline), EG(class_table), EX_T(EX(opline)->extended_value).class_entry, 0, TSRMLS_C);
 	}
 	EX(opline)++;
 	return ZEND_USER_OPCODE_CONTINUE;
 }
 #endif
 
-static int filename_is_in_cache(char *filename, int filename_len TSRMLS_DC)
+static int filename_is_in_cache(char *filename, int filename_len, TSRMLS_D)
 {
 	char *key;
 	int key_length;
@@ -294,7 +294,7 @@ static int filename_is_in_cache(char *filename, int filename_len TSRMLS_DC)
 		}
 	}
 
-	if ((key = accel_make_persistent_key_ex(&handle, filename_len, &key_length TSRMLS_CC)) != NULL) {
+	if ((key = accel_make_persistent_key_ex(&handle, filename_len, &key_length, TSRMLS_C)) != NULL) {
 		persistent_script = zend_accel_hash_find(&ZCSG(hash), key, key_length + 1);
 		return persistent_script && !persistent_script->corrupted;
 	}
@@ -312,7 +312,7 @@ static int accel_file_in_cache(INTERNAL_FUNCTION_PARAMETERS)
 	    Z_STRLEN_PP(zfilename) == 0) {
 		return 0;
 	}
-	return filename_is_in_cache(Z_STRVAL_PP(zfilename), Z_STRLEN_PP(zfilename) TSRMLS_CC);
+	return filename_is_in_cache(Z_STRVAL_PP(zfilename), Z_STRLEN_PP(zfilename), TSRMLS_C);
 }
 
 static void accel_file_exists(INTERNAL_FUNCTION_PARAMETERS)
@@ -512,7 +512,7 @@ static ZEND_FUNCTION(opcache_get_status)
 	/* keep the compiler happy */
 	(void)ht; (void)return_value_ptr; (void)this_ptr; (void)return_value_used;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|b", &fetch_scripts) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|b", &fetch_scripts) == FAILURE) {
 		return;
 	}
 	
@@ -565,7 +565,7 @@ static ZEND_FUNCTION(opcache_get_status)
 	}
 }
 
-static int add_blacklist_path(zend_blacklist_entry *p, zval *return_value TSRMLS_DC)
+static int add_blacklist_path(zend_blacklist_entry *p, zval *return_value, TSRMLS_D)
 {
 	add_next_index_stringl(return_value, p->path, p->path_length, 1);
 	return 0;
@@ -633,7 +633,7 @@ static ZEND_FUNCTION(opcache_get_configuration)
 	/* blacklist */
 	MAKE_STD_ZVAL(blacklist);
 	array_init(blacklist);
-	zend_accel_blacklist_apply(&accel_blacklist, (apply_func_arg_t) add_blacklist_path, blacklist TSRMLS_CC);
+	zend_accel_blacklist_apply(&accel_blacklist, (apply_func_arg_t) add_blacklist_path, blacklist, TSRMLS_C);
 	add_assoc_zval(return_value, "blacklist", blacklist);
 }
 
@@ -654,7 +654,7 @@ static ZEND_FUNCTION(opcache_reset)
 		RETURN_FALSE;
 	}
 
-	zend_accel_schedule_restart(ACCEL_RESTART_USER TSRMLS_CC);
+	zend_accel_schedule_restart(ACCEL_RESTART_USER, TSRMLS_C);
 	RETURN_TRUE;
 }
 
@@ -666,11 +666,11 @@ static ZEND_FUNCTION(opcache_invalidate)
 	int script_name_len;
 	zend_bool force = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|b", &script_name, &script_name_len, &force) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|b", &script_name, &script_name_len, &force) == FAILURE) {
 		return;
 	}
 
-	if (zend_accel_invalidate(script_name, script_name_len, force TSRMLS_CC) == SUCCESS) {
+	if (zend_accel_invalidate(script_name, script_name_len, force, TSRMLS_C) == SUCCESS) {
 		RETURN_TRUE;
 	} else {
 		RETURN_FALSE;

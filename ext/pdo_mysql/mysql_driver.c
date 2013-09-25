@@ -43,7 +43,7 @@
 #endif
 
 /* {{{ _pdo_mysql_error */
-int _pdo_mysql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *file, int line TSRMLS_DC)
+int _pdo_mysql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *file, int line, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
 	pdo_error_type *pdo_err; 
@@ -105,7 +105,7 @@ int _pdo_mysql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *file, int lin
 
 	if (!dbh->methods) {
 		PDO_DBG_INF("Throwing exception");
-		zend_throw_exception_ex(php_pdo_get_exception(), einfo->errcode TSRMLS_CC, "SQLSTATE[%s] [%d] %s",
+		zend_throw_exception_ex(php_pdo_get_exception(), einfo->errcode, TSRMLS_C, "SQLSTATE[%s] [%d] %s",
 				*pdo_err, einfo->errcode, einfo->errmsg);
 	}
 
@@ -114,7 +114,7 @@ int _pdo_mysql_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, const char *file, int lin
 /* }}} */
 
 /* {{{ pdo_mysql_fetch_error_func */
-static int pdo_mysql_fetch_error_func(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zval *info TSRMLS_DC)
+static int pdo_mysql_fetch_error_func(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zval *info, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
 	pdo_mysql_error_info *einfo = &H->einfo;
@@ -138,7 +138,7 @@ static int pdo_mysql_fetch_error_func(pdo_dbh_t *dbh, pdo_stmt_t *stmt, zval *in
 /* }}} */
 
 /* {{{ mysql_handle_closer */
-static int mysql_handle_closer(pdo_dbh_t *dbh TSRMLS_DC)
+static int mysql_handle_closer(pdo_dbh_t *dbh, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
 	
@@ -161,7 +161,7 @@ static int mysql_handle_closer(pdo_dbh_t *dbh TSRMLS_DC)
 /* }}} */
 
 /* {{{ mysql_handle_preparer */
-static int mysql_handle_preparer(pdo_dbh_t *dbh, const char *sql, long sql_len, pdo_stmt_t *stmt, zval *driver_options TSRMLS_DC)
+static int mysql_handle_preparer(pdo_dbh_t *dbh, const char *sql, long sql_len, pdo_stmt_t *stmt, zval *driver_options, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
 	pdo_mysql_stmt *S = ecalloc(1, sizeof(pdo_mysql_stmt));
@@ -187,7 +187,7 @@ static int mysql_handle_preparer(pdo_dbh_t *dbh, const char *sql, long sql_len, 
 		goto fallback;
 	}
 	stmt->supports_placeholders = PDO_PLACEHOLDER_POSITIONAL;
-	ret = pdo_parse_params(stmt, (char*)sql, sql_len, &nsql, &nsql_len TSRMLS_CC);
+	ret = pdo_parse_params(stmt, (char*)sql, sql_len, &nsql, &nsql_len, TSRMLS_C);
 
 	if (ret == 1) {
 		/* query was rewritten */
@@ -240,7 +240,7 @@ static int mysql_handle_preparer(pdo_dbh_t *dbh, const char *sql, long sql_len, 
 	}
 	dbh->alloc_own_columns = 1;
 
-	S->max_length = pdo_attr_lval(driver_options, PDO_ATTR_MAX_COLUMN_LEN, 0 TSRMLS_CC);
+	S->max_length = pdo_attr_lval(driver_options, PDO_ATTR_MAX_COLUMN_LEN, 0, TSRMLS_C);
 
 	PDO_DBG_RETURN(1);
 
@@ -253,7 +253,7 @@ end:
 /* }}} */
 
 /* {{{ mysql_handle_doer */
-static long mysql_handle_doer(pdo_dbh_t *dbh, const char *sql, long sql_len TSRMLS_DC)
+static long mysql_handle_doer(pdo_dbh_t *dbh, const char *sql, long sql_len, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
 	PDO_DBG_ENTER("mysql_handle_doer");
@@ -288,10 +288,10 @@ static long mysql_handle_doer(pdo_dbh_t *dbh, const char *sql, long sql_len TSRM
 /* }}} */
 
 /* {{{ pdo_mysql_last_insert_id */
-static char *pdo_mysql_last_insert_id(pdo_dbh_t *dbh, const char *name, unsigned int *len TSRMLS_DC)
+static char *pdo_mysql_last_insert_id(pdo_dbh_t *dbh, const char *name, unsigned int *len, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
-	char *id = php_pdo_int64_to_str(mysql_insert_id(H->server) TSRMLS_CC);
+	char *id = php_pdo_int64_to_str(mysql_insert_id(H->server), TSRMLS_C);
 	PDO_DBG_ENTER("pdo_mysql_last_insert_id");
 	*len = strlen(id);
 	PDO_DBG_RETURN(id);
@@ -299,7 +299,7 @@ static char *pdo_mysql_last_insert_id(pdo_dbh_t *dbh, const char *name, unsigned
 /* }}} */
 
 /* {{{ mysql_handle_quoter */
-static int mysql_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquotedlen, char **quoted, int *quotedlen, enum pdo_param_type paramtype  TSRMLS_DC)
+static int mysql_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquotedlen, char **quoted, int *quotedlen, enum pdo_param_type paramtype,  TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
 	PDO_DBG_ENTER("mysql_handle_quoter");
@@ -315,42 +315,42 @@ static int mysql_handle_quoter(pdo_dbh_t *dbh, const char *unquoted, int unquote
 /* }}} */
 
 /* {{{ mysql_handle_begin */
-static int mysql_handle_begin(pdo_dbh_t *dbh TSRMLS_DC)
+static int mysql_handle_begin(pdo_dbh_t *dbh, TSRMLS_D)
 {
 	PDO_DBG_ENTER("mysql_handle_quoter");
 	PDO_DBG_INF_FMT("dbh=%p", dbh);
-	PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("START TRANSACTION") TSRMLS_CC));
+	PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("START TRANSACTION"), TSRMLS_C));
 }
 /* }}} */
 
 /* {{{ mysql_handle_commit */
-static int mysql_handle_commit(pdo_dbh_t *dbh TSRMLS_DC)
+static int mysql_handle_commit(pdo_dbh_t *dbh, TSRMLS_D)
 {
 	PDO_DBG_ENTER("mysql_handle_commit");
 	PDO_DBG_INF_FMT("dbh=%p", dbh);
 #if MYSQL_VERSION_ID >= 40100 || defined(PDO_USE_MYSQLND)
 	PDO_DBG_RETURN(0 <= mysql_commit(((pdo_mysql_db_handle *)dbh->driver_data)->server));
 #else
-	PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("COMMIT") TSRMLS_CC));
+	PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("COMMIT"), TSRMLS_C));
 #endif
 }
 /* }}} */
 
 /* {{{ mysql_handle_rollback */
-static int mysql_handle_rollback(pdo_dbh_t *dbh TSRMLS_DC)
+static int mysql_handle_rollback(pdo_dbh_t *dbh, TSRMLS_D)
 {
 	PDO_DBG_ENTER("mysql_handle_rollback");
 	PDO_DBG_INF_FMT("dbh=%p", dbh);
 #if MYSQL_VERSION_ID >= 40100 || defined(PDO_USE_MYSQLND)
 	PDO_DBG_RETURN(0 <= mysql_rollback(((pdo_mysql_db_handle *)dbh->driver_data)->server));
 #else
-	PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("ROLLBACK") TSRMLS_CC));
+	PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("ROLLBACK"), TSRMLS_C));
 #endif
 }
 /* }}} */
 
 /* {{{ mysql_handle_autocommit */
-static inline int mysql_handle_autocommit(pdo_dbh_t *dbh TSRMLS_DC)
+static inline int mysql_handle_autocommit(pdo_dbh_t *dbh, TSRMLS_D)
 {
 	PDO_DBG_ENTER("mysql_handle_autocommit");
 	PDO_DBG_INF_FMT("dbh=%p", dbh);
@@ -359,16 +359,16 @@ static inline int mysql_handle_autocommit(pdo_dbh_t *dbh TSRMLS_DC)
 	PDO_DBG_RETURN(0 <= mysql_autocommit(((pdo_mysql_db_handle *)dbh->driver_data)->server, dbh->auto_commit));
 #else
 	if (dbh->auto_commit) {
-		PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("SET AUTOCOMMIT=1") TSRMLS_CC));
+		PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("SET AUTOCOMMIT=1"), TSRMLS_C));
 	} else {
-		PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("SET AUTOCOMMIT=0") TSRMLS_CC));
+		PDO_DBG_RETURN(0 <= mysql_handle_doer(dbh, ZEND_STRL("SET AUTOCOMMIT=0"), TSRMLS_C));
 	}
 #endif
 }
 /* }}} */
 
 /* {{{ pdo_mysql_set_attribute */
-static int pdo_mysql_set_attribute(pdo_dbh_t *dbh, long attr, zval *val TSRMLS_DC)
+static int pdo_mysql_set_attribute(pdo_dbh_t *dbh, long attr, zval *val, TSRMLS_D)
 {
 	PDO_DBG_ENTER("pdo_mysql_set_attribute");
 	PDO_DBG_INF_FMT("dbh=%p", dbh);
@@ -380,7 +380,7 @@ static int pdo_mysql_set_attribute(pdo_dbh_t *dbh, long attr, zval *val TSRMLS_D
 			/* ignore if the new value equals the old one */			
 			if (dbh->auto_commit ^ Z_BVAL_P(val)) {
 				dbh->auto_commit = Z_BVAL_P(val);
-				mysql_handle_autocommit(dbh TSRMLS_CC);
+				mysql_handle_autocommit(dbh, TSRMLS_C);
 			}
 			PDO_DBG_RETURN(1);
 
@@ -414,7 +414,7 @@ static int pdo_mysql_set_attribute(pdo_dbh_t *dbh, long attr, zval *val TSRMLS_D
 /* }}} */
 
 /* {{{ pdo_mysql_get_attribute */
-static int pdo_mysql_get_attribute(pdo_dbh_t *dbh, long attr, zval *return_value TSRMLS_DC)
+static int pdo_mysql_get_attribute(pdo_dbh_t *dbh, long attr, zval *return_value, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
 
@@ -477,7 +477,7 @@ static int pdo_mysql_get_attribute(pdo_dbh_t *dbh, long attr, zval *return_value
 /* }}} */
 
 /* {{{ pdo_mysql_check_liveness */
-static int pdo_mysql_check_liveness(pdo_dbh_t *dbh TSRMLS_DC)
+static int pdo_mysql_check_liveness(pdo_dbh_t *dbh, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H = (pdo_mysql_db_handle *)dbh->driver_data;
 #if MYSQL_VERSION_ID <= 32230
@@ -533,7 +533,7 @@ static struct pdo_dbh_methods mysql_methods = {
 #endif
 
 /* {{{ pdo_mysql_handle_factory */
-static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_DC)
+static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options, TSRMLS_D)
 {
 	pdo_mysql_db_handle *H;
 	int i, ret = 0;
@@ -591,30 +591,30 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 
 	/* handle MySQL options */
 	if (driver_options) {
-		long connect_timeout = pdo_attr_lval(driver_options, PDO_ATTR_TIMEOUT, 30 TSRMLS_CC);
-		long local_infile = pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_LOCAL_INFILE, 0 TSRMLS_CC);
+		long connect_timeout = pdo_attr_lval(driver_options, PDO_ATTR_TIMEOUT, 30, TSRMLS_C);
+		long local_infile = pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_LOCAL_INFILE, 0, TSRMLS_C);
 		char *init_cmd = NULL;
 #ifndef PDO_USE_MYSQLND
 		char *default_file = NULL, *default_group = NULL;
 #endif
 		long compress = 0;
 		char *ssl_key = NULL, *ssl_cert = NULL, *ssl_ca = NULL, *ssl_capath = NULL, *ssl_cipher = NULL;
-		H->buffered = pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_USE_BUFFERED_QUERY, 1 TSRMLS_CC);
+		H->buffered = pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_USE_BUFFERED_QUERY, 1, TSRMLS_C);
 
 		H->emulate_prepare = pdo_attr_lval(driver_options,
-			PDO_MYSQL_ATTR_DIRECT_QUERY, H->emulate_prepare TSRMLS_CC);
+			PDO_MYSQL_ATTR_DIRECT_QUERY, H->emulate_prepare, TSRMLS_C);
 		H->emulate_prepare = pdo_attr_lval(driver_options, 
-			PDO_ATTR_EMULATE_PREPARES, H->emulate_prepare TSRMLS_CC);
+			PDO_ATTR_EMULATE_PREPARES, H->emulate_prepare, TSRMLS_C);
 
 #ifndef PDO_USE_MYSQLND
-		H->max_buffer_size = pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_MAX_BUFFER_SIZE, H->max_buffer_size TSRMLS_CC);
+		H->max_buffer_size = pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_MAX_BUFFER_SIZE, H->max_buffer_size, TSRMLS_C);
 #endif
 
-		if (pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_FOUND_ROWS, 0 TSRMLS_CC)) {
+		if (pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_FOUND_ROWS, 0, TSRMLS_C)) {
 			connect_opts |= CLIENT_FOUND_ROWS;
 		}
 
-		if (pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_IGNORE_SPACE, 0 TSRMLS_CC)) {
+		if (pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_IGNORE_SPACE, 0, TSRMLS_C)) {
 			connect_opts |= CLIENT_IGNORE_SPACE;
 		}
 
@@ -647,7 +647,7 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 			mysql_options(H->server, MYSQL_OPT_RECONNECT, (const char*)&reconnect);
 		}
 #endif
-		init_cmd = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_INIT_COMMAND, NULL TSRMLS_CC);
+		init_cmd = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_INIT_COMMAND, NULL, TSRMLS_C);
 		if (init_cmd) {
 			if (mysql_options(H->server, MYSQL_INIT_COMMAND, (const char *)init_cmd)) {
 				efree(init_cmd);
@@ -657,7 +657,7 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 			efree(init_cmd);
 		}
 #ifndef PDO_USE_MYSQLND		
-		default_file = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_READ_DEFAULT_FILE, NULL TSRMLS_CC);
+		default_file = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_READ_DEFAULT_FILE, NULL, TSRMLS_C);
 		if (default_file) {
 			if (mysql_options(H->server, MYSQL_READ_DEFAULT_FILE, (const char *)default_file)) {
 				efree(default_file);
@@ -667,7 +667,7 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 			efree(default_file);
 		}
 		
-		default_group= pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_READ_DEFAULT_GROUP, NULL TSRMLS_CC);
+		default_group= pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_READ_DEFAULT_GROUP, NULL, TSRMLS_C);
 		if (default_group) {
 			if (mysql_options(H->server, MYSQL_READ_DEFAULT_GROUP, (const char *)default_group)) {
 				efree(default_group);
@@ -677,7 +677,7 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 			efree(default_group);
 		}
 #endif
-		compress = pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_COMPRESS, 0 TSRMLS_CC);
+		compress = pdo_attr_lval(driver_options, PDO_MYSQL_ATTR_COMPRESS, 0, TSRMLS_C);
 		if (compress) {
 			if (mysql_options(H->server, MYSQL_OPT_COMPRESS, 0)) {
 				pdo_mysql_error(dbh);
@@ -685,11 +685,11 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 			}
 		}
 
-		ssl_key = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_KEY, NULL TSRMLS_CC);
-		ssl_cert = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_CERT, NULL TSRMLS_CC);
-		ssl_ca = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_CA, NULL TSRMLS_CC);
-		ssl_capath = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_CAPATH, NULL TSRMLS_CC);
-		ssl_cipher = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_CIPHER, NULL TSRMLS_CC);
+		ssl_key = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_KEY, NULL, TSRMLS_C);
+		ssl_cert = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_CERT, NULL, TSRMLS_C);
+		ssl_ca = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_CA, NULL, TSRMLS_C);
+		ssl_capath = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_CAPATH, NULL, TSRMLS_C);
+		ssl_cipher = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SSL_CIPHER, NULL, TSRMLS_C);
 		
 		if (ssl_key || ssl_cert || ssl_ca || ssl_capath || ssl_cipher) {
 			mysql_ssl_set(H->server, ssl_key, ssl_cert, ssl_ca, ssl_capath, ssl_cipher);
@@ -712,7 +712,7 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 
 #if MYSQL_VERSION_ID > 50605 || defined(MYSQLI_USE_MYSQLND)
 		{
-			char *public_key = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SERVER_PUBLIC_KEY, NULL TSRMLS_CC);
+			char *public_key = pdo_attr_strval(driver_options, PDO_MYSQL_ATTR_SERVER_PUBLIC_KEY, NULL, TSRMLS_C);
 			if (public_key) {
 				if (mysql_options(H->server, MYSQL_SERVER_PUBLIC_KEY, public_key)) {
 					pdo_mysql_error(dbh);
@@ -752,7 +752,7 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 	}
 
 	if (mysqlnd_connect(H->server, host, dbh->username, dbh->password, password_len, dbname, dbname_len,
-						port, unix_socket, connect_opts TSRMLS_CC) == NULL) {
+						port, unix_socket, connect_opts, TSRMLS_C) == NULL) {
 #else
 	if (mysql_real_connect(H->server, host, dbh->username, dbh->password, dbname, port, unix_socket, connect_opts) == NULL) {
 #endif
@@ -761,7 +761,7 @@ static int pdo_mysql_handle_factory(pdo_dbh_t *dbh, zval *driver_options TSRMLS_
 	}
 
 	if (!dbh->auto_commit) {
-		mysql_handle_autocommit(dbh TSRMLS_CC);
+		mysql_handle_autocommit(dbh, TSRMLS_C);
 	}
 
 	H->attached = 1;

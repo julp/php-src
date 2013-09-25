@@ -266,7 +266,7 @@ PHP_FUNCTION(crypt)
 	 * available (passing always 2-character salt). At least for glibc6.1 */
 	memset(&salt[1], '$', PHP_MAX_SALT_LEN - 1);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s", &str, &str_len, &salt_in, &salt_in_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|s", &str, &str_len, &salt_in, &salt_in_len) == FAILURE) {
 		return;
 	}
 

@@ -28,8 +28,8 @@ PHPAPI int php_url_encode_hash_ex(HashTable *ht, smart_str *formstr,
 				const char *num_prefix, int num_prefix_len,
 				const char *key_prefix, int key_prefix_len,
 				const char *key_suffix, int key_suffix_len, 
-				zval *type, char *arg_sep, int enc_type TSRMLS_DC);
-#define php_url_encode_hash(ht, formstr)	php_url_encode_hash_ex((ht), (formstr), NULL, 0, NULL, 0, NULL, 0, NULL TSRMLS_CC)
+				zval *type, char *arg_sep, int enc_type, TSRMLS_D);
+#define php_url_encode_hash(ht, formstr)	php_url_encode_hash_ex((ht), (formstr), NULL, 0, NULL, 0, NULL, 0, NULL, TSRMLS_C)
 
 PHP_FUNCTION(http_build_query);
 

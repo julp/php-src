@@ -124,7 +124,7 @@ static ps_sd *ps_sd_new(ps_mm *data, const char *key)
 	if (!sd) {
 		TSRMLS_FETCH();
 
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "mm_malloc failed, avail %d, err %s", mm_available(data->mm), mm_error());
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "mm_malloc failed, avail %d, err %s", mm_available(data->mm), mm_error());
 		return NULL;
 	}
 
@@ -376,7 +376,7 @@ PS_WRITE_FUNC(mm)
 
 			if (!sd->data) {
 				ps_sd_destroy(data, sd);
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "cannot allocate new data segment");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "cannot allocate new data segment");
 				sd = NULL;
 			}
 		}

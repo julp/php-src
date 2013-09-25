@@ -44,14 +44,14 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-D7303025
 Since: 
 */
-int dom_entity_public_id_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_entity_public_id_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlEntity *nodep;
 
 	nodep = (xmlEntity *) dom_object_get_node(obj);
 
 	if (nodep == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -72,14 +72,14 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-D7C29F3E
 Since: 
 */
-int dom_entity_system_id_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_entity_system_id_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlEntity *nodep;
 
 	nodep = (xmlEntity *) dom_object_get_node(obj);
 
 	if (nodep == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -100,7 +100,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ID-6ABAEB38
 Since: 
 */
-int dom_entity_notation_name_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_entity_notation_name_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	xmlEntity *nodep;
 	char *content;
@@ -108,7 +108,7 @@ int dom_entity_notation_name_read(dom_object *obj, zval **retval TSRMLS_DC)
 	nodep = (xmlEntity *) dom_object_get_node(obj);
 
 	if (nodep == NULL) {
-		php_dom_throw_error(INVALID_STATE_ERR, 0 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 0, TSRMLS_C);
 		return FAILURE;
 	}
 
@@ -131,14 +131,14 @@ readonly=no
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Entity3-actualEncoding
 Since: DOM Level 3
 */
-int dom_entity_actual_encoding_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_entity_actual_encoding_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_NULL(*retval);
 	return SUCCESS;
 }
 
-int dom_entity_actual_encoding_write(dom_object *obj, zval *newval TSRMLS_DC)
+int dom_entity_actual_encoding_write(dom_object *obj, zval *newval, TSRMLS_D)
 {
 	return SUCCESS;
 }
@@ -150,14 +150,14 @@ readonly=no
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Entity3-encoding
 Since: DOM Level 3
 */
-int dom_entity_encoding_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_entity_encoding_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_NULL(*retval);
 	return SUCCESS;
 }
 
-int dom_entity_encoding_write(dom_object *obj, zval *newval TSRMLS_DC)
+int dom_entity_encoding_write(dom_object *obj, zval *newval, TSRMLS_D)
 {
 	return SUCCESS;
 }
@@ -169,14 +169,14 @@ readonly=no
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#Entity3-version
 Since: DOM Level 3
 */
-int dom_entity_version_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_entity_version_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_NULL(*retval);
 	return SUCCESS;
 }
 
-int dom_entity_version_write(dom_object *obj, zval *newval TSRMLS_DC)
+int dom_entity_version_write(dom_object *obj, zval *newval, TSRMLS_D)
 {
 	return SUCCESS;
 }

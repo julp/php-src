@@ -29,13 +29,13 @@ int make_http_soap_request(zval  *this_ptr,
                            char  *soapaction, 
                            int    soap_version,
                            char **response, 
-                           int   *response_len TSRMLS_DC);
+                           int   *response_len, TSRMLS_D);
 
-int proxy_authentication(zval* this_ptr, smart_str* soap_headers TSRMLS_DC);
-int basic_authentication(zval* this_ptr, smart_str* soap_headers TSRMLS_DC);
+int proxy_authentication(zval* this_ptr, smart_str* soap_headers, TSRMLS_D);
+int basic_authentication(zval* this_ptr, smart_str* soap_headers, TSRMLS_D);
 void http_context_headers(php_stream_context* context,
                           zend_bool has_authorization,
                           zend_bool has_proxy_authorization,
                           zend_bool has_cookies,
-                          smart_str* soap_headers TSRMLS_DC);
+                          smart_str* soap_headers, TSRMLS_D);
 #endif

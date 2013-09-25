@@ -43,7 +43,7 @@ static intl_error* intl_g_error_get( TSRMLS_D )
 /* {{{ void intl_free_custom_error_msg( intl_error* err )
  * Free mem.
  */
-static void intl_free_custom_error_msg( intl_error* err TSRMLS_DC )
+static void intl_free_custom_error_msg( intl_error* err, TSRMLS_D )
 {
 	if( !err && !( err = intl_g_error_get( TSRMLS_C ) ) )
 		return;
@@ -64,7 +64,7 @@ intl_error* intl_error_create( TSRMLS_D )
 {
 	intl_error* err = ecalloc( 1, sizeof( intl_error ) );
 
-	intl_error_init( err TSRMLS_CC );
+	intl_error_init( err, TSRMLS_C );
 
 	return err;
 }
@@ -73,7 +73,7 @@ intl_error* intl_error_create( TSRMLS_D )
 /* {{{ void intl_error_init( intl_error* coll_error )
  * Initialize internals of 'intl_error'.
  */
-void intl_error_init( intl_error* err TSRMLS_DC )
+void intl_error_init( intl_error* err, TSRMLS_D )
 {
 	if( !err && !( err = intl_g_error_get( TSRMLS_C ) ) )
 		return;
@@ -87,36 +87,36 @@ void intl_error_init( intl_error* err TSRMLS_DC )
 /* {{{ void intl_error_reset( intl_error* err )
  * Set last error code to 0 and unset last error message
  */
-void intl_error_reset( intl_error* err TSRMLS_DC )
+void intl_error_reset( intl_error* err, TSRMLS_D )
 {
 	if( !err && !( err = intl_g_error_get( TSRMLS_C ) ) )
 		return;
 
 	err->code = U_ZERO_ERROR;
 
-	intl_free_custom_error_msg( err TSRMLS_CC );
+	intl_free_custom_error_msg( err, TSRMLS_C );
 }
 /* }}} */
 
 /* {{{ void intl_error_set_custom_msg( intl_error* err, char* msg, int copyMsg )
  * Set last error message to msg copying it if needed.
  */
-void intl_error_set_custom_msg( intl_error* err, char* msg, int copyMsg TSRMLS_DC )
+void intl_error_set_custom_msg( intl_error* err, char* msg, int copyMsg, TSRMLS_D )
 {
 	if( !msg )
 		return;
 
 	if( !err ) {
 		if( INTL_G( error_level ) )
-			php_error_docref( NULL TSRMLS_CC, INTL_G( error_level ), "%s", msg );
+			php_error_docref( NULL, TSRMLS_C, INTL_G( error_level ), "%s", msg );
 		if( INTL_G( use_exceptions ) )
-			zend_throw_exception_ex( IntlException_ce_ptr, 0 TSRMLS_CC, "%s", msg );
+			zend_throw_exception_ex( IntlException_ce_ptr, 0, TSRMLS_C, "%s", msg );
 	}
 	if( !err && !( err = intl_g_error_get( TSRMLS_C ) ) )
 		return;
 
 	/* Free previous message if any */
-	intl_free_custom_error_msg( err TSRMLS_CC );
+	intl_free_custom_error_msg( err, TSRMLS_C );
 
 	/* Mark message copied if any */
 	err->free_custom_error_message = copyMsg;
@@ -129,7 +129,7 @@ void intl_error_set_custom_msg( intl_error* err, char* msg, int copyMsg TSRMLS_D
 /* {{{ const char* intl_error_get_message( intl_error* err )
  * Create output message in format "<intl_error_text>: <extra_user_error_text>".
  */
-char* intl_error_get_message( intl_error* err TSRMLS_DC )
+char* intl_error_get_message( intl_error* err, TSRMLS_D )
 {
 	const char* uErrorName = NULL;
 	char*       errMessage = 0;
@@ -156,7 +156,7 @@ char* intl_error_get_message( intl_error* err TSRMLS_DC )
 /* {{{ void intl_error_set_code( intl_error* err, UErrorCode err_code )
  * Set last error code.
  */
-void intl_error_set_code( intl_error* err, UErrorCode err_code TSRMLS_DC )
+void intl_error_set_code( intl_error* err, UErrorCode err_code, TSRMLS_D )
 {
 	if( !err && !( err = intl_g_error_get( TSRMLS_C ) ) )
 		return;
@@ -168,7 +168,7 @@ void intl_error_set_code( intl_error* err, UErrorCode err_code TSRMLS_DC )
 /* {{{ void intl_error_get_code( intl_error* err )
  * Return last error code.
  */
-UErrorCode intl_error_get_code( intl_error* err TSRMLS_DC )
+UErrorCode intl_error_get_code( intl_error* err, TSRMLS_D )
 {
 	if( !err && !( err = intl_g_error_get( TSRMLS_C ) ) )
 		return U_ZERO_ERROR;
@@ -180,53 +180,53 @@ UErrorCode intl_error_get_code( intl_error* err TSRMLS_DC )
 /* {{{ void intl_error_set( intl_error* err, UErrorCode code, char* msg, int copyMsg )
  * Set error code and message.
  */
-void intl_error_set( intl_error* err, UErrorCode code, char* msg, int copyMsg TSRMLS_DC )
+void intl_error_set( intl_error* err, UErrorCode code, char* msg, int copyMsg, TSRMLS_D )
 {
-	intl_error_set_code( err, code TSRMLS_CC );
-	intl_error_set_custom_msg( err, msg, copyMsg TSRMLS_CC );
+	intl_error_set_code( err, code, TSRMLS_C );
+	intl_error_set_custom_msg( err, msg, copyMsg, TSRMLS_C );
 }
 /* }}} */
 
 /* {{{ void intl_errors_set( intl_error* err, UErrorCode code, char* msg, int copyMsg )
  * Set error code and message.
  */
-void intl_errors_set( intl_error* err, UErrorCode code, char* msg, int copyMsg TSRMLS_DC )
+void intl_errors_set( intl_error* err, UErrorCode code, char* msg, int copyMsg, TSRMLS_D )
 {
-	intl_errors_set_code( err, code TSRMLS_CC );
-	intl_errors_set_custom_msg( err, msg, copyMsg TSRMLS_CC );
+	intl_errors_set_code( err, code, TSRMLS_C );
+	intl_errors_set_custom_msg( err, msg, copyMsg, TSRMLS_C );
 }
 /* }}} */
 
 /* {{{ void intl_errors_reset( intl_error* err )
  */
-void intl_errors_reset( intl_error* err TSRMLS_DC )
+void intl_errors_reset( intl_error* err, TSRMLS_D )
 {
 	if(err) {
-		intl_error_reset( err TSRMLS_CC );
+		intl_error_reset( err, TSRMLS_C );
 	}
-	intl_error_reset( NULL TSRMLS_CC );
+	intl_error_reset( NULL, TSRMLS_C );
 }
 /* }}} */
 
 /* {{{ void intl_errors_set_custom_msg( intl_error* err, char* msg, int copyMsg )
  */
-void intl_errors_set_custom_msg( intl_error* err, char* msg, int copyMsg TSRMLS_DC )
+void intl_errors_set_custom_msg( intl_error* err, char* msg, int copyMsg, TSRMLS_D )
 {
 	if(err) {
-		intl_error_set_custom_msg( err, msg, copyMsg TSRMLS_CC );
+		intl_error_set_custom_msg( err, msg, copyMsg, TSRMLS_C );
 	}
-	intl_error_set_custom_msg( NULL, msg, copyMsg TSRMLS_CC );
+	intl_error_set_custom_msg( NULL, msg, copyMsg, TSRMLS_C );
 }
 /* }}} */
 
 /* {{{ intl_errors_set_code( intl_error* err, UErrorCode err_code )
  */
-void intl_errors_set_code( intl_error* err, UErrorCode err_code TSRMLS_DC )
+void intl_errors_set_code( intl_error* err, UErrorCode err_code, TSRMLS_D )
 {
 	if(err) {
-		intl_error_set_code( err, err_code TSRMLS_CC );
+		intl_error_set_code( err, err_code, TSRMLS_C );
 	}
-	intl_error_set_code( NULL, err_code TSRMLS_CC );
+	intl_error_set_code( NULL, err_code, TSRMLS_C );
 }
 /* }}} */
 
@@ -240,7 +240,7 @@ void intl_register_IntlException_class( TSRMLS_D )
 	/* Create and register 'IntlException' class. */
 	INIT_CLASS_ENTRY_EX( ce, "IntlException", sizeof( "IntlException" ) - 1, NULL );
 	IntlException_ce_ptr = zend_register_internal_class_ex( &ce,
-		default_exception_ce, NULL TSRMLS_CC );
+		default_exception_ce, NULL, TSRMLS_C );
 	IntlException_ce_ptr->create_object = default_exception_ce->create_object;
 }
 

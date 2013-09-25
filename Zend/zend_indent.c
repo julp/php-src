@@ -61,7 +61,7 @@ ZEND_API void zend_indent()
 
 	/* highlight stuff coming back from zendlex() */
 	token.type = 0;
-	while ((token_type=lex_scan(&token TSRMLS_CC))) {
+	while ((token_type=lex_scan(&token, TSRMLS_C))) {
 		switch (token_type) {
 			case T_INLINE_HTML:
 				zend_write((char*)LANG_SCNG(yy_text), LANG_SCNG(yy_leng));

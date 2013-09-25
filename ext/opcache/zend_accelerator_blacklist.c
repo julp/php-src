@@ -230,7 +230,7 @@ void zend_accel_blacklist_load(zend_blacklist *blacklist, char *filename)
 		}
 
 		path_dup = zend_strndup(pbuf, path_length);
-		expand_filepath(path_dup, real_path TSRMLS_CC);
+		expand_filepath(path_dup, real_path, TSRMLS_C);
 		path_length = strlen(real_path);
 
 		free(path_dup);
@@ -292,11 +292,11 @@ zend_bool zend_accel_blacklist_is_blacklisted(zend_blacklist *blacklist, char *v
 	return ret;
 }
 
-void zend_accel_blacklist_apply(zend_blacklist *blacklist, apply_func_arg_t func, void *argument TSRMLS_DC)
+void zend_accel_blacklist_apply(zend_blacklist *blacklist, apply_func_arg_t func, void *argument, TSRMLS_D)
 {
 	int i;
 
 	for (i = 0; i < blacklist->pos; i++) {
-		func(&blacklist->entries[i], argument TSRMLS_CC);
+		func(&blacklist->entries[i], argument, TSRMLS_C);
 	}
 }

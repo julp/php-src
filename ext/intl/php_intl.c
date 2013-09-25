@@ -986,7 +986,7 @@ PHP_MINIT_FUNCTION( intl )
 	breakiterator_register_IntlPartsIterator_class( TSRMLS_C );
 
 	/* Global error handling. */
-	intl_error_init( NULL TSRMLS_CC );
+	intl_error_init( NULL, TSRMLS_C );
 
 	/* 'Converter' class for codepage conversions */
 	php_converter_minit(INIT_FUNC_ARGS_PASSTHRU);
@@ -1034,7 +1034,7 @@ PHP_RSHUTDOWN_FUNCTION( intl )
 		INTL_G(grapheme_iterator) = NULL;
 	}
 
-	intl_error_reset( NULL TSRMLS_CC);
+	intl_error_reset( NULL, TSRMLS_C);
 	return SUCCESS;
 }
 /* }}} */

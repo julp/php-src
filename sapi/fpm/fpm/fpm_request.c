@@ -179,7 +179,7 @@ void fpm_request_end(TSRMLS_D) /* {{{ */
 #ifdef HAVE_TIMES
 	struct tms cpu;
 #endif
-	size_t memory = zend_memory_peak_usage(1 TSRMLS_CC);
+	size_t memory = zend_memory_peak_usage(1, TSRMLS_C);
 
 	fpm_clock_get(&now);
 #ifdef HAVE_TIMES

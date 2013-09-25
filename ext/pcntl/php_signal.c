@@ -48,7 +48,7 @@ Sigfunc *php_signal4(int signo, Sigfunc *func, int restart, int mask_all)
 #endif
 	}
 #ifdef ZEND_SIGNALS
-	if (zend_sigaction(signo, &act, &oact TSRMLS_CC) < 0)
+	if (zend_sigaction(signo, &act, &oact, TSRMLS_C) < 0)
 #else
 	if (sigaction(signo, &act, &oact) < 0)
 #endif

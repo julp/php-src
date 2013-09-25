@@ -22,20 +22,20 @@
 /* {{{ void dateformat_data_init( dateformat_data* datef_data )
  * Initialize internals of dateformat_data.
  */
-void dateformat_data_init( dateformat_data* datef_data TSRMLS_DC )
+void dateformat_data_init( dateformat_data* datef_data, TSRMLS_D )
 {
 	if( !datef_data )
 		return;
 
 	datef_data->udatf = NULL;
-	intl_error_reset( &datef_data->error TSRMLS_CC );
+	intl_error_reset( &datef_data->error, TSRMLS_C );
 }
 /* }}} */
 
 /* {{{ void dateformat_data_free( dateformat_data* datef_data )
  * Clean up memory allocated for dateformat_data
  */
-void dateformat_data_free( dateformat_data* datef_data TSRMLS_DC )
+void dateformat_data_free( dateformat_data* datef_data, TSRMLS_D )
 {
 	if( !datef_data )
 		return;
@@ -44,7 +44,7 @@ void dateformat_data_free( dateformat_data* datef_data TSRMLS_DC )
 		udat_close( datef_data->udatf );
 
 	datef_data->udatf = NULL;
-	intl_error_reset( &datef_data->error TSRMLS_CC );
+	intl_error_reset( &datef_data->error, TSRMLS_C );
 }
 /* }}} */
 
@@ -55,7 +55,7 @@ dateformat_data* dateformat_data_create( TSRMLS_D )
 {
 	dateformat_data* datef_data = ecalloc( 1, sizeof(dateformat_data) );
 
-	dateformat_data_init( datef_data TSRMLS_CC );
+	dateformat_data_init( datef_data, TSRMLS_C );
 
 	return datef_data;
 }

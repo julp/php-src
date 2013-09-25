@@ -27,7 +27,7 @@ PHPAPI char *_php_math_number_format_ex(double, int, char *, size_t, char *, siz
 PHPAPI char * _php_math_longtobase(zval *arg, int base);
 PHPAPI long _php_math_basetolong(zval *arg, int base);
 PHPAPI int _php_math_basetozval(zval *arg, int base, zval *ret);
-PHPAPI char * _php_math_zvaltobase(zval *arg, int base TSRMLS_DC);
+PHPAPI char * _php_math_zvaltobase(zval *arg, int base, TSRMLS_D);
 
 PHP_FUNCTION(sin);
 PHP_FUNCTION(cos);

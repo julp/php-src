@@ -196,10 +196,10 @@ static void do_to_zval_err(res_context *ctx, const char *fmt, ...)
 	va_end(ap);
 }
 
-void err_msg_dispose(struct err_s *err TSRMLS_DC)
+void err_msg_dispose(struct err_s *err, TSRMLS_D)
 {
 	if (err->msg != NULL) {
-		php_error_docref0(NULL TSRMLS_CC, err->level, "%s", err->msg);
+		php_error_docref0(NULL, TSRMLS_C, err->level, "%s", err->msg);
 		if (err->should_free) {
 			efree(err->msg);
 		}
@@ -551,7 +551,7 @@ static void from_zval_write_sin_addr(const zval *zaddr_str, char *inaddr, ser_co
 		zaddr_str = &lzval;
 	}
 
-	res = php_set_inet_addr(&saddr, Z_STRVAL_P(zaddr_str), ctx->sock TSRMLS_CC);
+	res = php_set_inet_addr(&saddr, Z_STRVAL_P(zaddr_str), ctx->sock, TSRMLS_C);
 	if (res) {
 		memcpy(inaddr, &saddr.sin_addr, sizeof saddr.sin_addr);
 	} else {
@@ -609,7 +609,7 @@ static void from_zval_write_sin6_addr(const zval *zaddr_str, char *addr6, ser_co
 	}
 
 	res = php_set_inet6_addr(&saddr6,
-			Z_STRVAL_P(zaddr_str), ctx->sock TSRMLS_CC);
+			Z_STRVAL_P(zaddr_str), ctx->sock, TSRMLS_C);
 	if (res) {
 		memcpy(addr6, &saddr6.sin6_addr, sizeof saddr6.sin6_addr);
 	} else {
@@ -1432,8 +1432,8 @@ void to_zval_read_fd_array(const char *data, zval *zv, res_context *ctx)
 			return;
 		}
 		if (S_ISSOCK(statbuf.st_mode)) {
-			php_socket *sock = socket_import_file_descriptor(fd TSRMLS_CC);
-			zend_register_resource(elem, sock, php_sockets_le_socket() TSRMLS_CC);
+			php_socket *sock = socket_import_file_descriptor(fd, TSRMLS_C);
+			zend_register_resource(elem, sock, php_sockets_le_socket(), TSRMLS_C);
 		} else {
 			php_stream *stream = php_stream_fopen_from_fd(fd, "rw", NULL);
 			php_stream_to_zval(stream, elem);

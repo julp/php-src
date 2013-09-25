@@ -97,7 +97,7 @@ static void lcg_seed(TSRMLS_D) /* {{{ */
 }
 /* }}} */
 
-static void lcg_init_globals(php_lcg_globals *lcg_globals_p TSRMLS_DC) /* {{{ */
+static void lcg_init_globals(php_lcg_globals *lcg_globals_p, TSRMLS_D) /* {{{ */
 {
 	LCG(seeded) = 0;
 }
@@ -108,7 +108,7 @@ PHP_MINIT_FUNCTION(lcg) /* {{{ */
 #ifdef ZTS
 	ts_allocate_id(&lcg_globals_id, sizeof(php_lcg_globals), (ts_allocate_ctor) lcg_init_globals, NULL);
 #else
-	lcg_init_globals(&lcg_globals);
+	lcg_init_globals(&lcg_globals, TSRMLS_C);
 #endif
 	return SUCCESS;
 }

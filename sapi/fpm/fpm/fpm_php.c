@@ -23,7 +23,7 @@
 
 static char **limit_extensions = NULL;
 
-static int fpm_php_zend_ini_alter_master(char *name, int name_length, char *new_value, int new_value_length, int mode, int stage TSRMLS_DC) /* {{{ */
+static int fpm_php_zend_ini_alter_master(char *name, int name_length, char *new_value, int new_value_length, int mode, int stage, TSRMLS_D) /* {{{ */
 {
 	zend_ini_entry *ini_entry;
 	char *duplicate;
@@ -36,7 +36,7 @@ static int fpm_php_zend_ini_alter_master(char *name, int name_length, char *new_
 
 	if (!ini_entry->on_modify
 			|| ini_entry->on_modify(ini_entry, duplicate, new_value_length,
-				ini_entry->mh_arg1, ini_entry->mh_arg2, ini_entry->mh_arg3, stage TSRMLS_CC) == SUCCESS) {
+				ini_entry->mh_arg1, ini_entry->mh_arg2, ini_entry->mh_arg3, stage, TSRMLS_C) == SUCCESS) {
 		ini_entry->value = duplicate;
 		ini_entry->value_length = new_value_length;
 		ini_entry->modifiable = mode;
@@ -48,7 +48,7 @@ static int fpm_php_zend_ini_alter_master(char *name, int name_length, char *new_
 }
 /* }}} */
 
-static void fpm_php_disable(char *value, int (*zend_disable)(char *, uint TSRMLS_DC) TSRMLS_DC) /* {{{ */
+static void fpm_php_disable(char *value, int (*zend_disable)(char *, uint, TSRMLS_D), TSRMLS_D) /* {{{ */
 {
 	char *s = 0, *e = value;
 
@@ -58,7 +58,7 @@ static void fpm_php_disable(char *value, int (*zend_disable)(char *, uint TSRMLS
 			case ',':
 				if (s) {
 					*e = '\0';
-					zend_disable(s, e - s TSRMLS_CC);
+					zend_disable(s, e - s, TSRMLS_C);
 					s = 0;
 				}
 				break;
@@ -72,7 +72,7 @@ static void fpm_php_disable(char *value, int (*zend_disable)(char *, uint TSRMLS
 	}
 
 	if (s) {
-		zend_disable(s, e - s TSRMLS_CC);
+		zend_disable(s, e - s, TSRMLS_C);
 	}
 }
 /* }}} */
@@ -88,25 +88,25 @@ int fpm_php_apply_defines_ex(struct key_value_s *kv, int mode) /* {{{ */
 
 	if (!strcmp(name, "extension") && *value) {
 		zval zv;
-		php_dl(value, MODULE_PERSISTENT, &zv, 1 TSRMLS_CC);
+		php_dl(value, MODULE_PERSISTENT, &zv, 1, TSRMLS_C);
 		return Z_BVAL(zv) ? 1 : -1;
 	}
 
-	if (fpm_php_zend_ini_alter_master(name, name_len+1, value, value_len, mode, PHP_INI_STAGE_ACTIVATE TSRMLS_CC) == FAILURE) {
+	if (fpm_php_zend_ini_alter_master(name, name_len+1, value, value_len, mode, PHP_INI_STAGE_ACTIVATE, TSRMLS_C) == FAILURE) {
 		return -1;
 	}
 
 	if (!strcmp(name, "disable_functions") && *value) {
 		char *v = strdup(value);
 		PG(disable_functions) = v;
-		fpm_php_disable(v, zend_disable_function TSRMLS_CC);
+		fpm_php_disable(v, zend_disable_function, TSRMLS_C);
 		return 1;
 	}
 
 	if (!strcmp(name, "disable_classes") && *value) {
 		char *v = strdup(value);
 		PG(disable_classes) = v;
-		fpm_php_disable(v, zend_disable_class TSRMLS_CC);
+		fpm_php_disable(v, zend_disable_class, TSRMLS_C);
 		return 1;
 	}
 
@@ -258,7 +258,7 @@ int fpm_php_limit_extensions(char *path) /* {{{ */
 }
 /* }}} */
 
-char* fpm_php_get_string_from_table(char *table, char *key TSRMLS_DC) /* {{{ */
+char* fpm_php_get_string_from_table(char *table, char *key, TSRMLS_D) /* {{{ */
 {
 	zval **data, **tmp;
 	char *string_key;
@@ -270,7 +270,7 @@ char* fpm_php_get_string_from_table(char *table, char *key TSRMLS_DC) /* {{{ */
 
 	/* inspired from ext/standard/info.c */
 
-	zend_is_auto_global(table, strlen(table) TSRMLS_CC);
+	zend_is_auto_global(table, strlen(table), TSRMLS_C);
 
 	/* find the table and ensure it's an array */
 	if (zend_hash_find(&EG(symbol_table), table, strlen(table) + 1, (void **) &data) == SUCCESS && Z_TYPE_PP(data) == IS_ARRAY) {

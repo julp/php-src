@@ -183,16 +183,16 @@ ZEND_API void zend_llist_apply_with_del(zend_llist *l, int (*func)(void *data))
 }
 
 
-ZEND_API void zend_llist_apply(zend_llist *l, llist_apply_func_t func TSRMLS_DC)
+ZEND_API void zend_llist_apply(zend_llist *l, llist_apply_func_t func, TSRMLS_D)
 {
 	zend_llist_element *element;
 
 	for (element=l->head; element; element=element->next) {
-		func(element->data TSRMLS_CC);
+		func(element->data, TSRMLS_C);
 	}
 }
 
-ZEND_API void zend_llist_sort(zend_llist *l, llist_compare_func_t comp_func TSRMLS_DC)
+ZEND_API void zend_llist_sort(zend_llist *l, llist_compare_func_t comp_func, TSRMLS_D)
 {
 	size_t i;
 
@@ -211,7 +211,7 @@ ZEND_API void zend_llist_sort(zend_llist *l, llist_compare_func_t comp_func TSRM
 		*ptr++ = element;
 	}
 
-	zend_qsort(elements, l->count, sizeof(zend_llist_element *), (compare_func_t) comp_func TSRMLS_CC);
+	zend_qsort(elements, l->count, sizeof(zend_llist_element *), (compare_func_t) comp_func, TSRMLS_C);
 
 	l->head = elements[0];
 	elements[0]->prev = NULL;
@@ -226,24 +226,24 @@ ZEND_API void zend_llist_sort(zend_llist *l, llist_compare_func_t comp_func TSRM
 }
 
 
-ZEND_API void zend_llist_apply_with_argument(zend_llist *l, llist_apply_with_arg_func_t func, void *arg TSRMLS_DC)
+ZEND_API void zend_llist_apply_with_argument(zend_llist *l, llist_apply_with_arg_func_t func, void *arg, TSRMLS_D)
 {
 	zend_llist_element *element;
 
 	for (element=l->head; element; element=element->next) {
-		func(element->data, arg TSRMLS_CC);
+		func(element->data, arg, TSRMLS_C);
 	}
 }
 
 
-ZEND_API void zend_llist_apply_with_arguments(zend_llist *l, llist_apply_with_args_func_t func TSRMLS_DC, int num_args, ...)
+ZEND_API void zend_llist_apply_with_arguments(zend_llist *l, llist_apply_with_args_func_t func, TSRMLS_D, int num_args, ...)
 {
 	zend_llist_element *element;
 	va_list args;
 
 	va_start(args, num_args);
 	for (element=l->head; element; element=element->next) {
-		func(element->data, num_args, args TSRMLS_CC);
+		func(element->data, num_args, args, TSRMLS_C);
 	}
 	va_end(args);
 }

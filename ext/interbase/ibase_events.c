@@ -38,7 +38,7 @@ static void _php_ibase_event_free(char *event_buf, char *result_buf) /* {{{ */
 }
 /* }}} */
 
-void _php_ibase_free_event(ibase_event *event TSRMLS_DC) /* {{{ */
+void _php_ibase_free_event(ibase_event *event, TSRMLS_D) /* {{{ */
 {
 	unsigned short i;
 
@@ -72,11 +72,11 @@ void _php_ibase_free_event(ibase_event *event TSRMLS_DC) /* {{{ */
 }
 /* }}} */
 
-static void _php_ibase_free_event_rsrc(zend_rsrc_list_entry *rsrc TSRMLS_DC) /* {{{ */
+static void _php_ibase_free_event_rsrc(zend_rsrc_list_entry *rsrc, TSRMLS_D) /* {{{ */
 {
 	ibase_event *e = (ibase_event *) rsrc->ptr;
 
-	_php_ibase_free_event(e TSRMLS_CC);
+	_php_ibase_free_event(e, TSRMLS_C);
 
 	efree(e);
 }
@@ -140,7 +140,7 @@ PHP_FUNCTION(ibase_wait_event)
 		WRONG_PARAM_COUNT;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &args, &num_args) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "+", &args, &num_args) == FAILURE) {
 		return;
 	}
 
@@ -236,8 +236,8 @@ static isc_callback _php_ibase_callback(ibase_event *event, /* {{{ */
 
 			/* call the callback provided by the user */
 			if (SUCCESS != call_user_function(EG(function_table), NULL,
-					event->callback, &return_value, 2, args TSRMLS_CC)) {
-				_php_ibase_module_error("Error calling callback %s" TSRMLS_CC, Z_STRVAL_P(event->callback));
+					event->callback, &return_value, 2, args, TSRMLS_C)) {
+				_php_ibase_module_error("Error calling callback %s", TSRMLS_C, Z_STRVAL_P(event->callback));
 				break;
 			}
 
@@ -281,7 +281,7 @@ PHP_FUNCTION(ibase_set_event_handler)
 		WRONG_PARAM_COUNT;
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &args, &num_args) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "+", &args, &num_args) == FAILURE) {
 		return;
 	}
 
@@ -325,8 +325,8 @@ PHP_FUNCTION(ibase_set_event_handler)
 	}
 
 	/* get the callback */
-	if (!zend_is_callable(*cb_arg, 0, &cb_name TSRMLS_CC)) {
-		_php_ibase_module_error("Callback argument %s is not a callable function" TSRMLS_CC, cb_name);
+	if (!zend_is_callable(*cb_arg, 0, &cb_name, TSRMLS_C)) {
+		_php_ibase_module_error("Callback argument %s is not a callable function", TSRMLS_C, cb_name);
 		efree(cb_name);
 		efree(args);
 		RETURN_FALSE;
@@ -383,7 +383,7 @@ PHP_FUNCTION(ibase_free_event_handler)
 
 	RESET_ERRMSG;
 
-	if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &event_arg)) {
+	if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &event_arg)) {
 		ibase_event *event;
 
 		ZEND_FETCH_RESOURCE(event, ibase_event *, &event_arg, -1, "Interbase event", le_event);

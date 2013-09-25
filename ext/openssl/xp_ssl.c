@@ -37,8 +37,8 @@
 #include <sys/select.h>
 #endif
 
-int php_openssl_apply_verification_policy(SSL *ssl, X509 *peer, php_stream *stream TSRMLS_DC);
-SSL *php_SSL_new_from_context(SSL_CTX *ctx, php_stream *stream TSRMLS_DC);
+int php_openssl_apply_verification_policy(SSL *ssl, X509 *peer, php_stream *stream, TSRMLS_D);
+SSL *php_SSL_new_from_context(SSL_CTX *ctx, php_stream *stream, TSRMLS_D);
 int php_openssl_get_x509_list_id(void);
 
 /* This implementation is very closely tied to the that of the native
@@ -64,7 +64,7 @@ php_stream_ops php_openssl_socket_ops;
 
 /* it doesn't matter that we do some hash traversal here, since it is done only
  * in an error condition arising from a network connection problem */
-static int is_http_stream_talking_to_iis(php_stream *stream TSRMLS_DC)
+static int is_http_stream_talking_to_iis(php_stream *stream, TSRMLS_D)
 {
 	if (stream->wrapperdata && stream->wrapper && strcasecmp(stream->wrapper->wops->label, "HTTP") == 0) {
 		/* the wrapperdata is an array zval containing the headers */
@@ -88,7 +88,7 @@ static int is_http_stream_talking_to_iis(php_stream *stream TSRMLS_DC)
 	return 0;
 }
 
-static int handle_ssl_error(php_stream *stream, int nr_bytes, zend_bool is_init TSRMLS_DC)
+static int handle_ssl_error(php_stream *stream, int nr_bytes, zend_bool is_init, TSRMLS_D)
 {
 	php_openssl_netstream_data_t *sslsock = (php_openssl_netstream_data_t*)stream->abstract;
 	int err = SSL_get_error(sslsock->ssl_handle, nr_bytes);
@@ -112,8 +112,8 @@ static int handle_ssl_error(php_stream *stream, int nr_bytes, zend_bool is_init 
 		case SSL_ERROR_SYSCALL:
 			if (ERR_peek_error() == 0) {
 				if (nr_bytes == 0) {
-					if (!is_http_stream_talking_to_iis(stream TSRMLS_CC) && ERR_get_error() != 0) {
-						php_error_docref(NULL TSRMLS_CC, E_WARNING,
+					if (!is_http_stream_talking_to_iis(stream, TSRMLS_C) && ERR_get_error() != 0) {
+						php_error_docref(NULL, TSRMLS_C, E_WARNING,
 								"SSL: fatal protocol error");
 					}
 					SSL_set_shutdown(sslsock->ssl_handle, SSL_SENT_SHUTDOWN|SSL_RECEIVED_SHUTDOWN);
@@ -122,7 +122,7 @@ static int handle_ssl_error(php_stream *stream, int nr_bytes, zend_bool is_init 
 				} else {
 					char *estr = php_socket_strerror(php_socket_errno(), NULL, 0);
 
-					php_error_docref(NULL TSRMLS_CC, E_WARNING,
+					php_error_docref(NULL, TSRMLS_C, E_WARNING,
 							"SSL: %s", estr);
 
 					efree(estr);
@@ -139,7 +139,7 @@ static int handle_ssl_error(php_stream *stream, int nr_bytes, zend_bool is_init 
 
 			switch (ERR_GET_REASON(ecode)) {
 				case SSL_R_NO_SHARED_CIPHER:
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "SSL_R_NO_SHARED_CIPHER: no suitable shared cipher could be used.  This could be because the server is missing an SSL certificate (local_cert context option)");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING, "SSL_R_NO_SHARED_CIPHER: no suitable shared cipher could be used.  This could be because the server is missing an SSL certificate (local_cert context option)");
 					retry = 0;
 					break;
 
@@ -155,7 +155,7 @@ static int handle_ssl_error(php_stream *stream, int nr_bytes, zend_bool is_init 
 
 					smart_str_0(&ebuf);
 
-					php_error_docref(NULL TSRMLS_CC, E_WARNING,
+					php_error_docref(NULL, TSRMLS_C, E_WARNING,
 							"SSL operation failed with code %d. %s%s",
 							err,
 							ebuf.c ? "OpenSSL Error messages:\n" : "",
@@ -172,7 +172,7 @@ static int handle_ssl_error(php_stream *stream, int nr_bytes, zend_bool is_init 
 }
 
 
-static size_t php_openssl_sockop_write(php_stream *stream, const char *buf, size_t count TSRMLS_DC)
+static size_t php_openssl_sockop_write(php_stream *stream, const char *buf, size_t count, TSRMLS_D)
 {
 	php_openssl_netstream_data_t *sslsock = (php_openssl_netstream_data_t*)stream->abstract;
 	int didwrite;
@@ -184,7 +184,7 @@ static size_t php_openssl_sockop_write(php_stream *stream, const char *buf, size
 			didwrite = SSL_write(sslsock->ssl_handle, buf, count);
 
 			if (didwrite <= 0) {
-				retry = handle_ssl_error(stream, didwrite, 0 TSRMLS_CC);
+				retry = handle_ssl_error(stream, didwrite, 0, TSRMLS_C);
 			} else {
 				break;
 			}
@@ -194,7 +194,7 @@ static size_t php_openssl_sockop_write(php_stream *stream, const char *buf, size
 			php_stream_notify_progress_increment(stream->context, didwrite, 0);
 		}
 	} else {
-		didwrite = php_stream_socket_ops.write(stream, buf, count TSRMLS_CC);
+		didwrite = php_stream_socket_ops.write(stream, buf, count, TSRMLS_C);
 	}
 
 	if (didwrite < 0) {
@@ -204,7 +204,7 @@ static size_t php_openssl_sockop_write(php_stream *stream, const char *buf, size
 	return didwrite;
 }
 
-static size_t php_openssl_sockop_read(php_stream *stream, char *buf, size_t count TSRMLS_DC)
+static size_t php_openssl_sockop_read(php_stream *stream, char *buf, size_t count, TSRMLS_D)
 {
 	php_openssl_netstream_data_t *sslsock = (php_openssl_netstream_data_t*)stream->abstract;
 	int nr_bytes = 0;
@@ -216,7 +216,7 @@ static size_t php_openssl_sockop_read(php_stream *stream, char *buf, size_t coun
 			nr_bytes = SSL_read(sslsock->ssl_handle, buf, count);
 
 			if (nr_bytes <= 0) {
-				retry = handle_ssl_error(stream, nr_bytes, 0 TSRMLS_CC);
+				retry = handle_ssl_error(stream, nr_bytes, 0, TSRMLS_C);
 				stream->eof = (retry == 0 && errno != EAGAIN && !SSL_pending(sslsock->ssl_handle));
 				
 			} else {
@@ -231,7 +231,7 @@ static size_t php_openssl_sockop_read(php_stream *stream, char *buf, size_t coun
 	}
 	else
 	{
-		nr_bytes = php_stream_socket_ops.read(stream, buf, count TSRMLS_CC);
+		nr_bytes = php_stream_socket_ops.read(stream, buf, count, TSRMLS_C);
 	}
 
 	if (nr_bytes < 0) {
@@ -242,7 +242,7 @@ static size_t php_openssl_sockop_read(php_stream *stream, char *buf, size_t coun
 }
 
 
-static int php_openssl_sockop_close(php_stream *stream, int close_handle TSRMLS_DC)
+static int php_openssl_sockop_close(php_stream *stream, int close_handle, TSRMLS_D)
 {
 	php_openssl_netstream_data_t *sslsock = (php_openssl_netstream_data_t*)stream->abstract;
 #ifdef PHP_WIN32
@@ -293,28 +293,28 @@ static int php_openssl_sockop_close(php_stream *stream, int close_handle TSRMLS_
 	return 0;
 }
 
-static int php_openssl_sockop_flush(php_stream *stream TSRMLS_DC)
+static int php_openssl_sockop_flush(php_stream *stream, TSRMLS_D)
 {
-	return php_stream_socket_ops.flush(stream TSRMLS_CC);
+	return php_stream_socket_ops.flush(stream, TSRMLS_C);
 }
 
-static int php_openssl_sockop_stat(php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC)
+static int php_openssl_sockop_stat(php_stream *stream, php_stream_statbuf *ssb, TSRMLS_D)
 {
-	return php_stream_socket_ops.stat(stream, ssb TSRMLS_CC);
+	return php_stream_socket_ops.stat(stream, ssb, TSRMLS_C);
 }
 
 
 static inline int php_openssl_setup_crypto(php_stream *stream,
 		php_openssl_netstream_data_t *sslsock,
 		php_stream_xport_crypto_param *cparam
-		TSRMLS_DC)
+		,TSRMLS_D)
 {
 	SSL_METHOD *method;
 	long ssl_ctx_options = SSL_OP_ALL;
 	
 	if (sslsock->ssl_handle) {
 		if (sslsock->s.is_blocked) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "SSL/TLS already set-up for this stream");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "SSL/TLS already set-up for this stream");
 			return -1;
 		} else {
 			return 0;
@@ -331,7 +331,7 @@ static inline int php_openssl_setup_crypto(php_stream *stream,
 			break;
 		case STREAM_CRYPTO_METHOD_SSLv2_CLIENT:
 #ifdef OPENSSL_NO_SSL2
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "SSLv2 support is not compiled into the OpenSSL library PHP is linked against");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "SSLv2 support is not compiled into the OpenSSL library PHP is linked against");
 			return -1;
 #else
 			sslsock->is_client = 1;
@@ -356,7 +356,7 @@ static inline int php_openssl_setup_crypto(php_stream *stream,
 			break;
 		case STREAM_CRYPTO_METHOD_SSLv2_SERVER:
 #ifdef OPENSSL_NO_SSL2
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "SSLv2 support is not compiled into the OpenSSL library PHP is linked against");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "SSLv2 support is not compiled into the OpenSSL library PHP is linked against");
 			return -1;
 #else
 			sslsock->is_client = 0;
@@ -374,7 +374,7 @@ static inline int php_openssl_setup_crypto(php_stream *stream,
 
 	sslsock->ctx = SSL_CTX_new(method);
 	if (sslsock->ctx == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to create an SSL context");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "failed to create an SSL context");
 		return -1;
 	}
 
@@ -407,23 +407,23 @@ static inline int php_openssl_setup_crypto(php_stream *stream,
 	}
 #endif
 
-	sslsock->ssl_handle = php_SSL_new_from_context(sslsock->ctx, stream TSRMLS_CC);
+	sslsock->ssl_handle = php_SSL_new_from_context(sslsock->ctx, stream, TSRMLS_C);
 	if (sslsock->ssl_handle == NULL) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "failed to create an SSL handle");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "failed to create an SSL handle");
 		SSL_CTX_free(sslsock->ctx);
 		sslsock->ctx = NULL;
 		return -1;
 	}
 
 	if (!SSL_set_fd(sslsock->ssl_handle, sslsock->s.socket)) {
-		handle_ssl_error(stream, 0, 1 TSRMLS_CC);
+		handle_ssl_error(stream, 0, 1, TSRMLS_C);
 	}
 
 	if (cparam->inputs.session) {
 		if (cparam->inputs.session->ops != &php_openssl_socket_ops) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "supplied session stream must be an SSL enabled stream");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "supplied session stream must be an SSL enabled stream");
 		} else if (((php_openssl_netstream_data_t*)cparam->inputs.session->abstract)->ssl_handle == NULL) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "supplied SSL session stream is not initialized");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "supplied SSL session stream is not initialized");
 		} else {
 			SSL_copy_session_id(sslsock->ssl_handle, ((php_openssl_netstream_data_t*)cparam->inputs.session->abstract)->ssl_handle);
 		}
@@ -434,7 +434,7 @@ static inline int php_openssl_setup_crypto(php_stream *stream,
 static inline int php_openssl_enable_crypto(php_stream *stream,
 		php_openssl_netstream_data_t *sslsock,
 		php_stream_xport_crypto_param *cparam
-		TSRMLS_DC)
+		,TSRMLS_D)
 {
 	int n, retry = 1;
 
@@ -459,7 +459,7 @@ static inline int php_openssl_enable_crypto(php_stream *stream,
 			sslsock->state_set = 1;
 		}
 	
-		if (SUCCESS == php_set_sock_blocking(sslsock->s.socket, 0 TSRMLS_CC)) {
+		if (SUCCESS == php_set_sock_blocking(sslsock->s.socket, 0, TSRMLS_C)) {
 			sslsock->s.is_blocked = 0;
 		}
 		
@@ -492,14 +492,14 @@ static inline int php_openssl_enable_crypto(php_stream *stream,
 				if (elapsed_time.tv_sec > timeout->tv_sec ||
 						(elapsed_time.tv_sec == timeout->tv_sec &&
 						elapsed_time.tv_usec > timeout->tv_usec)) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "SSL: crypto enabling timeout");
+					php_error_docref(NULL, TSRMLS_C, E_WARNING, "SSL: crypto enabling timeout");
 					return -1;
 				}
 			}
 
 			if (n <= 0) {
 				/* in case of SSL_ERROR_WANT_READ/WRITE, do not retry in non-blocking mode */
-				retry = handle_ssl_error(stream, n, blocked TSRMLS_CC);
+				retry = handle_ssl_error(stream, n, blocked, TSRMLS_C);
 				if (retry) {
 					/* wait until something interesting happens in the socket. It may be a
 					 * timeout. Also consider the unlikely of possibility of a write block  */
@@ -522,7 +522,7 @@ static inline int php_openssl_enable_crypto(php_stream *stream,
 			}
 		} while (retry);
 
-		if (sslsock->s.is_blocked != blocked && SUCCESS == php_set_sock_blocking(sslsock->s.socket, blocked TSRMLS_CC)) {
+		if (sslsock->s.is_blocked != blocked && SUCCESS == php_set_sock_blocking(sslsock->s.socket, blocked, TSRMLS_C)) {
 			sslsock->s.is_blocked = blocked;
 		}
 
@@ -531,7 +531,7 @@ static inline int php_openssl_enable_crypto(php_stream *stream,
 
 			peer_cert = SSL_get_peer_certificate(sslsock->ssl_handle);
 
-			if (FAILURE == php_openssl_apply_verification_policy(sslsock->ssl_handle, peer_cert, stream TSRMLS_CC)) {
+			if (FAILURE == php_openssl_apply_verification_policy(sslsock->ssl_handle, peer_cert, stream, TSRMLS_C)) {
 				SSL_shutdown(sslsock->ssl_handle);
 				n = -1;
 			} else {	
@@ -548,7 +548,7 @@ static inline int php_openssl_enable_crypto(php_stream *stream,
 							zval_is_true(*val)) {
 						MAKE_STD_ZVAL(zcert);
 						ZVAL_RESOURCE(zcert, zend_list_insert(peer_cert, 
-									php_openssl_get_x509_list_id() TSRMLS_CC));
+									php_openssl_get_x509_list_id(), TSRMLS_C));
 						php_stream_context_set_option(stream->context,
 								"ssl", "peer_certificate",
 								zcert);
@@ -577,7 +577,7 @@ static inline int php_openssl_enable_crypto(php_stream *stream,
 								MAKE_STD_ZVAL(zcert);
 								ZVAL_RESOURCE(zcert,
 										zend_list_insert(mycert,
-											php_openssl_get_x509_list_id() TSRMLS_CC));
+											php_openssl_get_x509_list_id(), TSRMLS_C));
 								add_next_index_zval(arr, zcert);
 							}
 
@@ -612,7 +612,7 @@ static inline int php_openssl_enable_crypto(php_stream *stream,
 }
 
 static inline int php_openssl_tcp_sockop_accept(php_stream *stream, php_openssl_netstream_data_t *sock,
-		php_stream_xport_param *xparam STREAMS_DC TSRMLS_DC)
+		php_stream_xport_param *xparam STREAMS_DC, TSRMLS_D)
 {
 	int clisock;
 
@@ -626,7 +626,7 @@ static inline int php_openssl_tcp_sockop_accept(php_stream *stream, php_openssl_
 			xparam->inputs.timeout,
 			xparam->want_errortext ? &xparam->outputs.error_text : NULL,
 			&xparam->outputs.error_code
-			TSRMLS_CC);
+			,TSRMLS_C);
 
 	if (clisock >= 0) {
 		php_openssl_netstream_data_t *clisockdata;
@@ -674,9 +674,9 @@ static inline int php_openssl_tcp_sockop_accept(php_stream *stream, php_openssl_
 			clisockdata->method = sock->method;
 
 			if (php_stream_xport_crypto_setup(xparam->outputs.client, clisockdata->method,
-					NULL TSRMLS_CC) < 0 || php_stream_xport_crypto_enable(
-					xparam->outputs.client, 1 TSRMLS_CC) < 0) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to enable crypto");
+					NULL, TSRMLS_C) < 0 || php_stream_xport_crypto_enable(
+					xparam->outputs.client, 1, TSRMLS_C) < 0) {
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Failed to enable crypto");
 
 				php_stream_close(xparam->outputs.client);
 				xparam->outputs.client = NULL;
@@ -687,7 +687,7 @@ static inline int php_openssl_tcp_sockop_accept(php_stream *stream, php_openssl_
 	
 	return xparam->outputs.client == NULL ? -1 : 0;
 }
-static int php_openssl_sockop_set_option(php_stream *stream, int option, int value, void *ptrparam TSRMLS_DC)
+static int php_openssl_sockop_set_option(php_stream *stream, int option, int value, void *ptrparam, TSRMLS_D)
 {
 	php_openssl_netstream_data_t *sslsock = (php_openssl_netstream_data_t*)stream->abstract;
 	php_stream_xport_crypto_param *cparam = (php_stream_xport_crypto_param *)ptrparam;
@@ -752,11 +752,11 @@ static int php_openssl_sockop_set_option(php_stream *stream, int option, int val
 			switch(cparam->op) {
 
 				case STREAM_XPORT_CRYPTO_OP_SETUP:
-					cparam->outputs.returncode = php_openssl_setup_crypto(stream, sslsock, cparam TSRMLS_CC);
+					cparam->outputs.returncode = php_openssl_setup_crypto(stream, sslsock, cparam, TSRMLS_C);
 					return PHP_STREAM_OPTION_RETURN_OK;
 					break;
 				case STREAM_XPORT_CRYPTO_OP_ENABLE:
-					cparam->outputs.returncode = php_openssl_enable_crypto(stream, sslsock, cparam TSRMLS_CC);
+					cparam->outputs.returncode = php_openssl_enable_crypto(stream, sslsock, cparam, TSRMLS_C);
 					return PHP_STREAM_OPTION_RETURN_OK;
 					break;
 				default:
@@ -773,16 +773,16 @@ static int php_openssl_sockop_set_option(php_stream *stream, int option, int val
 				case STREAM_XPORT_OP_CONNECT_ASYNC:
 					/* TODO: Async connects need to check the enable_on_connect option when
 					 * we notice that the connect has actually been established */
-					php_stream_socket_ops.set_option(stream, option, value, ptrparam TSRMLS_CC);
+					php_stream_socket_ops.set_option(stream, option, value, ptrparam, TSRMLS_C);
 
 					if ((sslsock->enable_on_connect) &&
 						((xparam->outputs.returncode == 0) ||
 						(xparam->op == STREAM_XPORT_OP_CONNECT_ASYNC && 
 						xparam->outputs.returncode == 1 && xparam->outputs.error_code == EINPROGRESS)))
 					{
-						if (php_stream_xport_crypto_setup(stream, sslsock->method, NULL TSRMLS_CC) < 0 ||
-								php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
-							php_error_docref(NULL TSRMLS_CC, E_WARNING, "Failed to enable crypto");
+						if (php_stream_xport_crypto_setup(stream, sslsock->method, NULL, TSRMLS_C) < 0 ||
+								php_stream_xport_crypto_enable(stream, 1, TSRMLS_C) < 0) {
+							php_error_docref(NULL, TSRMLS_C, E_WARNING, "Failed to enable crypto");
 							xparam->outputs.returncode = -1;
 						}
 					}
@@ -791,7 +791,7 @@ static int php_openssl_sockop_set_option(php_stream *stream, int option, int val
 				case STREAM_XPORT_OP_ACCEPT:
 					/* we need to copy the additional fields that the underlying tcp transport
 					 * doesn't know about */
-					xparam->outputs.returncode = php_openssl_tcp_sockop_accept(stream, sslsock, xparam STREAMS_CC TSRMLS_CC);
+					xparam->outputs.returncode = php_openssl_tcp_sockop_accept(stream, sslsock, xparam STREAMS_CC, TSRMLS_C);
 
 					
 					return PHP_STREAM_OPTION_RETURN_OK;
@@ -802,10 +802,10 @@ static int php_openssl_sockop_set_option(php_stream *stream, int option, int val
 			}
 	}
 
-	return php_stream_socket_ops.set_option(stream, option, value, ptrparam TSRMLS_CC);
+	return php_stream_socket_ops.set_option(stream, option, value, ptrparam, TSRMLS_C);
 }
 
-static int php_openssl_sockop_cast(php_stream *stream, int castas, void **ret TSRMLS_DC)
+static int php_openssl_sockop_cast(php_stream *stream, int castas, void **ret, TSRMLS_D)
 {
 	php_openssl_netstream_data_t *sslsock = (php_openssl_netstream_data_t*)stream->abstract;
 
@@ -853,7 +853,7 @@ php_stream_ops php_openssl_socket_ops = {
 	php_openssl_sockop_set_option,
 };
 
-static char * get_sni(php_stream_context *ctx, char *resourcename, long resourcenamelen, int is_persistent TSRMLS_DC) {
+static char * get_sni(php_stream_context *ctx, char *resourcename, long resourcenamelen, int is_persistent, TSRMLS_D) {
 
 	php_url *url;
 
@@ -904,7 +904,7 @@ php_stream *php_openssl_ssl_socket_factory(const char *proto, long protolen,
 		char *resourcename, long resourcenamelen,
 		const char *persistent_id, int options, int flags,
 		struct timeval *timeout,
-		php_stream_context *context STREAMS_DC TSRMLS_DC)
+		php_stream_context *context STREAMS_DC, TSRMLS_D)
 {
 	php_stream *stream = NULL;
 	php_openssl_netstream_data_t *sslsock = NULL;
@@ -935,14 +935,14 @@ php_stream *php_openssl_ssl_socket_factory(const char *proto, long protolen,
 		return NULL;
 	}
 
-	sslsock->sni = get_sni(context, resourcename, resourcenamelen, !!persistent_id TSRMLS_CC);
+	sslsock->sni = get_sni(context, resourcename, resourcenamelen, !!persistent_id, TSRMLS_C);
 	
 	if (strncmp(proto, "ssl", protolen) == 0) {
 		sslsock->enable_on_connect = 1;
 		sslsock->method = STREAM_CRYPTO_METHOD_SSLv23_CLIENT;
 	} else if (strncmp(proto, "sslv2", protolen) == 0) {
 #ifdef OPENSSL_NO_SSL2
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "SSLv2 support is not compiled into the OpenSSL library PHP is linked against");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "SSLv2 support is not compiled into the OpenSSL library PHP is linked against");
 		return NULL;
 #else
 		sslsock->enable_on_connect = 1;

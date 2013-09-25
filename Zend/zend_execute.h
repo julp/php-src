@@ -50,26 +50,26 @@ typedef union _temp_variable {
 
 BEGIN_EXTERN_C()
 struct _zend_fcall_info;
-ZEND_API extern void (*zend_execute_ex)(zend_execute_data *execute_data TSRMLS_DC);
-ZEND_API extern void (*zend_execute_internal)(zend_execute_data *execute_data_ptr, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC);
+ZEND_API extern void (*zend_execute_ex)(zend_execute_data *execute_data, TSRMLS_D);
+ZEND_API extern void (*zend_execute_internal)(zend_execute_data *execute_data_ptr, struct _zend_fcall_info *fci, int return_value_used, TSRMLS_D);
 
 void init_executor(TSRMLS_D);
 void shutdown_executor(TSRMLS_D);
 void shutdown_destructors(TSRMLS_D);
-zend_execute_data *zend_create_execute_data_from_op_array(zend_op_array *op_array, zend_bool nested TSRMLS_DC);
-ZEND_API void zend_execute(zend_op_array *op_array TSRMLS_DC);
-ZEND_API void execute_ex(zend_execute_data *execute_data TSRMLS_DC);
-ZEND_API void execute_internal(zend_execute_data *execute_data_ptr, struct _zend_fcall_info *fci, int return_value_used TSRMLS_DC);
+zend_execute_data *zend_create_execute_data_from_op_array(zend_op_array *op_array, zend_bool nested, TSRMLS_D);
+ZEND_API void zend_execute(zend_op_array *op_array, TSRMLS_D);
+ZEND_API void execute_ex(zend_execute_data *execute_data, TSRMLS_D);
+ZEND_API void execute_internal(zend_execute_data *execute_data_ptr, struct _zend_fcall_info *fci, int return_value_used, TSRMLS_D);
 ZEND_API int zend_is_true(zval *op);
-ZEND_API int zend_lookup_class(const char *name, int name_length, zend_class_entry ***ce TSRMLS_DC);
-ZEND_API int zend_lookup_class_ex(const char *name, int name_length, const zend_literal *key, int use_autoload, zend_class_entry ***ce TSRMLS_DC);
-ZEND_API int zend_eval_string(char *str, zval *retval_ptr, char *string_name TSRMLS_DC);
-ZEND_API int zend_eval_stringl(char *str, int str_len, zval *retval_ptr, char *string_name TSRMLS_DC);
-ZEND_API int zend_eval_string_ex(char *str, zval *retval_ptr, char *string_name, int handle_exceptions TSRMLS_DC);
-ZEND_API int zend_eval_stringl_ex(char *str, int str_len, zval *retval_ptr, char *string_name, int handle_exceptions TSRMLS_DC);
+ZEND_API int zend_lookup_class(const char *name, int name_length, zend_class_entry ***ce, TSRMLS_D);
+ZEND_API int zend_lookup_class_ex(const char *name, int name_length, const zend_literal *key, int use_autoload, zend_class_entry ***ce, TSRMLS_D);
+ZEND_API int zend_eval_string(char *str, zval *retval_ptr, char *string_name, TSRMLS_D);
+ZEND_API int zend_eval_stringl(char *str, int str_len, zval *retval_ptr, char *string_name, TSRMLS_D);
+ZEND_API int zend_eval_string_ex(char *str, zval *retval_ptr, char *string_name, int handle_exceptions, TSRMLS_D);
+ZEND_API int zend_eval_stringl_ex(char *str, int str_len, zval *retval_ptr, char *string_name, int handle_exceptions, TSRMLS_D);
 
-ZEND_API char * zend_verify_arg_class_kind(const zend_arg_info *cur_arg_info, ulong fetch_type, const char **class_name, zend_class_entry **pce TSRMLS_DC);
-ZEND_API int zend_verify_arg_error(int error_type, const zend_function *zf, zend_uint arg_num, const char *need_msg, const char *need_kind, const char *given_msg, const char *given_kind TSRMLS_DC);
+ZEND_API char * zend_verify_arg_class_kind(const zend_arg_info *cur_arg_info, ulong fetch_type, const char **class_name, zend_class_entry **pce, TSRMLS_D);
+ZEND_API int zend_verify_arg_error(int error_type, const zend_function *zf, zend_uint arg_num, const char *need_msg, const char *need_kind, const char *given_msg, const char *given_kind, TSRMLS_D);
 
 static zend_always_inline void i_zval_ptr_dtor(zval *zval_ptr ZEND_FILE_LINE_DC)
 {
@@ -124,12 +124,12 @@ static zend_always_inline int i_zend_is_true(zval *op)
 
 				if (Z_OBJ_HT_P(op)->cast_object) {
 					zval tmp;
-					if (Z_OBJ_HT_P(op)->cast_object(op, &tmp, IS_BOOL TSRMLS_CC) == SUCCESS) {
+					if (Z_OBJ_HT_P(op)->cast_object(op, &tmp, IS_BOOL, TSRMLS_C) == SUCCESS) {
 						result = Z_LVAL(tmp);
 						break;
 					}
 				} else if (Z_OBJ_HT_P(op)->get) {
-					zval *tmp = Z_OBJ_HT_P(op)->get(op TSRMLS_CC);
+					zval *tmp = Z_OBJ_HT_P(op)->get(op, TSRMLS_C);
 					if(Z_TYPE_P(tmp) != IS_OBJECT) {
 						/* for safety - avoid loop */
 						convert_to_boolean(tmp);
@@ -148,10 +148,10 @@ static zend_always_inline int i_zend_is_true(zval *op)
 	return result;
 }
 
-ZEND_API int zval_update_constant(zval **pp, void *arg TSRMLS_DC);
-ZEND_API int zval_update_constant_inline_change(zval **pp, void *arg TSRMLS_DC);
-ZEND_API int zval_update_constant_no_inline_change(zval **pp, void *arg TSRMLS_DC);
-ZEND_API int zval_update_constant_ex(zval **pp, void *arg, zend_class_entry *scope TSRMLS_DC);
+ZEND_API int zval_update_constant(zval **pp, void *arg, TSRMLS_D);
+ZEND_API int zval_update_constant_inline_change(zval **pp, void *arg, TSRMLS_D);
+ZEND_API int zval_update_constant_no_inline_change(zval **pp, void *arg, TSRMLS_D);
+ZEND_API int zval_update_constant_ex(zval **pp, void *arg, zend_class_entry *scope, TSRMLS_D);
 
 /* dedicated Zend executor functions - do not use! */
 #define ZEND_VM_STACK_PAGE_SIZE ((16 * 1024) - 16)
@@ -169,7 +169,7 @@ struct _zend_vm_stack {
 	do {															\
 		if (UNEXPECTED((count) >									\
 		    EG(argument_stack)->end - EG(argument_stack)->top)) {	\
-			zend_vm_stack_extend((count) TSRMLS_CC);				\
+			zend_vm_stack_extend((count), TSRMLS_C);				\
 		}															\
 	} while (0)
 
@@ -198,7 +198,7 @@ static zend_always_inline void zend_vm_stack_destroy(TSRMLS_D)
 	}
 }
 
-static zend_always_inline void zend_vm_stack_extend(int count TSRMLS_DC)
+static zend_always_inline void zend_vm_stack_extend(int count, TSRMLS_D)
 {
 	zend_vm_stack p = zend_vm_stack_new_page(count >= ZEND_VM_STACK_PAGE_SIZE ? count : ZEND_VM_STACK_PAGE_SIZE);
 	p->prev = EG(argument_stack);
@@ -210,7 +210,7 @@ static zend_always_inline void **zend_vm_stack_top(TSRMLS_D)
 	return EG(argument_stack)->top;
 }
 
-static zend_always_inline void zend_vm_stack_push(void *ptr TSRMLS_DC)
+static zend_always_inline void zend_vm_stack_push(void *ptr, TSRMLS_D)
 {
 	*(EG(argument_stack)->top++) = ptr;
 }
@@ -222,7 +222,7 @@ static zend_always_inline void *zend_vm_stack_pop(TSRMLS_D)
 	return el;
 }
 
-static zend_always_inline void *zend_vm_stack_alloc(size_t size TSRMLS_DC)
+static zend_always_inline void *zend_vm_stack_alloc(size_t size, TSRMLS_D)
 {
 	void *ret;
 
@@ -234,7 +234,7 @@ static zend_always_inline void *zend_vm_stack_alloc(size_t size TSRMLS_DC)
 
 		if (UNEXPECTED(size + extra + ZEND_MM_ALIGNED_SIZE(sizeof(void*)) / sizeof(void*) >
 		    (zend_uintptr_t)(EG(argument_stack)->end - EG(argument_stack)->top))) {
-			zend_vm_stack_extend(size TSRMLS_CC);
+			zend_vm_stack_extend(size, TSRMLS_C);
 		} else {
 			void **old_top = EG(argument_stack)->top;
 
@@ -257,7 +257,7 @@ static zend_always_inline void** zend_vm_stack_frame_base(zend_execute_data *ex)
 		ZEND_MM_ALIGNED_SIZE(sizeof(call_slot)) * ex->op_array->nested_calls);
 }
 
-static zend_always_inline void zend_vm_stack_free_int(void *ptr TSRMLS_DC)
+static zend_always_inline void zend_vm_stack_free_int(void *ptr, TSRMLS_D)
 {
 	if (UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (void**)ptr)) {
 		zend_vm_stack p = EG(argument_stack);
@@ -269,7 +269,7 @@ static zend_always_inline void zend_vm_stack_free_int(void *ptr TSRMLS_DC)
 	}
 }
 
-static zend_always_inline void zend_vm_stack_free(void *ptr TSRMLS_DC)
+static zend_always_inline void zend_vm_stack_free(void *ptr, TSRMLS_D)
 {
 	if (UNEXPECTED(ZEND_VM_STACK_ELEMETS(EG(argument_stack)) == (void**)ptr)) {
 		zend_vm_stack p = EG(argument_stack);
@@ -287,7 +287,7 @@ static zend_always_inline void zend_vm_stack_free(void *ptr TSRMLS_DC)
 	}
 }
 
-static zend_always_inline void zend_vm_stack_clear_multiple(int nested TSRMLS_DC)
+static zend_always_inline void zend_vm_stack_clear_multiple(int nested, TSRMLS_D)
 {
 	void **p = EG(argument_stack)->top - 1;
  	void **end = p - (int)(zend_uintptr_t)*p;
@@ -300,7 +300,7 @@ static zend_always_inline void zend_vm_stack_clear_multiple(int nested TSRMLS_DC
 	if (nested) {
 		EG(argument_stack)->top = p;
 	} else {
-		zend_vm_stack_free_int(p TSRMLS_CC);
+		zend_vm_stack_free_int(p, TSRMLS_C);
 	}
 }
 
@@ -330,7 +330,7 @@ static zend_always_inline int zend_vm_stack_get_args_count(TSRMLS_D)
 	return zend_vm_stack_get_args_count_ex(EG(current_execute_data)->prev_execute_data);
 }
 
-static zend_always_inline zval** zend_vm_stack_get_arg(int requested_arg TSRMLS_DC)
+static zend_always_inline zval** zend_vm_stack_get_arg(int requested_arg, TSRMLS_D)
 {
 	return zend_vm_stack_get_arg_ex(EG(current_execute_data)->prev_execute_data, requested_arg);
 }
@@ -339,7 +339,7 @@ void execute_new_code(TSRMLS_D);
 
 
 /* services */
-ZEND_API const char *get_active_class_name(const char **space TSRMLS_DC);
+ZEND_API const char *get_active_class_name(const char **space, TSRMLS_D);
 ZEND_API const char *get_active_function_name(TSRMLS_D);
 ZEND_API const char *zend_get_executed_filename(TSRMLS_D);
 ZEND_API uint zend_get_executed_lineno(TSRMLS_D);
@@ -348,9 +348,9 @@ ZEND_API zend_bool zend_is_executing(TSRMLS_D);
 ZEND_API void zend_set_timeout(long seconds, int reset_signals);
 ZEND_API void zend_unset_timeout(TSRMLS_D);
 ZEND_API void zend_timeout(int dummy);
-ZEND_API zend_class_entry *zend_fetch_class(const char *class_name, uint class_name_len, int fetch_type TSRMLS_DC);
-ZEND_API zend_class_entry *zend_fetch_class_by_name(const char *class_name, uint class_name_len, const zend_literal *key, int fetch_type TSRMLS_DC);
-void zend_verify_abstract_class(zend_class_entry *ce TSRMLS_DC);
+ZEND_API zend_class_entry *zend_fetch_class(const char *class_name, uint class_name_len, int fetch_type, TSRMLS_D);
+ZEND_API zend_class_entry *zend_fetch_class_by_name(const char *class_name, uint class_name_len, const zend_literal *key, int fetch_type, TSRMLS_D);
+void zend_verify_abstract_class(zend_class_entry *ce, TSRMLS_D);
 
 #ifdef ZEND_WIN32
 void zend_init_timeout_thread(void);
@@ -367,7 +367,7 @@ void zend_shutdown_timeout_thread(void);
 /* The following tries to resolve the classname of a zval of type object.
  * Since it is slow it should be only used in error messages.
  */
-#define Z_OBJ_CLASS_NAME_P(zval) ((zval) && Z_TYPE_P(zval) == IS_OBJECT && Z_OBJ_HT_P(zval)->get_class_entry != NULL && Z_OBJ_HT_P(zval)->get_class_entry(zval TSRMLS_CC) ? Z_OBJ_HT_P(zval)->get_class_entry(zval TSRMLS_CC)->name : "")
+#define Z_OBJ_CLASS_NAME_P(zval) ((zval) && Z_TYPE_P(zval) == IS_OBJECT && Z_OBJ_HT_P(zval)->get_class_entry != NULL && Z_OBJ_HT_P(zval)->get_class_entry(zval, TSRMLS_C) ? Z_OBJ_HT_P(zval)->get_class_entry(zval, TSRMLS_C)->name : "")
 
 ZEND_API zval** zend_get_compiled_variable_value(const zend_execute_data *execute_data_ptr, zend_uint var);
 
@@ -388,12 +388,12 @@ typedef struct _zend_free_op {
 /*	int   is_var; */
 } zend_free_op;
 
-ZEND_API zval *zend_get_zval_ptr(int op_type, const znode_op *node, const zend_execute_data *execute_data, zend_free_op *should_free, int type TSRMLS_DC);
-ZEND_API zval **zend_get_zval_ptr_ptr(int op_type, const znode_op *node, const zend_execute_data *execute_data, zend_free_op *should_free, int type TSRMLS_DC);
+ZEND_API zval *zend_get_zval_ptr(int op_type, const znode_op *node, const zend_execute_data *execute_data, zend_free_op *should_free, int type, TSRMLS_D);
+ZEND_API zval **zend_get_zval_ptr_ptr(int op_type, const znode_op *node, const zend_execute_data *execute_data, zend_free_op *should_free, int type, TSRMLS_D);
 
 ZEND_API int zend_do_fcall(ZEND_OPCODE_HANDLER_ARGS);
 
-void zend_clean_and_cache_symbol_table(HashTable *symbol_table TSRMLS_DC);
+void zend_clean_and_cache_symbol_table(HashTable *symbol_table, TSRMLS_D);
 void zend_free_compiled_variables(zend_execute_data *execute_data);
 
 #define CACHED_PTR(num) \

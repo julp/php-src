@@ -52,12 +52,12 @@ typedef struct {
 
 static int le_dispatch;
 
-static void disp_destructor(php_dispatchex *disp TSRMLS_DC);
+static void disp_destructor(php_dispatchex *disp, TSRMLS_D);
 
-static void dispatch_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+static void dispatch_dtor(zend_rsrc_list_entry *rsrc, TSRMLS_D)
 {
 	php_dispatchex *disp = (php_dispatchex *)rsrc->ptr;
-	disp_destructor(disp TSRMLS_CC);
+	disp_destructor(disp, TSRMLS_C);
 }
 
 int php_com_wrapper_minit(INIT_FUNC_ARGS)
@@ -179,7 +179,7 @@ static HRESULT STDMETHODCALLTYPE disp_getidsofnames(
 		unsigned int namelen;
 		zval **tmp;
 		
-		name = php_com_olestring_to_string(rgszNames[i], &namelen, COMG(code_page) TSRMLS_CC);
+		name = php_com_olestring_to_string(rgszNames[i], &namelen, COMG(code_page), TSRMLS_C);
 		
 		/* Lookup the name in the hash */
 		if (zend_hash_find(disp->name_to_dispid, name, namelen+1, (void**)&tmp) == FAILURE) {
@@ -224,7 +224,7 @@ static HRESULT STDMETHODCALLTYPE disp_getdispid(
 	zval **tmp;
 	FETCH_DISP("GetDispID");
 
-	name = php_com_olestring_to_string(bstrName, &namelen, COMG(code_page) TSRMLS_CC);
+	name = php_com_olestring_to_string(bstrName, &namelen, COMG(code_page), TSRMLS_C);
 
 	trace("Looking for %s, namelen=%d in %p\n", name, namelen, disp->name_to_dispid);
 	
@@ -275,7 +275,7 @@ static HRESULT STDMETHODCALLTYPE disp_invokeex(
 				trace("alloc zval for arg %d VT=%08x\n", i, V_VT(arg));
 
 				ALLOC_INIT_ZVAL(zarg);
-				php_com_wrap_variant(zarg, arg, COMG(code_page) TSRMLS_CC);
+				php_com_wrap_variant(zarg, arg, COMG(code_page), TSRMLS_C);
 				params[i] = (zval**)emalloc(sizeof(zval**));
 				*params[i] = zarg;
 			}
@@ -287,13 +287,13 @@ static HRESULT STDMETHODCALLTYPE disp_invokeex(
 		 * and expose it as a COM exception */
 		
 		if (wFlags & DISPATCH_PROPERTYGET) {
-			retval = zend_read_property(Z_OBJCE_P(disp->object), disp->object, Z_STRVAL_PP(name), Z_STRLEN_PP(name)+1, 1 TSRMLS_CC);
+			retval = zend_read_property(Z_OBJCE_P(disp->object), disp->object, Z_STRVAL_PP(name), Z_STRLEN_PP(name)+1, 1, TSRMLS_C);
 		} else if (wFlags & DISPATCH_PROPERTYPUT) {
-			zend_update_property(Z_OBJCE_P(disp->object), disp->object, Z_STRVAL_PP(name), Z_STRLEN_PP(name)+1, *params[0] TSRMLS_CC);
+			zend_update_property(Z_OBJCE_P(disp->object), disp->object, Z_STRVAL_PP(name), Z_STRLEN_PP(name)+1, *params[0], TSRMLS_C);
 		} else if (wFlags & DISPATCH_METHOD) {
 			zend_try {
 				if (SUCCESS == call_user_function_ex(EG(function_table), &disp->object, *name,
-							&retval, pdp->cArgs, params, 1, NULL TSRMLS_CC)) {
+							&retval, pdp->cArgs, params, 1, NULL, TSRMLS_C)) {
 					ret = S_OK;
 					trace("function called ok\n");
 
@@ -304,7 +304,7 @@ static HRESULT STDMETHODCALLTYPE disp_invokeex(
 						VARIANT *dstvar = &pdp->rgvarg[ pdp->cArgs - 1 - i];
 						if ((V_VT(dstvar) & VT_BYREF) && obj->modified ) {
 							trace("percolate modified value for arg %d VT=%08x\n", i, V_VT(dstvar));
-							php_com_copy_variant(dstvar, srcvar TSRMLS_CC);   
+							php_com_copy_variant(dstvar, srcvar, TSRMLS_C);   
 						}
 					}
 				} else {
@@ -332,7 +332,7 @@ static HRESULT STDMETHODCALLTYPE disp_invokeex(
 		if (retval) {
 			if (pvarRes) {
 				VariantInit(pvarRes);
-				php_com_variant_from_zval(pvarRes, retval, COMG(code_page) TSRMLS_CC);
+				php_com_variant_from_zval(pvarRes, retval, COMG(code_page), TSRMLS_C);
 			}
 			zval_ptr_dtor(&retval);
 		} else if (pvarRes) {
@@ -389,7 +389,7 @@ static HRESULT STDMETHODCALLTYPE disp_getmembername(
 	FETCH_DISP("GetMemberName");
 
 	if (SUCCESS == zend_hash_index_find(disp->dispid_to_name, id, (void**)&name)) {
-		OLECHAR *olestr = php_com_string_to_olestring(Z_STRVAL_P(name), Z_STRLEN_P(name), COMG(code_page) TSRMLS_CC);
+		OLECHAR *olestr = php_com_string_to_olestring(Z_STRVAL_P(name), Z_STRLEN_P(name), COMG(code_page), TSRMLS_C);
 		*pbstrName = SysAllocString(olestr);
 		efree(olestr);
 		return S_OK;
@@ -448,7 +448,7 @@ static struct IDispatchExVtbl php_dispatch_vtbl = {
 
 /* enumerate functions and properties of the object and assign
  * dispatch ids */
-static void generate_dispids(php_dispatchex *disp TSRMLS_DC)
+static void generate_dispids(php_dispatchex *disp, TSRMLS_D)
 {
 	HashPosition pos;
 	char *name = NULL;
@@ -528,7 +528,7 @@ static void generate_dispids(php_dispatchex *disp TSRMLS_DC)
 	}
 }
 
-static php_dispatchex *disp_constructor(zval *object TSRMLS_DC)
+static php_dispatchex *disp_constructor(zval *object, TSRMLS_D)
 {
 	php_dispatchex *disp = (php_dispatchex*)CoTaskMemAlloc(sizeof(php_dispatchex));
 
@@ -548,12 +548,12 @@ static php_dispatchex *disp_constructor(zval *object TSRMLS_DC)
 		Z_ADDREF_P(object);
 	disp->object = object;
 
-	disp->id = zend_list_insert(disp, le_dispatch TSRMLS_CC);
+	disp->id = zend_list_insert(disp, le_dispatch, TSRMLS_C);
 	
 	return disp;
 }
 
-static void disp_destructor(php_dispatchex *disp TSRMLS_DC)
+static void disp_destructor(php_dispatchex *disp, TSRMLS_D)
 {	
 	/* Object store not available during request shutdown */
 	if (COMG(rshutdown_started)) {
@@ -579,9 +579,9 @@ static void disp_destructor(php_dispatchex *disp TSRMLS_DC)
 }
 
 PHP_COM_DOTNET_API IDispatch *php_com_wrapper_export_as_sink(zval *val, GUID *sinkid,
-	   HashTable *id_to_name TSRMLS_DC)
+	   HashTable *id_to_name, TSRMLS_D)
 {
-	php_dispatchex *disp = disp_constructor(val TSRMLS_CC);
+	php_dispatchex *disp = disp_constructor(val, TSRMLS_C);
 	HashPosition pos;
 	char *name = NULL;
 	zval *tmp, **ntmp;
@@ -617,7 +617,7 @@ PHP_COM_DOTNET_API IDispatch *php_com_wrapper_export_as_sink(zval *val, GUID *si
 	return (IDispatch*)disp;
 }
 
-PHP_COM_DOTNET_API IDispatch *php_com_wrapper_export(zval *val TSRMLS_DC)
+PHP_COM_DOTNET_API IDispatch *php_com_wrapper_export(zval *val, TSRMLS_D)
 {
 	php_dispatchex *disp = NULL;
 
@@ -625,7 +625,7 @@ PHP_COM_DOTNET_API IDispatch *php_com_wrapper_export(zval *val TSRMLS_DC)
 		return NULL;
 	}
 
-	if (php_com_is_valid_object(val TSRMLS_CC)) {
+	if (php_com_is_valid_object(val, TSRMLS_C)) {
 		/* pass back its IDispatch directly */
 		php_com_dotnet_object *obj = CDNO_FETCH(val);
 		
@@ -640,8 +640,8 @@ PHP_COM_DOTNET_API IDispatch *php_com_wrapper_export(zval *val TSRMLS_DC)
 		return NULL;
 	}
 
-	disp = disp_constructor(val TSRMLS_CC);
-	generate_dispids(disp TSRMLS_CC);
+	disp = disp_constructor(val, TSRMLS_C);
+	generate_dispids(disp, TSRMLS_C);
 
 	return (IDispatch*)disp;
 }

@@ -71,9 +71,9 @@ PHP_MINFO_FUNCTION(mb_regex);
 typedef struct _zend_mb_regex_globals zend_mb_regex_globals;
 
 zend_mb_regex_globals *php_mb_regex_globals_alloc(TSRMLS_D);
-void php_mb_regex_globals_free(zend_mb_regex_globals *pglobals TSRMLS_DC);
-int php_mb_regex_set_mbctype(const char *enc TSRMLS_DC);
-int php_mb_regex_set_default_mbctype(const char *encname TSRMLS_DC);
+void php_mb_regex_globals_free(zend_mb_regex_globals *pglobals, TSRMLS_D);
+int php_mb_regex_set_mbctype(const char *enc, TSRMLS_D);
+int php_mb_regex_set_default_mbctype(const char *encname, TSRMLS_D);
 const char *php_mb_regex_get_mbctype(TSRMLS_D);
 const char *php_mb_regex_get_default_mbctype(TSRMLS_D);
 

@@ -32,7 +32,7 @@
 #include "spl_array.h"
 
 /* {{{ spl_instantiate */
-PHPAPI void spl_instantiate(zend_class_entry *pce, zval **object, int alloc TSRMLS_DC)
+PHPAPI void spl_instantiate(zend_class_entry *pce, zval **object, int alloc, TSRMLS_D)
 {
 	if (alloc) {
 		ALLOC_ZVAL(*object);
@@ -43,7 +43,7 @@ PHPAPI void spl_instantiate(zend_class_entry *pce, zval **object, int alloc TSRM
 }
 /* }}} */
 
-PHPAPI long spl_offset_convert_to_long(zval *offset TSRMLS_DC) /* {{{ */
+PHPAPI long spl_offset_convert_to_long(zval *offset, TSRMLS_D) /* {{{ */
 {
 	switch (Z_TYPE_P(offset)) {
 	case IS_STRING:

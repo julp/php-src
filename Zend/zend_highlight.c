@@ -54,14 +54,14 @@ ZEND_API void zend_html_putc(char c)
 }
 
 
-ZEND_API void zend_html_puts(const char *s, uint len TSRMLS_DC)
+ZEND_API void zend_html_puts(const char *s, uint len, TSRMLS_D)
 {
 	const unsigned char *ptr = (const unsigned char*)s, *end = ptr + len;
 	unsigned char *filtered;
 	size_t filtered_len;
 
 	if (LANG_SCNG(output_filter)) {
-		LANG_SCNG(output_filter)(&filtered, &filtered_len, ptr, len TSRMLS_CC);
+		LANG_SCNG(output_filter)(&filtered, &filtered_len, ptr, len, TSRMLS_C);
 		ptr = filtered;
 		end = filtered + filtered_len;
 	}
@@ -82,7 +82,7 @@ ZEND_API void zend_html_puts(const char *s, uint len TSRMLS_DC)
 }
 
 
-ZEND_API void zend_highlight(zend_syntax_highlighter_ini *syntax_highlighter_ini TSRMLS_DC)
+ZEND_API void zend_highlight(zend_syntax_highlighter_ini *syntax_highlighter_ini, TSRMLS_D)
 {
 	zval token;
 	int token_type;
@@ -93,7 +93,7 @@ ZEND_API void zend_highlight(zend_syntax_highlighter_ini *syntax_highlighter_ini
 	zend_printf("<span style=\"color: %s\">\n", last_color);
 	/* highlight stuff coming back from zendlex() */
 	token.type = 0;
-	while ((token_type=lex_scan(&token TSRMLS_CC))) {
+	while ((token_type=lex_scan(&token, TSRMLS_C))) {
 		switch (token_type) {
 			case T_INLINE_HTML:
 				next_color = syntax_highlighter_ini->highlight_html;
@@ -115,7 +115,7 @@ ZEND_API void zend_highlight(zend_syntax_highlighter_ini *syntax_highlighter_ini
 				next_color = syntax_highlighter_ini->highlight_string;
 				break;
 			case T_WHITESPACE:
-				zend_html_puts((char*)LANG_SCNG(yy_text), LANG_SCNG(yy_leng) TSRMLS_CC);  /* no color needed */
+				zend_html_puts((char*)LANG_SCNG(yy_text), LANG_SCNG(yy_leng), TSRMLS_C);  /* no color needed */
 				token.type = 0;
 				continue;
 				break;
@@ -138,7 +138,7 @@ ZEND_API void zend_highlight(zend_syntax_highlighter_ini *syntax_highlighter_ini
 			}
 		}
 
-		zend_html_puts((char*)LANG_SCNG(yy_text), LANG_SCNG(yy_leng) TSRMLS_CC);
+		zend_html_puts((char*)LANG_SCNG(yy_text), LANG_SCNG(yy_leng), TSRMLS_C);
 
 		if (token.type == IS_STRING) {
 			switch (token_type) {
@@ -171,7 +171,7 @@ ZEND_API void zend_strip(TSRMLS_D)
 	int prev_space = 0;
 
 	token.type = 0;
-	while ((token_type=lex_scan(&token TSRMLS_CC))) {
+	while ((token_type=lex_scan(&token, TSRMLS_C))) {
 		switch (token_type) {
 			case T_WHITESPACE:
 				if (!prev_space) {
@@ -187,7 +187,7 @@ ZEND_API void zend_strip(TSRMLS_D)
 			case T_END_HEREDOC:
 				zend_write((char*)LANG_SCNG(yy_text), LANG_SCNG(yy_leng));
 				/* read the following character, either newline or ; */
-				if (lex_scan(&token TSRMLS_CC) != T_WHITESPACE) {
+				if (lex_scan(&token, TSRMLS_C) != T_WHITESPACE) {
 					zend_write((char*)LANG_SCNG(yy_text), LANG_SCNG(yy_leng));
 				}
 				zend_write("\n", sizeof("\n") - 1);

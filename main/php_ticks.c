@@ -61,7 +61,7 @@ PHPAPI void php_remove_tick_function(void (*func)(int))
 						   (int(*)(void*, void*))php_compare_tick_functions);
 }
 
-static void php_tick_iterator(void *data, void *arg TSRMLS_DC)
+static void php_tick_iterator(void *data, void *arg, TSRMLS_D)
 {
 	void (*func)(int);
 
@@ -73,7 +73,7 @@ void php_run_ticks(int count)
 {
 	TSRMLS_FETCH();
 
-	zend_llist_apply_with_argument(&PG(tick_functions), (llist_apply_with_arg_func_t) php_tick_iterator, &count TSRMLS_CC);
+	zend_llist_apply_with_argument(&PG(tick_functions), (llist_apply_with_arg_func_t) php_tick_iterator, &count, TSRMLS_C);
 }
 
 /*

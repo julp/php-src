@@ -42,7 +42,7 @@ extern zend_class_entry *NumberFormatter_ce_ptr;
 	if (FORMATTER_OBJECT(nfo) == NULL) \
 	{ \
 		intl_errors_set(&nfo->nf_data.error, U_ILLEGAL_ARGUMENT_ERROR, \
-				"Found unconstructed NumberFormatter", 0 TSRMLS_CC); \
+				"Found unconstructed NumberFormatter", 0, TSRMLS_C); \
 		RETURN_FALSE; \
 	}
 

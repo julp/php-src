@@ -379,7 +379,7 @@ PHP_FUNCTION(parse_url)
 	php_url *resource;
 	long key = -1;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &str, &str_len, &key) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|l", &str, &str_len, &key) == FAILURE) {
 		return;
 	}
 
@@ -416,7 +416,7 @@ PHP_FUNCTION(parse_url)
 				if (resource->fragment != NULL) RETVAL_STRING(resource->fragment, 1);
 				break;
 			default:
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid URL component identifier %ld", key);
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid URL component identifier %ld", key);
 				RETVAL_FALSE;
 		}
 		goto done;
@@ -536,7 +536,7 @@ PHP_FUNCTION(urlencode)
 	char *in_str, *out_str;
 	int in_str_len, out_str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in_str,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &in_str,
 							  &in_str_len) == FAILURE) {
 		return;
 	}
@@ -553,7 +553,7 @@ PHP_FUNCTION(urldecode)
 	char *in_str, *out_str;
 	int in_str_len, out_str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in_str,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &in_str,
 							  &in_str_len) == FAILURE) {
 		return;
 	}
@@ -637,7 +637,7 @@ PHP_FUNCTION(rawurlencode)
 	char *in_str, *out_str;
 	int in_str_len, out_str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in_str,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &in_str,
 							  &in_str_len) == FAILURE) {
 		return;
 	}
@@ -654,7 +654,7 @@ PHP_FUNCTION(rawurldecode)
 	char *in_str, *out_str;
 	int in_str_len, out_str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in_str,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &in_str,
 							  &in_str_len) == FAILURE) {
 		return;
 	}
@@ -707,7 +707,7 @@ PHP_FUNCTION(get_headers)
 	HashTable *hashT;
 	long format = 0;
                 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &url, &url_len, &format) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|l", &url, &url_len, &format) == FAILURE) {
 		return;
 	}
 	context = FG(default_context) ? FG(default_context) : (FG(default_context) = php_stream_context_alloc(TSRMLS_C));

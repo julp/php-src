@@ -48,9 +48,9 @@ out_char (int c)
 
 
 void
-pn (bc_num num TSRMLS_DC)
+pn (bc_num num, TSRMLS_D)
 {
-  bc_out_num (num, 10, out_char, 0 TSRMLS_CC);
+  bc_out_num (num, 10, out_char, 0, TSRMLS_C);
   out_char ('\n');
 }
 

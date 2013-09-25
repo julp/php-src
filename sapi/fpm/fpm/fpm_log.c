@@ -95,7 +95,7 @@ int fpm_log_init_child(struct fpm_worker_pool_s *wp)  /* {{{ */
 }
 /* }}} */
 
-int fpm_log_write(char *log_format TSRMLS_DC) /* {{{ */
+int fpm_log_write(char *log_format, TSRMLS_D) /* {{{ */
 {
 	char *s, *b;
 	char buffer[FPM_LOG_BUFFER+1];

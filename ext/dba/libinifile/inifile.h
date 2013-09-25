@@ -45,12 +45,12 @@ typedef struct {
 	line_type next;
 } inifile;
 
-val_type inifile_fetch(inifile *dba, const key_type *key, int skip TSRMLS_DC);
-int inifile_firstkey(inifile *dba TSRMLS_DC);
-int inifile_nextkey(inifile *dba TSRMLS_DC);
-int inifile_delete(inifile *dba, const key_type *key TSRMLS_DC);
-int inifile_replace(inifile *dba, const key_type *key, const val_type *val TSRMLS_DC);
-int inifile_append(inifile *dba, const key_type *key, const val_type *val TSRMLS_DC);
+val_type inifile_fetch(inifile *dba, const key_type *key, int skip, TSRMLS_D);
+int inifile_firstkey(inifile *dba, TSRMLS_D);
+int inifile_nextkey(inifile *dba, TSRMLS_D);
+int inifile_delete(inifile *dba, const key_type *key, TSRMLS_D);
+int inifile_replace(inifile *dba, const key_type *key, const val_type *val, TSRMLS_D);
+int inifile_append(inifile *dba, const key_type *key, const val_type *val, TSRMLS_D);
 char *inifile_version();
 
 key_type inifile_key_split(const char *group_name);
@@ -60,7 +60,7 @@ void inifile_key_free(key_type *key);
 void inifile_val_free(val_type *val);
 void inifile_line_free(line_type *ln);
 
-inifile * inifile_alloc(php_stream *fp, int readonly, int persistent TSRMLS_DC);
+inifile * inifile_alloc(php_stream *fp, int readonly, int persistent, TSRMLS_D);
 void inifile_free(inifile *dba, int persistent);
 
 #endif

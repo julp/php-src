@@ -46,7 +46,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ERROR-DOMError-severity
 Since: 
 */
-int dom_domerror_severity_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_domerror_severity_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_STRING(*retval, "TEST", 1);
@@ -60,7 +60,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ERROR-DOMError-message
 Since: 
 */
-int dom_domerror_message_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_domerror_message_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_STRING(*retval, "TEST", 1);
@@ -74,7 +74,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ERROR-DOMError-type
 Since: 
 */
-int dom_domerror_type_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_domerror_type_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_STRING(*retval, "TEST", 1);
@@ -88,7 +88,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ERROR-DOMError-relatedException
 Since: 
 */
-int dom_domerror_related_exception_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_domerror_related_exception_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_STRING(*retval, "TEST", 1);
@@ -102,7 +102,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ERROR-DOMError-relatedData
 Since: 
 */
-int dom_domerror_related_data_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_domerror_related_data_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_STRING(*retval, "TEST", 1);
@@ -116,7 +116,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#ERROR-DOMError-location
 Since: 
 */
-int dom_domerror_location_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_domerror_location_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	ALLOC_ZVAL(*retval);
 	ZVAL_STRING(*retval, "TEST", 1);

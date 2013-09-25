@@ -130,7 +130,7 @@ extern pdo_driver_t pdo_firebird_driver;
 
 extern struct pdo_stmt_methods firebird_stmt_methods;
 
-void _firebird_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, char const *file, long line TSRMLS_DC);
+void _firebird_error(pdo_dbh_t *dbh, pdo_stmt_t *stmt, char const *file, long line, TSRMLS_D);
 
 enum {
 	PDO_FB_ATTR_DATE_FORMAT = PDO_ATTR_DRIVER_SPECIFIC,

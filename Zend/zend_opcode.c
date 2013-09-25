@@ -29,14 +29,14 @@
 
 #include "zend_vm.h"
 
-static void zend_extension_op_array_ctor_handler(zend_extension *extension, zend_op_array *op_array TSRMLS_DC)
+static void zend_extension_op_array_ctor_handler(zend_extension *extension, zend_op_array *op_array, TSRMLS_D)
 {
 	if (extension->op_array_ctor) {
 		extension->op_array_ctor(op_array);
 	}
 }
 
-static void zend_extension_op_array_dtor_handler(zend_extension *extension, zend_op_array *op_array TSRMLS_DC)
+static void zend_extension_op_array_dtor_handler(zend_extension *extension, zend_op_array *op_array, TSRMLS_D)
 {
 	if (extension->op_array_dtor) {
 		extension->op_array_dtor(op_array);
@@ -48,7 +48,7 @@ static void op_array_alloc_ops(zend_op_array *op_array, zend_uint size)
 	op_array->opcodes = erealloc(op_array->opcodes, size * sizeof(zend_op));
 }
 
-void init_op_array(zend_op_array *op_array, zend_uchar type, int initial_ops_size TSRMLS_DC)
+void init_op_array(zend_op_array *op_array, zend_uchar type, int initial_ops_size, TSRMLS_D)
 {
 	op_array->type = type;
 
@@ -106,14 +106,14 @@ void init_op_array(zend_op_array *op_array, zend_uchar type, int initial_ops_siz
 
 	memset(op_array->reserved, 0, ZEND_MAX_RESERVED_RESOURCES * sizeof(void*));
 
-	zend_llist_apply_with_argument(&zend_extensions, (llist_apply_with_arg_func_t) zend_extension_op_array_ctor_handler, op_array TSRMLS_CC);
+	zend_llist_apply_with_argument(&zend_extensions, (llist_apply_with_arg_func_t) zend_extension_op_array_ctor_handler, op_array, TSRMLS_C);
 }
 
-ZEND_API void destroy_zend_function(zend_function *function TSRMLS_DC)
+ZEND_API void destroy_zend_function(zend_function *function, TSRMLS_D)
 {
 	switch (function->type) {
 		case ZEND_USER_FUNCTION:
-			destroy_op_array((zend_op_array *) function TSRMLS_CC);
+			destroy_op_array((zend_op_array *) function, TSRMLS_C);
 			break;
 		case ZEND_INTERNAL_FUNCTION:
 			/* do nothing */
@@ -125,7 +125,7 @@ ZEND_API void zend_function_dtor(zend_function *function)
 {
 	TSRMLS_FETCH();
 
-	destroy_zend_function(function TSRMLS_CC);
+	destroy_zend_function(function, TSRMLS_C);
 }
 
 static void zend_cleanup_op_array_data(zend_op_array *op_array)
@@ -135,7 +135,7 @@ static void zend_cleanup_op_array_data(zend_op_array *op_array)
 	}
 }
 
-ZEND_API int zend_cleanup_function_data(zend_function *function TSRMLS_DC)
+ZEND_API int zend_cleanup_function_data(zend_function *function, TSRMLS_D)
 {
 	if (function->type == ZEND_USER_FUNCTION) {
 		zend_cleanup_op_array_data((zend_op_array *) function);
@@ -145,7 +145,7 @@ ZEND_API int zend_cleanup_function_data(zend_function *function TSRMLS_DC)
 	}
 }
 
-ZEND_API int zend_cleanup_function_data_full(zend_function *function TSRMLS_DC)
+ZEND_API int zend_cleanup_function_data_full(zend_function *function, TSRMLS_D)
 {
 	if (function->type == ZEND_USER_FUNCTION) {
 		zend_cleanup_op_array_data((zend_op_array *) function);
@@ -153,13 +153,13 @@ ZEND_API int zend_cleanup_function_data_full(zend_function *function TSRMLS_DC)
 	return 0;
 }
 
-static inline void cleanup_user_class_data(zend_class_entry *ce TSRMLS_DC)
+static inline void cleanup_user_class_data(zend_class_entry *ce, TSRMLS_D)
 {
 	/* Clean all parts that can contain run-time data */
 	/* Note that only run-time accessed data need to be cleaned up, pre-defined data can
 	   not contain objects and thus are not probelmatic */
 	if (ce->ce_flags & ZEND_HAS_STATIC_IN_METHODS) {
-		zend_hash_apply(&ce->function_table, (apply_func_t) zend_cleanup_function_data_full TSRMLS_CC);
+		zend_hash_apply(&ce->function_table, (apply_func_t) zend_cleanup_function_data_full, TSRMLS_C);
 	}
 	if (ce->static_members_table) {
 		int i;
@@ -175,7 +175,7 @@ static inline void cleanup_user_class_data(zend_class_entry *ce TSRMLS_DC)
 	}
 }
 
-static inline void cleanup_internal_class_data(zend_class_entry *ce TSRMLS_DC)
+static inline void cleanup_internal_class_data(zend_class_entry *ce, TSRMLS_D)
 {
 	if (CE_STATIC_MEMBERS(ce)) {
 		int i;
@@ -192,27 +192,27 @@ static inline void cleanup_internal_class_data(zend_class_entry *ce TSRMLS_DC)
 	}
 }
 
-ZEND_API void zend_cleanup_internal_class_data(zend_class_entry *ce TSRMLS_DC)
+ZEND_API void zend_cleanup_internal_class_data(zend_class_entry *ce, TSRMLS_D)
 {
-	cleanup_internal_class_data(ce TSRMLS_CC);
+	cleanup_internal_class_data(ce, TSRMLS_C);
 }
 
-ZEND_API int zend_cleanup_user_class_data(zend_class_entry **pce TSRMLS_DC)
+ZEND_API int zend_cleanup_user_class_data(zend_class_entry **pce, TSRMLS_D)
 {
 	if ((*pce)->type == ZEND_USER_CLASS) {
-		cleanup_user_class_data(*pce TSRMLS_CC);
+		cleanup_user_class_data(*pce, TSRMLS_C);
 		return ZEND_HASH_APPLY_KEEP;
 	} else {
 		return ZEND_HASH_APPLY_STOP;
 	}
 }
 
-ZEND_API int zend_cleanup_class_data(zend_class_entry **pce TSRMLS_DC)
+ZEND_API int zend_cleanup_class_data(zend_class_entry **pce, TSRMLS_D)
 {
 	if ((*pce)->type == ZEND_USER_CLASS) {
-		cleanup_user_class_data(*pce TSRMLS_CC);
+		cleanup_user_class_data(*pce, TSRMLS_C);
 	} else {
-		cleanup_internal_class_data(*pce TSRMLS_CC);
+		cleanup_internal_class_data(*pce, TSRMLS_C);
 	}
 	return 0;
 }
@@ -346,7 +346,7 @@ void zend_class_add_ref(zend_class_entry **ce)
 	(*ce)->refcount++;
 }
 
-ZEND_API void destroy_op_array(zend_op_array *op_array TSRMLS_DC)
+ZEND_API void destroy_op_array(zend_op_array *op_array, TSRMLS_D)
 {
 	zend_literal *literal = op_array->literals;
 	zend_literal *end;
@@ -399,7 +399,7 @@ ZEND_API void destroy_op_array(zend_op_array *op_array TSRMLS_DC)
 		efree(op_array->try_catch_array);
 	}
 	if (op_array->fn_flags & ZEND_ACC_DONE_PASS_TWO) {
-		zend_llist_apply_with_argument(&zend_extensions, (llist_apply_with_arg_func_t) zend_extension_op_array_dtor_handler, op_array TSRMLS_CC);
+		zend_llist_apply_with_argument(&zend_extensions, (llist_apply_with_arg_func_t) zend_extension_op_array_dtor_handler, op_array, TSRMLS_C);
 	}
 	if (op_array->arg_info) {
 		for (i=0; i<op_array->num_args; i++) {
@@ -412,14 +412,14 @@ ZEND_API void destroy_op_array(zend_op_array *op_array TSRMLS_DC)
 	}
 }
 
-void init_op(zend_op *op TSRMLS_DC)
+void init_op(zend_op *op, TSRMLS_D)
 {
 	memset(op, 0, sizeof(zend_op));
 	op->lineno = CG(zend_lineno);
 	SET_UNUSED(op->result);
 }
 
-zend_op *get_next_op(zend_op_array *op_array TSRMLS_DC)
+zend_op *get_next_op(zend_op_array *op_array, TSRMLS_D)
 {
 	zend_uint next_op_num = op_array->last++;
 	zend_op *next_op;
@@ -437,7 +437,7 @@ zend_op *get_next_op(zend_op_array *op_array TSRMLS_DC)
 	
 	next_op = &(op_array->opcodes[next_op_num]);
 	
-	init_op(next_op TSRMLS_CC);
+	init_op(next_op, TSRMLS_C);
 
 	return next_op;
 }
@@ -454,7 +454,7 @@ zend_brk_cont_element *get_next_brk_cont_element(zend_op_array *op_array)
 	return &op_array->brk_cont_array[op_array->last_brk_cont-1];
 }
 
-static void zend_update_extended_info(zend_op_array *op_array TSRMLS_DC)
+static void zend_update_extended_info(zend_op_array *op_array, TSRMLS_D)
 {
 	zend_op *opline = op_array->opcodes, *end=opline+op_array->last;
 
@@ -477,14 +477,14 @@ static void zend_update_extended_info(zend_op_array *op_array TSRMLS_DC)
 	}
 }
 
-static void zend_extension_op_array_handler(zend_extension *extension, zend_op_array *op_array TSRMLS_DC)
+static void zend_extension_op_array_handler(zend_extension *extension, zend_op_array *op_array, TSRMLS_D)
 {
 	if (extension->op_array_handler) {
 		extension->op_array_handler(op_array);
 	}
 }
 
-static void zend_check_finally_breakout(zend_op_array *op_array, zend_uint op_num, zend_uint dst_num TSRMLS_DC)
+static void zend_check_finally_breakout(zend_op_array *op_array, zend_uint op_num, zend_uint dst_num, TSRMLS_D)
 {
 	zend_uint i;
 
@@ -504,14 +504,14 @@ static void zend_check_finally_breakout(zend_op_array *op_array, zend_uint op_nu
 	} 
 }
 
-static void zend_resolve_finally_call(zend_op_array *op_array, zend_uint op_num, zend_uint dst_num TSRMLS_DC)
+static void zend_resolve_finally_call(zend_op_array *op_array, zend_uint op_num, zend_uint dst_num, TSRMLS_D)
 {
 	zend_uint start_op;
 	zend_op *opline;
 	zend_uint i = op_array->last_try_catch;
 
 	if (dst_num != (zend_uint)-1) {
-		zend_check_finally_breakout(op_array, op_num, dst_num TSRMLS_CC);
+		zend_check_finally_breakout(op_array, op_num, dst_num, TSRMLS_C);
 	}
 
 	/* the backward order is mater */
@@ -527,7 +527,7 @@ static void zend_resolve_finally_call(zend_op_array *op_array, zend_uint op_num,
 			/* generate a FAST_CALL to finally block */
 		    start_op = get_next_op_number(op_array);
 
-			opline = get_next_op(op_array TSRMLS_CC);
+			opline = get_next_op(op_array, TSRMLS_C);
 			opline->opcode = ZEND_FAST_CALL;
 			SET_UNUSED(opline->op1);
 			SET_UNUSED(opline->op2);
@@ -546,7 +546,7 @@ static void zend_resolve_finally_call(zend_op_array *op_array, zend_uint op_num,
 				    (dst_num < op_array->try_catch_array[i].try_op ||
 				     dst_num > op_array->try_catch_array[i].finally_end)) {
 					
-					opline = get_next_op(op_array TSRMLS_CC);
+					opline = get_next_op(op_array, TSRMLS_C);
 					opline->opcode = ZEND_FAST_CALL;
 					SET_UNUSED(opline->op1);
 					SET_UNUSED(opline->op2);
@@ -555,7 +555,7 @@ static void zend_resolve_finally_call(zend_op_array *op_array, zend_uint op_num,
 			}
 
 			/* Finish the sequence with original opcode */
-			opline = get_next_op(op_array TSRMLS_CC);
+			opline = get_next_op(op_array, TSRMLS_C);
 			*opline = op_array->opcodes[op_num];
 
 			/* Replace original opcode with jump to this sequence */
@@ -570,7 +570,7 @@ static void zend_resolve_finally_call(zend_op_array *op_array, zend_uint op_num,
 	}	
 }
 
-static void zend_resolve_finally_ret(zend_op_array *op_array, zend_uint op_num TSRMLS_DC)
+static void zend_resolve_finally_ret(zend_op_array *op_array, zend_uint op_num, TSRMLS_D)
 {
 	int i;
 	zend_uint catch_op_num = 0, finally_op_num = 0;
@@ -598,7 +598,7 @@ static void zend_resolve_finally_ret(zend_op_array *op_array, zend_uint op_num T
 	}
 }
 
-static void zend_resolve_finally_calls(zend_op_array *op_array TSRMLS_DC)
+static void zend_resolve_finally_calls(zend_op_array *op_array, TSRMLS_D)
 {
 	zend_uint i;
 	zend_op *opline;
@@ -609,7 +609,7 @@ static void zend_resolve_finally_calls(zend_op_array *op_array TSRMLS_DC)
 			case ZEND_RETURN:
 			case ZEND_RETURN_BY_REF:
 			case ZEND_GENERATOR_RETURN:
-				zend_resolve_finally_call(op_array, i, (zend_uint)-1 TSRMLS_CC);
+				zend_resolve_finally_call(op_array, i, (zend_uint)-1, TSRMLS_C);
 				break;
 			case ZEND_BRK:
 			case ZEND_CONT:
@@ -625,22 +625,22 @@ static void zend_resolve_finally_calls(zend_op_array *op_array TSRMLS_DC)
 						array_offset = jmp_to->parent;
 					}
 				} while (--nest_levels > 0);
-				zend_resolve_finally_call(op_array, i, opline->opcode == ZEND_BRK ? jmp_to->brk : jmp_to->cont TSRMLS_CC);
+				zend_resolve_finally_call(op_array, i, opline->opcode == ZEND_BRK ? jmp_to->brk : jmp_to->cont, TSRMLS_C);
 				break;
 			}
 			case ZEND_GOTO:
 				if (Z_TYPE(op_array->literals[opline->op2.constant].constant) != IS_LONG) {
 					zend_uint num = opline->op2.constant;
 					opline->op2.zv = &op_array->literals[opline->op2.constant].constant;
-					zend_resolve_goto_label(op_array, opline, 1 TSRMLS_CC);
+					zend_resolve_goto_label(op_array, opline, 1, TSRMLS_C);
 					opline->op2.constant = num;					
 				}
 				/* break omitted intentionally */
 			case ZEND_JMP:
-				zend_resolve_finally_call(op_array, i, opline->op1.opline_num TSRMLS_CC);
+				zend_resolve_finally_call(op_array, i, opline->op1.opline_num, TSRMLS_C);
 				break;
 			case ZEND_FAST_RET:
-				zend_resolve_finally_ret(op_array, i TSRMLS_CC);
+				zend_resolve_finally_ret(op_array, i, TSRMLS_C);
 				break;
 			default:
 				break;
@@ -648,7 +648,7 @@ static void zend_resolve_finally_calls(zend_op_array *op_array TSRMLS_DC)
 	}
 }
 
-ZEND_API int pass_two(zend_op_array *op_array TSRMLS_DC)
+ZEND_API int pass_two(zend_op_array *op_array, TSRMLS_D)
 {
 	zend_op *opline, *end;
 
@@ -656,13 +656,13 @@ ZEND_API int pass_two(zend_op_array *op_array TSRMLS_DC)
 		return 0;
 	}
 	if (op_array->has_finally_block) {
-		zend_resolve_finally_calls(op_array TSRMLS_CC);
+		zend_resolve_finally_calls(op_array, TSRMLS_C);
 	}
 	if (CG(compiler_options) & ZEND_COMPILE_EXTENDED_INFO) {
-		zend_update_extended_info(op_array TSRMLS_CC);
+		zend_update_extended_info(op_array, TSRMLS_C);
 	}
 	if (CG(compiler_options) & ZEND_COMPILE_HANDLE_OP_ARRAY) {
-		zend_llist_apply_with_argument(&zend_extensions, (llist_apply_with_arg_func_t) zend_extension_op_array_handler, op_array TSRMLS_CC);
+		zend_llist_apply_with_argument(&zend_extensions, (llist_apply_with_arg_func_t) zend_extension_op_array_handler, op_array, TSRMLS_C);
 	}
 
 	if (!(op_array->fn_flags & ZEND_ACC_INTERACTIVE) && CG(context).vars_size != op_array->last_var) {
@@ -690,7 +690,7 @@ ZEND_API int pass_two(zend_op_array *op_array TSRMLS_DC)
 		switch (opline->opcode) {
 			case ZEND_GOTO:
 				if (Z_TYPE_P(opline->op2.zv) != IS_LONG) {
-					zend_resolve_goto_label(op_array, opline, 1 TSRMLS_CC);
+					zend_resolve_goto_label(op_array, opline, 1, TSRMLS_C);
 				}
 				/* break omitted intentionally */
 			case ZEND_JMP:
@@ -725,10 +725,10 @@ ZEND_API int pass_two(zend_op_array *op_array TSRMLS_DC)
 	return 0;
 }
 
-int print_class(zend_class_entry *class_entry TSRMLS_DC)
+int print_class(zend_class_entry *class_entry, TSRMLS_D)
 {
 	printf("Class %s:\n", class_entry->name);
-	zend_hash_apply(&class_entry->function_table, (apply_func_t) pass_two TSRMLS_CC);
+	zend_hash_apply(&class_entry->function_table, (apply_func_t) pass_two, TSRMLS_C);
 	printf("End of class %s.\n\n", class_entry->name);
 	return 0;
 }

@@ -118,7 +118,7 @@ static void _php_ibase_free_xsqlda(XSQLDA *sqlda) /* {{{ */
 }
 /* }}} */
 
-static void _php_ibase_free_stmt_handle(ibase_db_link *link, isc_stmt_handle stmt TSRMLS_DC) /* {{{ */
+static void _php_ibase_free_stmt_handle(ibase_db_link *link, isc_stmt_handle stmt, TSRMLS_D) /* {{{ */
 {
 	static char info[] = { isc_info_base_level, isc_info_end };
 
@@ -136,7 +136,7 @@ static void _php_ibase_free_stmt_handle(ibase_db_link *link, isc_stmt_handle stm
 }
 /* }}} */
 
-static void _php_ibase_free_result(zend_rsrc_list_entry *rsrc TSRMLS_DC) /* {{{ */
+static void _php_ibase_free_result(zend_rsrc_list_entry *rsrc, TSRMLS_D) /* {{{ */
 {
 	ibase_result *ib_result = (ibase_result *) rsrc->ptr;
 
@@ -147,14 +147,14 @@ static void _php_ibase_free_result(zend_rsrc_list_entry *rsrc TSRMLS_DC) /* {{{ 
 			IBDEBUG("query still valid; don't drop statement handle");
 			ib_result->query->result = NULL;	/* Indicate to query, that result is released */
 		} else {
-			_php_ibase_free_stmt_handle(ib_result->link, ib_result->stmt TSRMLS_CC);
+			_php_ibase_free_stmt_handle(ib_result->link, ib_result->stmt, TSRMLS_C);
 		}
 		efree(ib_result);
 	}
 }
 /* }}} */
 
-static void _php_ibase_free_query(ibase_query *ib_query TSRMLS_DC) /* {{{ */
+static void _php_ibase_free_query(ibase_query *ib_query, TSRMLS_D) /* {{{ */
 {
 	IBDEBUG("Freeing query...");
 
@@ -168,7 +168,7 @@ static void _php_ibase_free_query(ibase_query *ib_query TSRMLS_DC) /* {{{ */
 		IBDEBUG("result still valid; don't drop statement handle");
 		ib_query->result->query = NULL;	/* Indicate to result, that query is released */
 	} else {
-		_php_ibase_free_stmt_handle(ib_query->link, ib_query->stmt TSRMLS_CC);
+		_php_ibase_free_stmt_handle(ib_query->link, ib_query->stmt, TSRMLS_C);
 	}
 	if (ib_query->in_array) {
 		efree(ib_query->in_array);
@@ -182,13 +182,13 @@ static void _php_ibase_free_query(ibase_query *ib_query TSRMLS_DC) /* {{{ */
 }
 /* }}} */
 
-static void php_ibase_free_query_rsrc(zend_rsrc_list_entry *rsrc TSRMLS_DC) /* {{{ */
+static void php_ibase_free_query_rsrc(zend_rsrc_list_entry *rsrc, TSRMLS_D) /* {{{ */
 {
 	ibase_query *ib_query = (ibase_query *)rsrc->ptr;
 
 	if (ib_query != NULL) {
 		IBDEBUG("Preparing to free query by dtor...");
-		_php_ibase_free_query(ib_query TSRMLS_CC);
+		_php_ibase_free_query(ib_query, TSRMLS_C);
 		efree(ib_query);
 	}
 }
@@ -204,7 +204,7 @@ void php_ibase_query_minit(INIT_FUNC_ARGS) /* {{{ */
 /* }}} */
 
 static int _php_ibase_alloc_array(ibase_array **ib_arrayp, XSQLDA *sqlda, /* {{{ */
-	isc_db_handle link, isc_tr_handle trans, unsigned short *array_cnt TSRMLS_DC)
+	isc_db_handle link, isc_tr_handle trans, unsigned short *array_cnt, TSRMLS_D)
 {
 	unsigned short i, n;
 	ibase_array *ar;
@@ -295,7 +295,7 @@ static int _php_ibase_alloc_array(ibase_array **ib_arrayp, XSQLDA *sqlda, /* {{{
 					 */
 				default:
 					_php_ibase_module_error("Unsupported array type %d in relation '%s' column '%s'"
-						TSRMLS_CC, ar_desc->array_desc_dtype, var->relname, var->sqlname);
+						,TSRMLS_C, ar_desc->array_desc_dtype, var->relname, var->sqlname);
 					efree(ar);
 					return FAILURE;
 			} /* switch array_desc_type */
@@ -315,14 +315,14 @@ static int _php_ibase_alloc_array(ibase_array **ib_arrayp, XSQLDA *sqlda, /* {{{
 
 /* allocate and prepare query */
 static int _php_ibase_alloc_query(ibase_query *ib_query, ibase_db_link *link, /* {{{ */
-	ibase_trans *trans, char *query, unsigned short dialect, int trans_res_id TSRMLS_DC)
+	ibase_trans *trans, char *query, unsigned short dialect, int trans_res_id, TSRMLS_D)
 {
 	static char info_type[] = {isc_info_sql_stmt_type};
 	char result[8];
 
 	/* Return FAILURE, if querystring is empty */
 	if (*query == '\0') {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Querystring empty.");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Querystring empty.");
 		return FAILURE;
 	}
 
@@ -400,7 +400,7 @@ static int _php_ibase_alloc_query(ibase_query *ib_query, ibase_db_link *link, /*
 		efree(ib_query->in_sqlda);
 		ib_query->in_sqlda = NULL;
 	} else if (FAILURE == _php_ibase_alloc_array(&ib_query->in_array, ib_query->in_sqlda,
-			link->handle, trans->handle, &ib_query->in_array_cnt TSRMLS_CC)) {
+			link->handle, trans->handle, &ib_query->in_array_cnt, TSRMLS_C)) {
 		goto _php_ibase_alloc_query_error;
 	}
 
@@ -408,7 +408,7 @@ static int _php_ibase_alloc_query(ibase_query *ib_query, ibase_db_link *link, /*
 		efree(ib_query->out_sqlda);
 		ib_query->out_sqlda = NULL;
 	} else 	if (FAILURE == _php_ibase_alloc_array(&ib_query->out_array, ib_query->out_sqlda,
-			link->handle, trans->handle, &ib_query->out_array_cnt TSRMLS_CC)) {
+			link->handle, trans->handle, &ib_query->out_array_cnt, TSRMLS_C)) {
 		goto _php_ibase_alloc_query_error;
 	}
 
@@ -433,7 +433,7 @@ _php_ibase_alloc_query_error:
 /* }}} */
 
 static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /* {{{ */
-	ibase_array *array, int dim TSRMLS_DC)
+	ibase_array *array, int dim, TSRMLS_D)
 {
 	zval null_val, *pnull_val = &null_val;
 	int u_bound = array->ar_desc.array_desc_bounds[dim].array_bound_upper,
@@ -459,7 +459,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 				subval = &pnull_val;
 			}
 
-			if (_php_ibase_bind_array(*subval, buf, slice_size, array, dim+1 TSRMLS_CC) == FAILURE)
+			if (_php_ibase_bind_array(*subval, buf, slice_size, array, dim+1, TSRMLS_C) == FAILURE)
 			{
 				return FAILURE;
 			}
@@ -494,14 +494,14 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 			switch (array->el_type) {
 				case SQL_SHORT:
 					if (l > SHRT_MAX || l < SHRT_MIN) {
-						_php_ibase_module_error("Array parameter exceeds field width" TSRMLS_CC);
+						_php_ibase_module_error("Array parameter exceeds field width", TSRMLS_C);
 						return FAILURE;
 					}
 					*(short*) buf = (short) l;
 					break;
 				case SQL_LONG:
 					if (l > ISC_LONG_MAX || l < ISC_LONG_MIN) {
-						_php_ibase_module_error("Array parameter exceeds field width" TSRMLS_CC);
+						_php_ibase_module_error("Array parameter exceeds field width", TSRMLS_C);
 						return FAILURE;
 					}
 					*(ISC_LONG*) buf = (ISC_LONG) l;
@@ -514,7 +514,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 
 						if (!sscanf(Z_STRVAL_P(val), "%Lf", &l)) {
 							_php_ibase_module_error("Cannot convert '%s' to long double"
-								TSRMLS_CC, Z_STRVAL_P(val));
+								,TSRMLS_C, Z_STRVAL_P(val));
 							return FAILURE;
 						}
 
@@ -538,7 +538,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 				case SQL_SHORT:
 					convert_to_long(val);
 					if (Z_LVAL_P(val) > SHRT_MAX || Z_LVAL_P(val) < SHRT_MIN) {
-						_php_ibase_module_error("Array parameter exceeds field width" TSRMLS_CC);
+						_php_ibase_module_error("Array parameter exceeds field width", TSRMLS_C);
 						return FAILURE;
 					}
 					*(short *) buf = (short) Z_LVAL_P(val);
@@ -547,7 +547,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 					convert_to_long(val);
 #if (SIZEOF_LONG > 4)
 					if (Z_LVAL_P(val) > ISC_LONG_MAX || Z_LVAL_P(val) < ISC_LONG_MIN) {
-						_php_ibase_module_error("Array parameter exceeds field width" TSRMLS_CC);
+						_php_ibase_module_error("Array parameter exceeds field width", TSRMLS_C);
 						return FAILURE;
 					}
 #endif
@@ -561,7 +561,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 					convert_to_string(val);
 					if (!sscanf(Z_STRVAL_P(val), "%" LL_MASK "d", &l)) {
 						_php_ibase_module_error("Cannot convert '%s' to long integer"
-							TSRMLS_CC, Z_STRVAL_P(val));
+							,TSRMLS_C, Z_STRVAL_P(val));
 						return FAILURE;
 					} else {
 						*(ISC_INT64 *) buf = l;
@@ -586,7 +586,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 
 					if (n != 3 && n != 6) {
 						_php_ibase_module_error("Invalid date/time format (expected 3 or 6 fields, got %d."
-							" Use format 'm/d/Y H:i:s'. You gave '%s')" TSRMLS_CC, n, Z_STRVAL_P(val));
+							" Use format 'm/d/Y H:i:s'. You gave '%s')", TSRMLS_C, n, Z_STRVAL_P(val));
 						return FAILURE;
 					}
 					t.tm_year -= 1900;
@@ -603,7 +603,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 
 					if (n != 3) {
 						_php_ibase_module_error("Invalid date format (expected 3 fields, got %d. "
-							"Use format 'm/d/Y' You gave '%s')" TSRMLS_CC, n, Z_STRVAL_P(val));
+							"Use format 'm/d/Y' You gave '%s')", TSRMLS_C, n, Z_STRVAL_P(val));
 						return FAILURE;
 					}
 					t.tm_year -= 1900;
@@ -620,7 +620,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 
 					if (n != 3) {
 						_php_ibase_module_error("Invalid time format (expected 3 fields, got %d. "
-							"Use format 'H:i:s'. You gave '%s')" TSRMLS_CC, n, Z_STRVAL_P(val));
+							"Use format 'H:i:s'. You gave '%s')", TSRMLS_C, n, Z_STRVAL_P(val));
 						return FAILURE;
 					}
 #endif
@@ -637,7 +637,7 @@ static int _php_ibase_bind_array(zval *val, char *buf, unsigned long buf_size, /
 /* }}} */
 
 static int _php_ibase_bind(XSQLDA *sqlda, zval ***b_vars, BIND_BUF *buf, /* {{{ */
-	ibase_query *ib_query TSRMLS_DC)
+	ibase_query *ib_query, TSRMLS_D)
 {
 	int i, array_cnt = 0, rv = SUCCESS;
 
@@ -747,7 +747,7 @@ static int _php_ibase_bind(XSQLDA *sqlda, zval ***b_vars, BIND_BUF *buf, /* {{{ 
 						return FAILURE;
 					}
 
-					if (_php_ibase_blob_add(&b_var, &ib_blob TSRMLS_CC) != SUCCESS) {
+					if (_php_ibase_blob_add(&b_var, &ib_blob, TSRMLS_C) != SUCCESS) {
 						return FAILURE;
 					}
 
@@ -767,7 +767,7 @@ static int _php_ibase_bind(XSQLDA *sqlda, zval ***b_vars, BIND_BUF *buf, /* {{{ 
 					if (Z_STRLEN_P(b_var) != BLOB_ID_LEN ||
 						!_php_ibase_string_to_quad(Z_STRVAL_P(b_var), &buf[i].val.qval)) {
 
-						_php_ibase_module_error("Parameter %d: invalid array ID" TSRMLS_CC,i+1);
+						_php_ibase_module_error("Parameter %d: invalid array ID", TSRMLS_C,i+1);
 						rv = FAILURE;
 					}
 				} else {
@@ -777,9 +777,9 @@ static int _php_ibase_bind(XSQLDA *sqlda, zval ***b_vars, BIND_BUF *buf, /* {{{ 
 					ISC_QUAD array_id = { 0, 0 };
 
 					if (FAILURE == _php_ibase_bind_array(b_var, array_data, ar->ar_size, 
-							ar, 0 TSRMLS_CC)) {
+							ar, 0, TSRMLS_C)) {
 						_php_ibase_module_error("Parameter %d: failed to bind array argument"
-							TSRMLS_CC,i+1);
+							,TSRMLS_C,i+1);
 						efree(array_data);
 						rv = FAILURE;
 						continue;
@@ -969,7 +969,7 @@ static int _php_ibase_exec(INTERNAL_FUNCTION_PARAMETERS, ibase_result **ib_resul
 		in_sqlda = emalloc(XSQLDA_LENGTH(ib_query->in_sqlda->sqld));
 		memcpy(in_sqlda, ib_query->in_sqlda, XSQLDA_LENGTH(ib_query->in_sqlda->sqld));
 		bind_buf = safe_emalloc(sizeof(BIND_BUF), ib_query->in_sqlda->sqld, 0);
-		if (_php_ibase_bind(in_sqlda, args, bind_buf, ib_query TSRMLS_CC) == FAILURE) {
+		if (_php_ibase_bind(in_sqlda, args, bind_buf, ib_query, TSRMLS_C) == FAILURE) {
 			IBDEBUG("Could not bind input XSQLDA");
 			goto _php_ibase_exec_error;
 		}
@@ -1077,7 +1077,7 @@ PHP_FUNCTION(ibase_query)
 		long l;
 
 		default:
-		    if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, 3 TSRMLS_CC, "rrs",
+		    if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, 3, TSRMLS_C, "rrs",
 					&zlink, &ztrans, &query, &query_len)) {
 
 				ZEND_FETCH_RESOURCE2(ib_link, ibase_db_link*, &zlink, -1, LE_LINK, le_link, le_plink);
@@ -1088,7 +1088,7 @@ PHP_FUNCTION(ibase_query)
 				break;
 		    }
 		case 2:
-			if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, 2 TSRMLS_CC, "rs",
+			if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, 2, TSRMLS_C, "rs",
 					&zlink, &query, &query_len)) {
 				_php_ibase_get_link_trans(INTERNAL_FUNCTION_PARAM_PASSTHRU, &zlink, &ib_link, &trans);
 	
@@ -1101,17 +1101,17 @@ PHP_FUNCTION(ibase_query)
 
 			/* the statement is 'CREATE DATABASE ...' if the link argument is IBASE_CREATE */
 			if (SUCCESS == zend_parse_parameters_ex(ZEND_PARSE_PARAMS_QUIET, ZEND_NUM_ARGS()
-					TSRMLS_CC, "ls", &l, &query, &query_len) && l == PHP_IBASE_CREATE) {
+					,TSRMLS_C, "ls", &l, &query, &query_len) && l == PHP_IBASE_CREATE) {
 				isc_db_handle db = NULL;
 				isc_tr_handle trans = NULL;
 
 				if (PG(sql_safe_mode)) {
 					_php_ibase_module_error("CREATE DATABASE is not allowed in SQL safe mode"
-						TSRMLS_CC);
+						,TSRMLS_C);
 
 				} else if (((l = INI_INT("ibase.max_links")) != -1) && (IBG(num_links) >= l)) {
 					_php_ibase_module_error("CREATE DATABASE is not allowed: maximum link count "
-						"(%ld) reached" TSRMLS_CC, l);
+						"(%ld) reached", TSRMLS_C, l);
 
 				} else if (isc_dsql_execute_immediate(IB_STATUS, &db, &trans, (short)query_len, 
 						query, SQL_DIALECT_CURRENT, NULL)) {
@@ -1119,7 +1119,7 @@ PHP_FUNCTION(ibase_query)
 
 				} else if (!db) {
 					_php_ibase_module_error("Connection to created database could not be "
-						"established" TSRMLS_CC);
+						"established", TSRMLS_C);
 
 				} else {
 
@@ -1140,7 +1140,7 @@ PHP_FUNCTION(ibase_query)
 			}					
 		case 1:
 		case 0:
-			if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS() ? 1 : 0 TSRMLS_CC, "s", &query, 
+			if (SUCCESS == zend_parse_parameters(ZEND_NUM_ARGS() ? 1 : 0, TSRMLS_C, "s", &query, 
 					&query_len)) {
 				ZEND_FETCH_RESOURCE2(ib_link, ibase_db_link *, NULL, IBG(default_link), LE_LINK,
 			    	le_link, le_plink);
@@ -1152,9 +1152,9 @@ PHP_FUNCTION(ibase_query)
 	}
 
 	/* open default transaction */
-	if (ib_link == NULL || FAILURE == _php_ibase_def_trans(ib_link, &trans TSRMLS_CC) 
+	if (ib_link == NULL || FAILURE == _php_ibase_def_trans(ib_link, &trans, TSRMLS_C) 
 			|| FAILURE == _php_ibase_alloc_query(&ib_query, ib_link, trans, query, ib_link->dialect,
-				trans_res_id TSRMLS_CC)) {
+				trans_res_id, TSRMLS_C)) {
 		return;
 	}
 
@@ -1163,13 +1163,13 @@ PHP_FUNCTION(ibase_query)
 		    expected_n = ib_query.in_sqlda ? ib_query.in_sqlda->sqld : 0;
 		
 		if (bind_n != expected_n) {
-			php_error_docref(NULL TSRMLS_CC, (bind_n < expected_n) ? E_WARNING : E_NOTICE,
+			php_error_docref(NULL, TSRMLS_C, (bind_n < expected_n) ? E_WARNING : E_NOTICE,
 				"Statement expects %d arguments, %d given", expected_n, bind_n);
 			if (bind_n < expected_n) {
 				break;
 			}
 		} else if (bind_n > 0) {		
-			if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "+", &bind_args, &bind_num) == FAILURE) {
+			if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "+", &bind_args, &bind_num) == FAILURE) {
 				return;
 			}
 		}
@@ -1190,7 +1190,7 @@ PHP_FUNCTION(ibase_query)
 		}
 	} while (0);
 
-	_php_ibase_free_query(&ib_query TSRMLS_CC);
+	_php_ibase_free_query(&ib_query, TSRMLS_C);
 
 	if (bind_args) {
 		efree(bind_args);
@@ -1208,7 +1208,7 @@ PHP_FUNCTION(ibase_affected_rows)
 		
 	RESET_ERRMSG;
 	
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|r", &arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|r", &arg) == FAILURE) {
 		return;
 	}
 
@@ -1266,7 +1266,7 @@ PHP_FUNCTION(ibase_num_rows)
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &result_arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &result_arg) == FAILURE) {
 		return;
 	}
 
@@ -1293,7 +1293,7 @@ PHP_FUNCTION(ibase_num_rows)
 /* }}} */
 
 static int _php_ibase_var_zval(zval *val, void *data, int type, int len, /* {{{ */
-	int scale, int flag TSRMLS_DC)
+	int scale, int flag, TSRMLS_D)
 {
 	static ISC_INT64 const scales[] = { 1, 10, 100, 1000, 
 		10000, 
@@ -1425,7 +1425,7 @@ format_date_time:
 /* }}}	*/
 
 static int _php_ibase_arr_zval(zval *ar_zval, char *data, unsigned long data_size, /* {{{ */
-	ibase_array *ib_array, int dim, int flag TSRMLS_DC)
+	ibase_array *ib_array, int dim, int flag, TSRMLS_D)
 {
 	/**
 	 * Create multidimension array - recursion function
@@ -1447,7 +1447,7 @@ static int _php_ibase_arr_zval(zval *ar_zval, char *data, unsigned long data_siz
 
 			/* recursion here */
 			if (FAILURE == _php_ibase_arr_zval(slice_zval, data, slice_size, ib_array, dim + 1,
-					flag TSRMLS_CC)) {
+					flag, TSRMLS_C)) {
 				return FAILURE;
 			}
 			data += slice_size;
@@ -1457,7 +1457,7 @@ static int _php_ibase_arr_zval(zval *ar_zval, char *data, unsigned long data_siz
 	} else { /* data at last */
 
 		if (FAILURE == _php_ibase_var_zval(ar_zval, data, ib_array->el_type,
-				ib_array->ar_desc.array_desc_length, ib_array->ar_desc.array_desc_scale, flag TSRMLS_CC)) {
+				ib_array->ar_desc.array_desc_length, ib_array->ar_desc.array_desc_scale, flag, TSRMLS_C)) {
 			return FAILURE;
 		}
 
@@ -1481,7 +1481,7 @@ static void _php_ibase_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, int fetch_type) 
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|l", &result_arg, &flag)) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r|l", &result_arg, &flag)) {
 		return;
 	}
 
@@ -1541,7 +1541,7 @@ static void _php_ibase_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, int fetch_type) 
 
 				default:
 					_php_ibase_var_zval(result, var->sqldata, var->sqltype, var->sqllen,
-						var->sqlscale, flag TSRMLS_CC);
+						var->sqlscale, flag, TSRMLS_C);
 					break;
 				case SQL_BLOB:
 					if (flag & PHP_IBASE_FETCH_BLOBS) { /* fetch blob contents into hash */
@@ -1576,7 +1576,7 @@ static void _php_ibase_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, int fetch_type) 
 								item == isc_info_error || i >= sizeof(bl_info)) {
 
 								_php_ibase_module_error("Could not determine BLOB size (internal error)"
-									TSRMLS_CC);
+									,TSRMLS_C);
 								goto _php_ibase_fetch_error;
 							}								
 
@@ -1592,7 +1592,7 @@ static void _php_ibase_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, int fetch_type) 
 						if (max_len == 0) {
 							ZVAL_STRING(result, "", 1);
 						} else if (SUCCESS != _php_ibase_blob_get(result, &blob_handle, 
-								max_len TSRMLS_CC)) {
+								max_len, TSRMLS_C)) {
 							goto _php_ibase_fetch_error;
 						}
 
@@ -1621,7 +1621,7 @@ static void _php_ibase_fetch_hash(INTERNAL_FUNCTION_PARAMETERS, int fetch_type) 
 						}
 
 						if (FAILURE == _php_ibase_arr_zval(result, ar_data, ib_array->ar_size, ib_array,
-								0, flag TSRMLS_CC)) {
+								0, flag, TSRMLS_C)) {
 							efree(ar_data);
 							goto _php_ibase_fetch_error;
 						}
@@ -1694,7 +1694,7 @@ PHP_FUNCTION(ibase_name_result)
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &result_arg, &name_arg, &name_arg_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs", &result_arg, &name_arg, &name_arg_len) == FAILURE) {
 		return;
 	}
 
@@ -1718,7 +1718,7 @@ PHP_FUNCTION(ibase_free_result)
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &result_arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &result_arg) == FAILURE) {
 		return;
 	}
 
@@ -1742,12 +1742,12 @@ PHP_FUNCTION(ibase_prepare)
 	RESET_ERRMSG;
 	
 	if (ZEND_NUM_ARGS() == 1) {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &query, &query_len) == FAILURE) {
 			return;
 		}
 		ZEND_FETCH_RESOURCE2(ib_link, ibase_db_link *, NULL, IBG(default_link), LE_LINK, le_link, le_plink);
 	} else if (ZEND_NUM_ARGS() == 2) {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &link_arg, &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rs", &link_arg, &query, &query_len) == FAILURE) {
 			return;
 		}
 		_php_ibase_get_link_trans(INTERNAL_FUNCTION_PARAM_PASSTHRU, &link_arg, &ib_link, &trans);
@@ -1756,7 +1756,7 @@ PHP_FUNCTION(ibase_prepare)
 			trans_res_id = Z_RESVAL_P(link_arg);
 		}
 	} else {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rrs", &link_arg, &trans_arg, &query, &query_len) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rrs", &link_arg, &trans_arg, &query, &query_len) == FAILURE) {
 			return;
 		}
 		ZEND_FETCH_RESOURCE2(ib_link, ibase_db_link *, &link_arg, -1, LE_LINK, le_link, le_plink);
@@ -1764,13 +1764,13 @@ PHP_FUNCTION(ibase_prepare)
 		trans_res_id = Z_RESVAL_P(trans_arg);
 	}
 
-	if (FAILURE == _php_ibase_def_trans(ib_link, &trans TSRMLS_CC)) {
+	if (FAILURE == _php_ibase_def_trans(ib_link, &trans, TSRMLS_C)) {
 		RETURN_FALSE;
 	}
 
 	ib_query = (ibase_query *) emalloc(sizeof(ibase_query));
 
-	if (FAILURE == _php_ibase_alloc_query(ib_query, ib_link, trans, query, ib_link->dialect, trans_res_id TSRMLS_CC)) {
+	if (FAILURE == _php_ibase_alloc_query(ib_query, ib_link, trans, query, ib_link->dialect, trans_res_id, TSRMLS_C)) {
 		efree(ib_query);
 		RETURN_FALSE;
 	}
@@ -1791,7 +1791,7 @@ PHP_FUNCTION(ibase_execute)
 	
 	RETVAL_FALSE;
 
-	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() ? 1 : 0 TSRMLS_CC, "r", &query)) {
+	if (FAILURE == zend_parse_parameters(ZEND_NUM_ARGS() ? 1 : 0, TSRMLS_C, "r", &query)) {
 		return;
 	}
 
@@ -1802,7 +1802,7 @@ PHP_FUNCTION(ibase_execute)
 			expected_n = ib_query->in_sqlda ? ib_query->in_sqlda->sqld : 0;
 
 		if (bind_n != expected_n) {
-			php_error_docref(NULL TSRMLS_CC, (bind_n < expected_n) ? E_WARNING : E_NOTICE,
+			php_error_docref(NULL, TSRMLS_C, (bind_n < expected_n) ? E_WARNING : E_NOTICE,
 				"Statement expects %d arguments, %d given", expected_n, bind_n);
 
 			if (bind_n < expected_n) {
@@ -1845,7 +1845,7 @@ PHP_FUNCTION(ibase_execute)
 			if (ib_query->statement_type == isc_info_sql_stmt_exec_procedure) {
 				result->stmt = NULL;
 			}
-			ib_query->result_res_id = zend_list_insert(result, le_result TSRMLS_CC);
+			ib_query->result_res_id = zend_list_insert(result, le_result, TSRMLS_C);
 			RETVAL_RESOURCE(ib_query->result_res_id);
 		}
 	} while (0);
@@ -1865,7 +1865,7 @@ PHP_FUNCTION(ibase_free_query)
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &query_arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &query_arg) == FAILURE) {
 		return;
 	}
 
@@ -1885,7 +1885,7 @@ PHP_FUNCTION(ibase_num_fields)
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &result) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &result) == FAILURE) {
 		return;
 	}
 
@@ -2009,7 +2009,7 @@ PHP_FUNCTION(ibase_field_info)
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &result_arg, &field_arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rl", &result_arg, &field_arg) == FAILURE) {
 		return;
 	}
 
@@ -2028,7 +2028,7 @@ PHP_FUNCTION(ibase_field_info)
 	}					
 
 	if (sqlda == NULL) {
-		_php_ibase_module_error("Trying to get field info from a non-select query" TSRMLS_CC);
+		_php_ibase_module_error("Trying to get field info from a non-select query", TSRMLS_C);
 		RETURN_FALSE;
 	}
 
@@ -2048,7 +2048,7 @@ PHP_FUNCTION(ibase_num_params)
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &result) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "r", &result) == FAILURE) {
 		return;
 	}
 
@@ -2072,7 +2072,7 @@ PHP_FUNCTION(ibase_param_info)
 
 	RESET_ERRMSG;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &result_arg, &field_arg) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "rl", &result_arg, &field_arg) == FAILURE) {
 		return;
 	}
 

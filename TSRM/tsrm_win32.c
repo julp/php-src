@@ -40,7 +40,7 @@ static ts_rsrc_id win32_globals_id;
 static tsrm_win32_globals win32_globals;
 #endif
 
-static void tsrm_win32_ctor(tsrm_win32_globals *globals TSRMLS_DC)
+static void tsrm_win32_ctor(tsrm_win32_globals *globals, TSRMLS_D)
 {
 	globals->process = NULL;
 	globals->shm	 = NULL;
@@ -59,7 +59,7 @@ static void tsrm_win32_ctor(tsrm_win32_globals *globals TSRMLS_DC)
 	globals->impersonation_token_sid = NULL;
 }
 
-static void tsrm_win32_dtor(tsrm_win32_globals *globals TSRMLS_DC)
+static void tsrm_win32_dtor(tsrm_win32_globals *globals, TSRMLS_D)
 {
 	shm_pair *ptr;
 
@@ -92,18 +92,18 @@ TSRM_API void tsrm_win32_startup(void)
 #ifdef ZTS
 	ts_allocate_id(&win32_globals_id, sizeof(tsrm_win32_globals), (ts_allocate_ctor)tsrm_win32_ctor, (ts_allocate_ctor)tsrm_win32_dtor);
 #else
-	tsrm_win32_ctor(&win32_globals TSRMLS_CC);
+	tsrm_win32_ctor(&win32_globals, TSRMLS_C);
 #endif
 }
 
 TSRM_API void tsrm_win32_shutdown(void)
 {
 #ifndef ZTS
-	tsrm_win32_dtor(&win32_globals TSRMLS_CC);
+	tsrm_win32_dtor(&win32_globals, TSRMLS_C);
 #endif
 }
 
-char * tsrm_win32_get_path_sid_key(const char *pathname TSRMLS_DC)
+char * tsrm_win32_get_path_sid_key(const char *pathname, TSRMLS_D)
 {
 	PSID pSid = TWG(impersonation_token_sid);
 	DWORD sid_len = pSid ? GetLengthSid(pSid) : 0;
@@ -190,7 +190,7 @@ Finished:
 	return NULL;
 }
 
-TSRM_API int tsrm_win32_access(const char *pathname, int mode TSRMLS_DC)
+TSRM_API int tsrm_win32_access(const char *pathname, int mode, TSRMLS_D)
 {
 	time_t t;
 	HANDLE thread_token = NULL;
@@ -214,7 +214,7 @@ TSRM_API int tsrm_win32_access(const char *pathname, int mode TSRMLS_DC)
 	} else {
 		if(!IS_ABSOLUTE_PATH(pathname, strlen(pathname)+1)) {
 			real_path = (char *)malloc(MAX_PATH);
-			if(tsrm_realpath(pathname, real_path TSRMLS_CC) == NULL) {
+			if(tsrm_realpath(pathname, real_path, TSRMLS_C) == NULL) {
 				goto Finished;
 			}
 			pathname = real_path;
@@ -279,14 +279,14 @@ TSRM_API int tsrm_win32_access(const char *pathname, int mode TSRMLS_DC)
 
 		if (CWDG(realpath_cache_size_limit)) {
 			t = time(0);
-			bucket = realpath_cache_lookup(pathname, strlen(pathname), t TSRMLS_CC);
+			bucket = realpath_cache_lookup(pathname, strlen(pathname), t, TSRMLS_C);
 			if(bucket == NULL && real_path == NULL) {
 				/* We used the pathname directly. Call tsrm_realpath */
 				/* so that entry is created in realpath cache */
 				real_path = (char *)malloc(MAX_PATH);
-				if(tsrm_realpath(pathname, real_path TSRMLS_CC) != NULL) {
+				if(tsrm_realpath(pathname, real_path, TSRMLS_C) != NULL) {
 					pathname = real_path;
-					bucket = realpath_cache_lookup(pathname, strlen(pathname), t TSRMLS_CC);
+					bucket = realpath_cache_lookup(pathname, strlen(pathname), t, TSRMLS_C);
 				}
 			}
  		}
@@ -381,7 +381,7 @@ Finished:
 }
 
 
-static process_pair *process_get(FILE *stream TSRMLS_DC)
+static process_pair *process_get(FILE *stream, TSRMLS_D)
 {
 	process_pair *ptr;
 	process_pair *newptr;
@@ -451,10 +451,10 @@ TSRM_API FILE *popen(const char *command, const char *type)
 {
 	TSRMLS_FETCH();
 
-	return popen_ex(command, type, NULL, NULL TSRMLS_CC);
+	return popen_ex(command, type, NULL, NULL, TSRMLS_C);
 }
 
-TSRM_API FILE *popen_ex(const char *command, const char *type, const char *cwd, char *env TSRMLS_DC)
+TSRM_API FILE *popen_ex(const char *command, const char *type, const char *cwd, char *env, TSRMLS_D)
 {
 	FILE *stream = NULL;
 	int fno, type_len = strlen(type), read, mode;
@@ -551,7 +551,7 @@ TSRM_API FILE *popen_ex(const char *command, const char *type, const char *cwd, 
 	}
 
 	CloseHandle(process.hThread);
-	proc = process_get(NULL TSRMLS_CC);
+	proc = process_get(NULL, TSRMLS_C);
 
 	if (read) {
 		fno = _open_osfhandle((tsrm_intptr_t)in, _O_RDONLY | mode);
@@ -573,7 +573,7 @@ TSRM_API int pclose(FILE *stream)
 	process_pair *process;
 	TSRMLS_FETCH();
 
-	if ((process = process_get(stream TSRMLS_CC)) == NULL) {
+	if ((process = process_get(stream, TSRMLS_C)) == NULL) {
 		return 0;
 	}
 

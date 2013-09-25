@@ -361,7 +361,7 @@ static inline unsigned int get_next_char(
 /* {{{ entity_charset determine_charset
  * returns the charset identifier based on current locale or a hint.
  * defaults to UTF-8 */
-static enum entity_charset determine_charset(char *charset_hint TSRMLS_DC)
+static enum entity_charset determine_charset(char *charset_hint, TSRMLS_D)
 {
 	int i;
 	enum entity_charset charset = cs_utf_8;
@@ -447,7 +447,7 @@ det_charset:
 			}
 		}
 		if (!found) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "charset `%s' not supported, assuming utf-8",
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "charset `%s' not supported, assuming utf-8",
 					charset_hint);
 		}
 	}
@@ -1083,7 +1083,7 @@ static entity_table_opt determine_entity_table(int all, int doctype)
  * only the basic ones, i.e., those in basic_entities_ex + the numeric entities
  * that correspond to quotes.
  */
-PHPAPI char *php_unescape_html_entities(unsigned char *old, size_t oldlen, size_t *newlen, int all, int flags, char *hint_charset TSRMLS_DC)
+PHPAPI char *php_unescape_html_entities(unsigned char *old, size_t oldlen, size_t *newlen, int all, int flags, char *hint_charset, TSRMLS_D)
 {
 	size_t retlen;
 	char *ret;
@@ -1092,7 +1092,7 @@ PHPAPI char *php_unescape_html_entities(unsigned char *old, size_t oldlen, size_
 	size_t new_size = TRAVERSE_FOR_ENTITIES_EXPAND_SIZE(oldlen);
 
 	if (all) {
-		charset = determine_charset(hint_charset TSRMLS_CC);
+		charset = determine_charset(hint_charset, TSRMLS_C);
 	} else {
 		charset = cs_8859_1; /* charset shouldn't matter, use ISO-8859-1 for performance */
 	}
@@ -1123,9 +1123,9 @@ empty_source:
 }
 /* }}} */
 
-PHPAPI char *php_escape_html_entities(unsigned char *old, size_t oldlen, size_t *newlen, int all, int flags, char *hint_charset TSRMLS_DC)
+PHPAPI char *php_escape_html_entities(unsigned char *old, size_t oldlen, size_t *newlen, int all, int flags, char *hint_charset, TSRMLS_D)
 {
-	return php_escape_html_entities_ex(old, oldlen, newlen, all, flags, hint_charset, 1 TSRMLS_CC);
+	return php_escape_html_entities_ex(old, oldlen, newlen, all, flags, hint_charset, 1, TSRMLS_C);
 }
 
 /* {{{ find_entity_for_char */
@@ -1211,11 +1211,11 @@ static inline void find_entity_for_char_basic(
 
 /* {{{ php_escape_html_entities
  */
-PHPAPI char *php_escape_html_entities_ex(unsigned char *old, size_t oldlen, size_t *newlen, int all, int flags, char *hint_charset, zend_bool double_encode TSRMLS_DC)
+PHPAPI char *php_escape_html_entities_ex(unsigned char *old, size_t oldlen, size_t *newlen, int all, int flags, char *hint_charset, zend_bool double_encode, TSRMLS_D)
 {
 	size_t cursor, maxlen, len;
 	char *replaced;
-	enum entity_charset charset = determine_charset(hint_charset TSRMLS_CC);
+	enum entity_charset charset = determine_charset(hint_charset, TSRMLS_C);
 	int doctype = flags & ENT_HTML_DOC_TYPE_MASK;
 	entity_table_opt entity_table;
 	const enc_to_uni *to_uni_table = NULL;
@@ -1226,7 +1226,7 @@ PHPAPI char *php_escape_html_entities_ex(unsigned char *old, size_t oldlen, size
 
 	if (all) { /* replace with all named entities */
 		if (CHARSET_PARTIAL_SUPPORT(charset)) {
-			php_error_docref0(NULL TSRMLS_CC, E_STRICT, "Only basic entities "
+			php_error_docref0(NULL, TSRMLS_C, E_STRICT, "Only basic entities "
 				"substitution is supported for multi-byte encodings other than UTF-8; "
 				"functionality is equivalent to htmlspecialchars");
 		}
@@ -1439,11 +1439,11 @@ static void php_html_entities(INTERNAL_FUNCTION_PARAMETERS, int all)
 	char *replaced;
 	zend_bool double_encode = 1;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|ls!b", &str, &str_len, &flags, &hint_charset, &hint_charset_len, &double_encode) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|ls!b", &str, &str_len, &flags, &hint_charset, &hint_charset_len, &double_encode) == FAILURE) {
 		return;
 	}
 
-	replaced = php_escape_html_entities_ex(str, str_len, &new_len, all, (int) flags, hint_charset, double_encode TSRMLS_CC);
+	replaced = php_escape_html_entities_ex(str, str_len, &new_len, all, (int) flags, hint_charset, double_encode, TSRMLS_C);
 	RETVAL_STRINGL(replaced, (int)new_len, 0);
 }
 /* }}} */
@@ -1488,11 +1488,11 @@ PHP_FUNCTION(htmlspecialchars_decode)
 	long quote_style = ENT_COMPAT;
 	char *replaced;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|l", &str, &str_len, &quote_style) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|l", &str, &str_len, &quote_style) == FAILURE) {
 		return;
 	}
 
-	replaced = php_unescape_html_entities(str, str_len, &new_len, 0 /*!all*/, quote_style, NULL TSRMLS_CC);
+	replaced = php_unescape_html_entities(str, str_len, &new_len, 0 /*!all*/, quote_style, NULL, TSRMLS_C);
 	if (replaced) {
 		RETURN_STRINGL(replaced, (int)new_len, 0);
 	}
@@ -1510,12 +1510,12 @@ PHP_FUNCTION(html_entity_decode)
 	long quote_style = ENT_COMPAT;
 	char *replaced;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|ls", &str, &str_len,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|ls", &str, &str_len,
 							  &quote_style, &hint_charset, &hint_charset_len) == FAILURE) {
 		return;
 	}
 
-	replaced = php_unescape_html_entities(str, str_len, &new_len, 1 /*all*/, quote_style, hint_charset TSRMLS_CC);
+	replaced = php_unescape_html_entities(str, str_len, &new_len, 1 /*all*/, quote_style, hint_charset, TSRMLS_C);
 	if (replaced) {
 		RETURN_STRINGL(replaced, (int)new_len, 0);
 	}
@@ -1605,12 +1605,12 @@ PHP_FUNCTION(get_html_translation_table)
 	 * getting the translated table from data structures that are optimized for
 	 * random access, not traversal */
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|lls",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|lls",
 			&all, &flags, &charset_hint, &charset_hint_len) == FAILURE) {
 		return;
 	}
 
-	charset = determine_charset(charset_hint TSRMLS_CC);
+	charset = determine_charset(charset_hint, TSRMLS_C);
 	doctype = flags & ENT_HTML_DOC_TYPE_MASK;
 	LIMIT_ALL(all, doctype, charset);
 

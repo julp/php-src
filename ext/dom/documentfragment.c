@@ -58,28 +58,28 @@ PHP_METHOD(domdocumentfragment, __construct)
 	dom_object *intern;
 	zend_error_handling error_handling;
 
-	zend_replace_error_handling(EH_THROW, dom_domexception_class_entry, &error_handling TSRMLS_CC);
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O", &id, dom_documentfragment_class_entry) == FAILURE) {
-		zend_restore_error_handling(&error_handling TSRMLS_CC);
+	zend_replace_error_handling(EH_THROW, dom_domexception_class_entry, &error_handling, TSRMLS_C);
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "O", &id, dom_documentfragment_class_entry) == FAILURE) {
+		zend_restore_error_handling(&error_handling, TSRMLS_C);
 		return;
 	}
 
-	zend_restore_error_handling(&error_handling TSRMLS_CC);
+	zend_restore_error_handling(&error_handling, TSRMLS_C);
 	nodep = xmlNewDocFragment(NULL);
 
 	if (!nodep) {
-		php_dom_throw_error(INVALID_STATE_ERR, 1 TSRMLS_CC);
+		php_dom_throw_error(INVALID_STATE_ERR, 1, TSRMLS_C);
 		RETURN_FALSE;
 	}
 
-	intern = (dom_object *)zend_object_store_get_object(id TSRMLS_CC);
+	intern = (dom_object *)zend_object_store_get_object(id, TSRMLS_C);
 	if (intern != NULL) {
 		oldnode = dom_object_get_node(intern);
 		if (oldnode != NULL) {
-			php_libxml_node_free_resource(oldnode  TSRMLS_CC);
+			php_libxml_node_free_resource(oldnode,  TSRMLS_C);
 		}
-		/* php_dom_set_object(intern, nodep TSRMLS_CC); */
-		php_libxml_increment_node_ptr((php_libxml_node_object *)intern, nodep, (void *)intern TSRMLS_CC);
+		/* php_dom_set_object(intern, nodep, TSRMLS_C); */
+		php_libxml_increment_node_ptr((php_libxml_node_object *)intern, nodep, (void *)intern, TSRMLS_C);
 	}
 }
 /* }}} end DOMDocumentFragment::__construct */
@@ -128,14 +128,14 @@ PHP_METHOD(domdocumentfragment, appendXML) {
 	int err;
 	xmlNodePtr lst;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ou", &id, dom_documentfragment_class_entry, &data, &data_len) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ou", &id, dom_documentfragment_class_entry, &data, &data_len) == FAILURE) {
 		return;
 	}
 
 	DOM_GET_OBJ(nodep, id, xmlNodePtr, intern);
 
 	if (dom_node_is_read_only(nodep) == SUCCESS) {
-		php_dom_throw_error(NO_MODIFICATION_ALLOWED_ERR, dom_get_strict_error(intern->document) TSRMLS_CC);
+		php_dom_throw_error(NO_MODIFICATION_ALLOWED_ERR, dom_get_strict_error(intern->document), TSRMLS_C);
 		RETURN_FALSE;
 	}
 

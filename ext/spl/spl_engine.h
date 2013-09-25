@@ -25,26 +25,26 @@
 #include "php_spl.h"
 #include "zend_interfaces.h"
 
-PHPAPI void spl_instantiate(zend_class_entry *pce, zval **object, int alloc TSRMLS_DC);
+PHPAPI void spl_instantiate(zend_class_entry *pce, zval **object, int alloc, TSRMLS_D);
 
-PHPAPI long spl_offset_convert_to_long(zval *offset TSRMLS_DC);
+PHPAPI long spl_offset_convert_to_long(zval *offset, TSRMLS_D);
 
 /* {{{ spl_instantiate_arg_ex1 */
-static inline int spl_instantiate_arg_ex1(zend_class_entry *pce, zval **retval, int alloc, zval *arg1 TSRMLS_DC)
+static inline int spl_instantiate_arg_ex1(zend_class_entry *pce, zval **retval, int alloc, zval *arg1, TSRMLS_D)
 {
-	spl_instantiate(pce, retval, alloc TSRMLS_CC);
+	spl_instantiate(pce, retval, alloc, TSRMLS_C);
 	
-	zend_call_method(retval, pce, &pce->constructor, pce->constructor->common.function_name, strlen(pce->constructor->common.function_name), NULL, 1, arg1, NULL TSRMLS_CC);
+	zend_call_method(retval, pce, &pce->constructor, pce->constructor->common.function_name, strlen(pce->constructor->common.function_name), NULL, 1, arg1, NULL, TSRMLS_C);
 	return 0;
 }
 /* }}} */
 
 /* {{{ spl_instantiate_arg_ex2 */
-static inline int spl_instantiate_arg_ex2(zend_class_entry *pce, zval **retval, int alloc, zval *arg1, zval *arg2 TSRMLS_DC)
+static inline int spl_instantiate_arg_ex2(zend_class_entry *pce, zval **retval, int alloc, zval *arg1, zval *arg2, TSRMLS_D)
 {
-	spl_instantiate(pce, retval, alloc TSRMLS_CC);
+	spl_instantiate(pce, retval, alloc, TSRMLS_C);
 	
-	zend_call_method(retval, pce, &pce->constructor, pce->constructor->common.function_name, strlen(pce->constructor->common.function_name), NULL, 2, arg1, arg2 TSRMLS_CC);
+	zend_call_method(retval, pce, &pce->constructor, pce->constructor->common.function_name, strlen(pce->constructor->common.function_name), NULL, 2, arg1, arg2, TSRMLS_C);
 	return 0;
 }
 /* }}} */

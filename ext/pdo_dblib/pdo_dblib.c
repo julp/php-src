@@ -129,7 +129,7 @@ int error_handler(DBPROCESS *dbproc, int severity, int dberr,
 	strcpy(einfo->sqlstate, state);
 
 #if 0
-	php_error_docref(NULL TSRMLS_CC, E_WARNING,
+	php_error_docref(NULL, TSRMLS_C, E_WARNING,
 		"dblib error: %d %s (severity %d)",
 		dberr, dberrstr, severity);	
 #endif
@@ -157,7 +157,7 @@ int msg_handler(DBPROCESS *dbproc, DBINT msgno, int msgstate,
 	}
 
 #if 0
-	php_error_docref(NULL TSRMLS_CC, E_WARNING, "dblib message: %s (severity %d)", msgtext, severity);
+	php_error_docref(NULL, TSRMLS_C, E_WARNING, "dblib message: %s (severity %d)", msgtext, severity);
 #endif
 
 	return 0;

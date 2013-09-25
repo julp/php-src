@@ -209,7 +209,7 @@ INLINE static int lookup_integer_header(char *headername, int default_value)
  */
 
 INLINE static int
-php_caudium_low_ub_write(const char *str, uint str_length TSRMLS_DC) {
+php_caudium_low_ub_write(const char *str, uint str_length, TSRMLS_D) {
   int sent_bytes = 0;
   struct pike_string *to_write = NULL;
   GET_THIS();
@@ -239,7 +239,7 @@ php_caudium_low_ub_write(const char *str, uint str_length TSRMLS_DC) {
  */
 
 static int
-php_caudium_sapi_ub_write(const char *str, uint str_length TSRMLS_DC)
+php_caudium_sapi_ub_write(const char *str, uint str_length, TSRMLS_D)
 {
   GET_THIS();
   int sent_bytes = 0, fd = MY_FD;
@@ -269,7 +269,7 @@ php_caudium_sapi_ub_write(const char *str, uint str_length TSRMLS_DC)
     }
     THIS->written += sent_bytes;
   } else {
-    THREAD_SAFE_RUN(sent_bytes = php_caudium_low_ub_write(str, str_length TSRMLS_CC),
+    THREAD_SAFE_RUN(sent_bytes = php_caudium_low_ub_write(str, str_length, TSRMLS_C),
 		    "write");
   }
   return sent_bytes;
@@ -335,7 +335,7 @@ php_caudium_set_header(char *header_name, char *value, char *p)
  */
 static int
 php_caudium_sapi_header_handler(sapi_header_struct *sapi_header,
-			      sapi_headers_struct *sapi_headers TSRMLS_DC)
+			      sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
   char *header_name, *header_content, *p;
   header_name = sapi_header->header;
@@ -357,7 +357,7 @@ php_caudium_sapi_header_handler(sapi_header_struct *sapi_header,
  */
 
 INLINE static int
-php_caudium_low_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
+php_caudium_low_send_headers(sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
   struct pike_string *ind;
   struct svalue *s_headermap;
@@ -383,10 +383,10 @@ php_caudium_low_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
 }
 
 static int
-php_caudium_sapi_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
+php_caudium_sapi_send_headers(sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
   int res = 0;
-  THREAD_SAFE_RUN(res = php_caudium_low_send_headers(sapi_headers TSRMLS_CC), "send headers");
+  THREAD_SAFE_RUN(res = php_caudium_low_send_headers(sapi_headers, TSRMLS_C), "send headers");
   return res;
 }
 
@@ -420,7 +420,7 @@ INLINE static int php_caudium_low_read_post(char *buf, uint count_bytes)
 }
 
 static int
-php_caudium_sapi_read_post(char *buf, uint count_bytes TSRMLS_DC)
+php_caudium_sapi_read_post(char *buf, uint count_bytes, TSRMLS_D)
 {
   uint total_read = 0;
   THREAD_SAFE_RUN(total_read = php_caudium_low_read_post(buf, count_bytes), "read post");
@@ -478,7 +478,7 @@ static zend_module_entry php_caudium_module = {
 };
 
 
-INLINE static void low_sapi_caudium_register_variables(zval *track_vars_array TSRMLS_DC)   
+INLINE static void low_sapi_caudium_register_variables(zval *track_vars_array, TSRMLS_D)   
 {
   int i;
   struct keypair *k;
@@ -488,16 +488,16 @@ INLINE static void low_sapi_caudium_register_variables(zval *track_vars_array TS
   struct svalue *val;
   GET_THIS();
   php_register_variable("PHP_SELF", SG(request_info).request_uri,
-			track_vars_array TSRMLS_CC);
+			track_vars_array, TSRMLS_C);
   php_register_variable("GATEWAY_INTERFACE", "CGI/1.1",
-			track_vars_array TSRMLS_CC);
+			track_vars_array, TSRMLS_C);
   php_register_variable("REQUEST_METHOD",
 			(char *) SG(request_info).request_method,
-			track_vars_array TSRMLS_CC);
+			track_vars_array, TSRMLS_C);
   php_register_variable("REQUEST_URI", SG(request_info).request_uri,
-			track_vars_array TSRMLS_CC);
+			track_vars_array, TSRMLS_C);
   php_register_variable("PATH_TRANSLATED", SG(request_info).path_translated,
-			track_vars_array TSRMLS_CC);
+			track_vars_array, TSRMLS_C);
 
   sind = make_shared_string("env");
   headers = low_mapping_string_lookup(REQUEST_DATA, sind);
@@ -509,15 +509,15 @@ INLINE static void low_sapi_caudium_register_variables(zval *track_vars_array TS
       if(ind && ind->type == PIKE_T_STRING &&
 	 val && val->type == PIKE_T_STRING) {
 	php_register_variable(ind->u.string->str, val->u.string->str,
-			      track_vars_array TSRMLS_CC );
+			      track_vars_array, TSRMLS_C );
       }
     }
   }
 }
 
-static void sapi_caudium_register_variables(zval *track_vars_array TSRMLS_DC)
+static void sapi_caudium_register_variables(zval *track_vars_array, TSRMLS_D)
 {
-  THREAD_SAFE_RUN(low_sapi_caudium_register_variables(track_vars_array TSRMLS_CC), "register_variables");
+  THREAD_SAFE_RUN(low_sapi_caudium_register_variables(track_vars_array, TSRMLS_C), "register_variables");
 }
 
 
@@ -654,7 +654,7 @@ static void php_caudium_module_main(php_caudium_request *ureq)
       free_struct(TSRMLS_C);
     }, "Negative run response");
   } else {
-    php_execute_script(&file_handle TSRMLS_CC);
+    php_execute_script(&file_handle, TSRMLS_C);
     php_request_shutdown(NULL);
     THREAD_SAFE_RUN({
       push_int(THIS->written);

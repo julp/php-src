@@ -32,11 +32,11 @@ PHP_FUNCTION(unserialize);
 PHP_FUNCTION(memory_get_usage);
 PHP_FUNCTION(memory_get_peak_usage);
 
-PHPAPI void php_var_dump(zval **struc, int level TSRMLS_DC);
-PHPAPI void php_var_export(zval **struc, int level TSRMLS_DC);
-PHPAPI void php_var_export_ex(zval **struc, int level, smart_str *buf TSRMLS_DC);
+PHPAPI void php_var_dump(zval **struc, int level, TSRMLS_D);
+PHPAPI void php_var_export(zval **struc, int level, TSRMLS_D);
+PHPAPI void php_var_export_ex(zval **struc, int level, smart_str *buf, TSRMLS_D);
 
-PHPAPI void php_debug_zval_dump(zval **struc, int level TSRMLS_DC);
+PHPAPI void php_debug_zval_dump(zval **struc, int level, TSRMLS_D);
 
 typedef HashTable* php_serialize_data_t;
 
@@ -49,8 +49,8 @@ struct php_unserialize_data {
 
 typedef struct php_unserialize_data* php_unserialize_data_t;
 
-PHPAPI void php_var_serialize(smart_str *buf, zval **struc, php_serialize_data_t *var_hash TSRMLS_DC);
-PHPAPI int php_var_unserialize(zval **rval, const unsigned char **p, const unsigned char *max, php_unserialize_data_t *var_hash TSRMLS_DC);
+PHPAPI void php_var_serialize(smart_str *buf, zval **struc, php_serialize_data_t *var_hash, TSRMLS_D);
+PHPAPI int php_var_unserialize(zval **rval, const unsigned char **p, const unsigned char *max, php_unserialize_data_t *var_hash, TSRMLS_D);
 
 #define PHP_VAR_SERIALIZE_INIT(var_hash_ptr) \
 do  { \
@@ -122,11 +122,11 @@ PHPAPI void var_destroy(php_unserialize_data_t *var_hash);
 	
 PHPAPI zend_class_entry *php_create_empty_class(char *class_name, int len);
 
-static inline int php_varname_check(char *name, int name_len, zend_bool silent TSRMLS_DC) /* {{{ */
+static inline int php_varname_check(char *name, int name_len, zend_bool silent, TSRMLS_D) /* {{{ */
 {
     if (name_len == sizeof("GLOBALS") - 1 && !memcmp(name, "GLOBALS", sizeof("GLOBALS") - 1)) {
 		if (!silent) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Attempted GLOBALS variable overwrite");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Attempted GLOBALS variable overwrite");
 		}
         return FAILURE;
     } else if (name[0] == '_' &&
@@ -142,7 +142,7 @@ static inline int php_varname_check(char *name, int name_len, zend_bool silent T
             )
             ) {
 		if (!silent) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Attempted super-global (%s) variable overwrite", name);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Attempted super-global (%s) variable overwrite", name);
 		}
         return FAILURE;
     } else if (name[0] == 'H' &&
@@ -158,7 +158,7 @@ static inline int php_varname_check(char *name, int name_len, zend_bool silent T
             )
             ) {
 		if (!silent) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Attempted long input array (%s) overwrite", name);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Attempted long input array (%s) overwrite", name);
 		}
         return FAILURE;
     }

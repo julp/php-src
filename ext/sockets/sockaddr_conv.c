@@ -11,7 +11,7 @@
 
 #if HAVE_IPV6
 /* Sets addr by hostname, or by ip in string form (AF_INET6) */
-int php_set_inet6_addr(struct sockaddr_in6 *sin6, char *string, php_socket *php_sock TSRMLS_DC) /* {{{ */
+int php_set_inet6_addr(struct sockaddr_in6 *sin6, char *string, php_socket *php_sock, TSRMLS_D) /* {{{ */
 {
 	struct in6_addr tmp;
 #if HAVE_GETADDRINFO
@@ -37,7 +37,7 @@ int php_set_inet6_addr(struct sockaddr_in6 *sin6, char *string, php_socket *php_
 			return 0;
 		}
 		if (addrinfo->ai_family != PF_INET6 || addrinfo->ai_addrlen != sizeof(struct sockaddr_in6)) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Host lookup failed: Non AF_INET6 domain returned on AF_INET6 socket");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Host lookup failed: Non AF_INET6 domain returned on AF_INET6 socket");
 			freeaddrinfo(addrinfo);
 			return 0;
 		}
@@ -47,7 +47,7 @@ int php_set_inet6_addr(struct sockaddr_in6 *sin6, char *string, php_socket *php_
 
 #else
 		/* No IPv6 specific hostname resolution is available on this system? */
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Host lookup failed: getaddrinfo() not available on this system");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Host lookup failed: getaddrinfo() not available on this system");
 		return 0;
 #endif
 
@@ -59,7 +59,7 @@ int php_set_inet6_addr(struct sockaddr_in6 *sin6, char *string, php_socket *php_
 #endif
 
 /* Sets addr by hostname, or by ip in string form (AF_INET)  */
-int php_set_inet_addr(struct sockaddr_in *sin, char *string, php_socket *php_sock TSRMLS_DC) /* {{{ */
+int php_set_inet_addr(struct sockaddr_in *sin, char *string, php_socket *php_sock, TSRMLS_D) /* {{{ */
 {
 	struct in_addr tmp;
 	struct hostent *host_entry;
@@ -77,7 +77,7 @@ int php_set_inet_addr(struct sockaddr_in *sin, char *string, php_socket *php_soc
 			return 0;
 		}
 		if (host_entry->h_addrtype != AF_INET) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Host lookup failed: Non AF_INET domain returned on AF_INET socket");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Host lookup failed: Non AF_INET domain returned on AF_INET socket");
 			return 0;
 		}
 		memcpy(&(sin->sin_addr.s_addr), host_entry->h_addr_list[0], host_entry->h_length);
@@ -89,11 +89,11 @@ int php_set_inet_addr(struct sockaddr_in *sin, char *string, php_socket *php_soc
 
 /* Sets addr by hostname or by ip in string form (AF_INET or AF_INET6,
  * depending on the socket) */
-int php_set_inet46_addr(php_sockaddr_storage *ss, socklen_t *ss_len, char *string, php_socket *php_sock TSRMLS_DC) /* {{{ */
+int php_set_inet46_addr(php_sockaddr_storage *ss, socklen_t *ss_len, char *string, php_socket *php_sock, TSRMLS_D) /* {{{ */
 {
 	if (php_sock->type == AF_INET) {
 		struct sockaddr_in t = {0};
-		if (php_set_inet_addr(&t, string, php_sock TSRMLS_CC)) {
+		if (php_set_inet_addr(&t, string, php_sock, TSRMLS_C)) {
 			memcpy(ss, &t, sizeof t);
 			ss->ss_family = AF_INET;
 			*ss_len = sizeof(t);
@@ -103,7 +103,7 @@ int php_set_inet46_addr(php_sockaddr_storage *ss, socklen_t *ss_len, char *strin
 #if HAVE_IPV6
 	else if (php_sock->type == AF_INET6) {
 		struct sockaddr_in6 t = {0};
-		if (php_set_inet6_addr(&t, string, php_sock TSRMLS_CC)) {
+		if (php_set_inet6_addr(&t, string, php_sock, TSRMLS_C)) {
 			memcpy(ss, &t, sizeof t);
 			ss->ss_family = AF_INET6;
 			*ss_len = sizeof(t);
@@ -112,7 +112,7 @@ int php_set_inet46_addr(php_sockaddr_storage *ss, socklen_t *ss_len, char *strin
 	}
 #endif
 	else {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,
 			"IP address used in the context of an unexpected type of socket");
 	}
 	return 0;

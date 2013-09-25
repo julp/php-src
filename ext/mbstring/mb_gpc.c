@@ -62,11 +62,11 @@ MBSTRING_API SAPI_TREAT_DATA_FUNC(mbstr_treat_data)
 
 	if (arg != PARSE_STRING) {
 		char *value = MBSTRG(internal_encoding_name);
-		_php_mb_ini_mbstring_internal_encoding_set(value, value ? strlen(value): 0 TSRMLS_CC);
+		_php_mb_ini_mbstring_internal_encoding_set(value, value ? strlen(value): 0, TSRMLS_C);
 	}
 
 	if (!MBSTRG(encoding_translation)) {
-		php_default_treat_data(arg, str, destArray TSRMLS_CC);
+		php_default_treat_data(arg, str, destArray, TSRMLS_C);
 		return;
 	}
 
@@ -95,7 +95,7 @@ MBSTRING_API SAPI_TREAT_DATA_FUNC(mbstr_treat_data)
 	}
 
 	if (arg==PARSE_POST) { 
-		sapi_handle_post(array_ptr TSRMLS_CC);
+		sapi_handle_post(array_ptr, TSRMLS_C);
 		return;
 	}
 
@@ -161,7 +161,7 @@ MBSTRING_API SAPI_TREAT_DATA_FUNC(mbstr_treat_data)
 
 	MBSTRG(illegalchars) = 0;
 
-	detected = _php_mb_encoding_handler_ex(&info, array_ptr, res TSRMLS_CC);
+	detected = _php_mb_encoding_handler_ex(&info, array_ptr, res, TSRMLS_C);
 	MBSTRG(http_input_identify) = detected;
 
 	if (detected) {
@@ -192,7 +192,7 @@ MBSTRING_API SAPI_TREAT_DATA_FUNC(mbstr_treat_data)
 /* }}} */
 
 /* {{{ mbfl_no_encoding _php_mb_encoding_handler_ex() */
-const mbfl_encoding *_php_mb_encoding_handler_ex(const php_mb_encoding_handler_info_t *info, zval *arg, char *res TSRMLS_DC)
+const mbfl_encoding *_php_mb_encoding_handler_ex(const php_mb_encoding_handler_info_t *info, zval *arg, char *res, TSRMLS_D)
 {
 	char *var, *val;
 	const char *s1, *s2;
@@ -256,7 +256,7 @@ const mbfl_encoding *_php_mb_encoding_handler_ex(const php_mb_encoding_handler_i
 	} 
 
 	if (n > (PG(max_input_vars) * 2)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Input variables exceeded %ld. To increase the limit change max_input_vars in php.ini.", PG(max_input_vars));
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Input variables exceeded %ld. To increase the limit change max_input_vars in php.ini.", PG(max_input_vars));
 		goto out;
 	}
 
@@ -286,7 +286,7 @@ const mbfl_encoding *_php_mb_encoding_handler_ex(const php_mb_encoding_handler_i
 		}
 		if (!from_encoding) {
 			if (info->report_errors) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to detect encoding");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to detect encoding");
 			}
 			from_encoding = &mbfl_encoding_pass;
 		}
@@ -300,7 +300,7 @@ const mbfl_encoding *_php_mb_encoding_handler_ex(const php_mb_encoding_handler_i
 			mbfl_buffer_converter_illegal_substchar(convd, MBSTRG(current_filter_illegal_substchar));
 		} else {
 			if (info->report_errors) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to create converter");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to create converter");
 			}
 			goto out;
 		}
@@ -331,9 +331,9 @@ const mbfl_encoding *_php_mb_encoding_handler_ex(const php_mb_encoding_handler_i
 		n++;
 		/* we need val to be emalloc()ed */
 		val = estrndup(val, val_len);
-		if (sapi_module.input_filter(info->data_type, var, &val, val_len, &new_val_len TSRMLS_CC)) {
+		if (sapi_module.input_filter(info->data_type, var, &val, val_len, &new_val_len, TSRMLS_C)) {
 			/* add variable to symbol table */
-			php_register_variable_safe(var, val, new_val_len, array_ptr TSRMLS_CC);
+			php_register_variable_safe(var, val, new_val_len, array_ptr, TSRMLS_C);
 		}
 		efree(val);
 		
@@ -376,7 +376,7 @@ SAPI_POST_HANDLER_FUNC(php_mb_post_handler)
 	info.num_from_encodings     = MBSTRG(http_input_list_size); 
 	info.from_language          = MBSTRG(language);
 
-	detected = _php_mb_encoding_handler_ex(&info, arg, SG(request_info).post_data TSRMLS_CC);
+	detected = _php_mb_encoding_handler_ex(&info, arg, SG(request_info).post_data, TSRMLS_C);
 
 	MBSTRG(http_input_identify) = detected;
 	if (detected) {

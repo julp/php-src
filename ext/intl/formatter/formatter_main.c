@@ -36,11 +36,11 @@ static void numfmt_ctor(INTERNAL_FUNCTION_PARAMETERS)
 	FORMATTER_METHOD_INIT_VARS;
 
 	/* Parse parameters. */
-	if( zend_parse_parameters( ZEND_NUM_ARGS() TSRMLS_CC, "sl|s",
+	if( zend_parse_parameters( ZEND_NUM_ARGS(), TSRMLS_C, "sl|s",
 		&locale, &locale_len, &style, &pattern, &pattern_len ) == FAILURE )
 	{
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"numfmt_create: unable to parse input parameters", 0 TSRMLS_CC );
+			"numfmt_create: unable to parse input parameters", 0, TSRMLS_C );
 		zval_dtor(return_value);
 		RETURN_NULL();
 	}
@@ -102,16 +102,16 @@ PHP_FUNCTION( numfmt_get_error_code )
 	FORMATTER_METHOD_INIT_VARS
 
 	/* Parse parameters. */
-	if( zend_parse_method_parameters( ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O",
+	if( zend_parse_method_parameters( ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "O",
 		&object, NumberFormatter_ce_ptr ) == FAILURE )
 	{
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"numfmt_get_error_code: unable to parse input params", 0 TSRMLS_CC );
+			"numfmt_get_error_code: unable to parse input params", 0, TSRMLS_C );
 
 		RETURN_FALSE;
 	}
 
-	nfo = (NumberFormatter_object *) zend_object_store_get_object( object TSRMLS_CC );
+	nfo = (NumberFormatter_object *) zend_object_store_get_object( object, TSRMLS_C );
 
 	/* Return formatter's last error code. */
 	RETURN_LONG( INTL_DATA_ERROR_CODE(nfo) );
@@ -129,19 +129,19 @@ PHP_FUNCTION( numfmt_get_error_message )
 	FORMATTER_METHOD_INIT_VARS
 
 	/* Parse parameters. */
-	if( zend_parse_method_parameters( ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "O",
+	if( zend_parse_method_parameters( ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "O",
 		&object, NumberFormatter_ce_ptr ) == FAILURE )
 	{
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,
-			"numfmt_get_error_message: unable to parse input params", 0 TSRMLS_CC );
+			"numfmt_get_error_message: unable to parse input params", 0, TSRMLS_C );
 
 		RETURN_FALSE;
 	}
 
-	nfo = (NumberFormatter_object *) zend_object_store_get_object( object TSRMLS_CC );
+	nfo = (NumberFormatter_object *) zend_object_store_get_object( object, TSRMLS_C );
 
 	/* Return last error message. */
-	message = intl_error_get_message( INTL_DATA_ERROR_P(nfo) TSRMLS_CC );
+	message = intl_error_get_message( INTL_DATA_ERROR_P(nfo), TSRMLS_C );
 	RETURN_STRING( message, 0);
 }
 /* }}} */

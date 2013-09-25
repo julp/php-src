@@ -46,13 +46,13 @@ static void _cal_easter(INTERNAL_FUNCTION_PARAMETERS, int gm)
 		}
 	}
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC,
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C,
 		"|ll", &year, &method) == FAILURE) {
 			return;
 	}
  
 	if (gm && (year<1970 || year>2037)) {				/* out of range for timestamps */
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "This function is only valid for years between 1970 and 2037 inclusive");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "This function is only valid for years between 1970 and 2037 inclusive");
 		RETURN_FALSE;
 	}
 

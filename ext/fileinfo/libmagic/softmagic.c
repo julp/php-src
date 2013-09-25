@@ -349,7 +349,7 @@ check_fmt(struct magic_set *ms, struct magic *m)
 		return 0;
 	}
 	
-	if ((pce = pcre_get_compiled_regex("~%[-0-9.]*s~", &re_extra, &re_options TSRMLS_CC)) == NULL) {
+	if ((pce = pcre_get_compiled_regex("~%[-0-9.]*s~", &re_extra, &re_options, TSRMLS_C)) == NULL) {
 		return -1;
 	} else {
 	 	return !pcre_exec(pce, re_extra, m->desc, strlen(m->desc), 0, re_options, NULL, 0);
@@ -2026,7 +2026,7 @@ magiccheck(struct magic_set *ms, struct magic *m)
 		convert_libmagic_pattern(pattern, options);
 		
 		l = v = 0;
-		if ((pce = pcre_get_compiled_regex_cache(Z_STRVAL_P(pattern), Z_STRLEN_P(pattern) TSRMLS_CC)) == NULL) {
+		if ((pce = pcre_get_compiled_regex_cache(Z_STRVAL_P(pattern), Z_STRLEN_P(pattern), TSRMLS_C)) == NULL) {
 			zval_dtor(pattern);
 			FREE_ZVAL(pattern);
 			return -1;
@@ -2043,7 +2043,7 @@ magiccheck(struct magic_set *ms, struct magic *m)
 			haystack = estrndup(ms->search.s, ms->search.s_len);
 
 			/* match v = 0, no match v = 1 */
-			php_pcre_match_impl(pce, haystack, ms->search.s_len, retval, subpats, 1, 1, PREG_OFFSET_CAPTURE, 0 TSRMLS_CC);
+			php_pcre_match_impl(pce, haystack, ms->search.s_len, retval, subpats, 1, 1, PREG_OFFSET_CAPTURE, 0, TSRMLS_C);
 			/* Free haystack */
 			efree(haystack);
 			

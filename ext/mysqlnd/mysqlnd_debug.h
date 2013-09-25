@@ -65,16 +65,16 @@ struct st_mysqlnd_plugin_trace_log
 	struct st_mysqlnd_plugin_header plugin_header;
 	struct
 	{
-		MYSQLND_DEBUG * (*trace_instance_init)(const char * skip_functions[] TSRMLS_DC);
-		char * (*get_backtrace)(uint max_levels, size_t * length TSRMLS_DC);
+		MYSQLND_DEBUG * (*trace_instance_init)(const char * skip_functions[], TSRMLS_D);
+		char * (*get_backtrace)(uint max_levels, size_t * length, TSRMLS_D);
 	} methods;
 };
 
 void mysqlnd_debug_trace_plugin_register(TSRMLS_D);
 
-PHPAPI MYSQLND_DEBUG * mysqlnd_debug_init(const char * skip_functions[] TSRMLS_DC);
+PHPAPI MYSQLND_DEBUG * mysqlnd_debug_init(const char * skip_functions[], TSRMLS_D);
 
-PHPAPI char * mysqlnd_get_backtrace(uint max_levels, size_t * length TSRMLS_DC);
+PHPAPI char * mysqlnd_get_backtrace(uint max_levels, size_t * length, TSRMLS_D);
 
 #if defined(__GNUC__) || (defined(_MSC_VER) && (_MSC_VER >= 1400))
 #ifdef PHP_WIN32

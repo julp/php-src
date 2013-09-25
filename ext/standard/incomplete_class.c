@@ -34,7 +34,7 @@ static zend_object_handlers php_incomplete_object_handlers;
 
 /* {{{ incomplete_class_message
  */
-static void incomplete_class_message(zval *object, int error_type TSRMLS_DC)
+static void incomplete_class_message(zval *object, int error_type, TSRMLS_D)
 {
 	char *class_name;
 	zend_bool class_name_alloced = 1;
@@ -46,7 +46,7 @@ static void incomplete_class_message(zval *object, int error_type TSRMLS_DC)
 		class_name = "unknown";
 	}
 
-	php_error_docref(NULL TSRMLS_CC, error_type, INCOMPLETE_CLASS_MSG, class_name);
+	php_error_docref(NULL, TSRMLS_C, error_type, INCOMPLETE_CLASS_MSG, class_name);
 
 	if (class_name_alloced) {
 		efree(class_name);
@@ -54,9 +54,9 @@ static void incomplete_class_message(zval *object, int error_type TSRMLS_DC)
 }
 /* }}} */
 
-static zval *incomplete_class_get_property(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC) /* {{{ */
+static zval *incomplete_class_get_property(zval *object, zval *member, int type, const zend_literal *key, TSRMLS_D) /* {{{ */
 {
-	incomplete_class_message(object, E_NOTICE TSRMLS_CC);
+	incomplete_class_message(object, E_NOTICE, TSRMLS_C);
 
 	if (type == BP_VAR_W || type == BP_VAR_RW) {
 		return EG(error_zval_ptr);
@@ -66,47 +66,47 @@ static zval *incomplete_class_get_property(zval *object, zval *member, int type,
 }
 /* }}} */
 
-static void incomplete_class_write_property(zval *object, zval *member, zval *value, const zend_literal *key TSRMLS_DC) /* {{{ */
+static void incomplete_class_write_property(zval *object, zval *member, zval *value, const zend_literal *key, TSRMLS_D) /* {{{ */
 {
-	incomplete_class_message(object, E_NOTICE TSRMLS_CC);
+	incomplete_class_message(object, E_NOTICE, TSRMLS_C);
 }
 /* }}} */
 
-static zval **incomplete_class_get_property_ptr_ptr(zval *object, zval *member, int type, const zend_literal *key TSRMLS_DC) /* {{{ */
+static zval **incomplete_class_get_property_ptr_ptr(zval *object, zval *member, int type, const zend_literal *key, TSRMLS_D) /* {{{ */
 {
-	incomplete_class_message(object, E_NOTICE TSRMLS_CC);
+	incomplete_class_message(object, E_NOTICE, TSRMLS_C);
 	return &EG(error_zval_ptr);
 }
 /* }}} */
 
-static void incomplete_class_unset_property(zval *object, zval *member, const zend_literal *key TSRMLS_DC) /* {{{ */
+static void incomplete_class_unset_property(zval *object, zval *member, const zend_literal *key, TSRMLS_D) /* {{{ */
 {
-	incomplete_class_message(object, E_NOTICE TSRMLS_CC);
+	incomplete_class_message(object, E_NOTICE, TSRMLS_C);
 }
 /* }}} */
 
-static int incomplete_class_has_property(zval *object, zval *member, int check_empty, const zend_literal *key TSRMLS_DC) /* {{{ */
+static int incomplete_class_has_property(zval *object, zval *member, int check_empty, const zend_literal *key, TSRMLS_D) /* {{{ */
 {
-	incomplete_class_message(object, E_NOTICE TSRMLS_CC);
+	incomplete_class_message(object, E_NOTICE, TSRMLS_C);
 	return 0;
 }
 /* }}} */
 
-static union _zend_function *incomplete_class_get_method(zval **object, char *method, int method_len, const zend_literal *key TSRMLS_DC) /* {{{ */
+static union _zend_function *incomplete_class_get_method(zval **object, char *method, int method_len, const zend_literal *key, TSRMLS_D) /* {{{ */
 {
-	incomplete_class_message(*object, E_ERROR TSRMLS_CC);
+	incomplete_class_message(*object, E_ERROR, TSRMLS_C);
 	return NULL;
 }
 /* }}} */
 
 /* {{{ php_create_incomplete_class
  */
-static zend_object_value php_create_incomplete_object(zend_class_entry *class_type TSRMLS_DC)
+static zend_object_value php_create_incomplete_object(zend_class_entry *class_type, TSRMLS_D)
 {
 	zend_object *object;
 	zend_object_value value;
 
-	value = zend_objects_new(&object, class_type TSRMLS_CC);
+	value = zend_objects_new(&object, class_type, TSRMLS_C);
 	value.handlers = &php_incomplete_object_handlers;
 
 	object_properties_init(object, class_type);
@@ -129,7 +129,7 @@ PHPAPI zend_class_entry *php_create_incomplete_class(TSRMLS_D)
 	php_incomplete_object_handlers.get_property_ptr_ptr = incomplete_class_get_property_ptr_ptr;
     php_incomplete_object_handlers.get_method = incomplete_class_get_method;
 
-	return zend_register_internal_class(&incomplete_class TSRMLS_CC);
+	return zend_register_internal_class(&incomplete_class, TSRMLS_C);
 }
 /* }}} */
 

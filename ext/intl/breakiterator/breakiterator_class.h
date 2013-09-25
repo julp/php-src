@@ -53,13 +53,13 @@ typedef struct {
 	BREAKITER_METHOD_FETCH_OBJECT_NO_CHECK; \
 	if (bio->biter == NULL) \
 	{ \
-		intl_errors_set(&bio->err, U_ILLEGAL_ARGUMENT_ERROR, "Found unconstructed BreakIterator", 0 TSRMLS_CC); \
+		intl_errors_set(&bio->err, U_ILLEGAL_ARGUMENT_ERROR, "Found unconstructed BreakIterator", 0, TSRMLS_C); \
 		RETURN_FALSE; \
 	}
 
-void breakiterator_object_create(zval *object, BreakIterator *break_iter TSRMLS_DC);
+void breakiterator_object_create(zval *object, BreakIterator *break_iter, TSRMLS_D);
 
-void breakiterator_object_construct(zval *object, BreakIterator *break_iter TSRMLS_DC);
+void breakiterator_object_construct(zval *object, BreakIterator *break_iter, TSRMLS_D);
 
 void breakiterator_register_BreakIterator_class(TSRMLS_D);
 

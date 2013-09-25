@@ -79,7 +79,7 @@ error (const char *format,...)
 	va_start(args, format);
 	vspprintf(&tmp, 0, format, args);
 	va_end(args);
-	php_error_docref(NULL TSRMLS_CC, E_WARNING, "%s: %s", LIBNAME, tmp);
+	php_error_docref(NULL, TSRMLS_C, E_WARNING, "%s: %s", LIBNAME, tmp);
 	efree(tmp);
 }
 

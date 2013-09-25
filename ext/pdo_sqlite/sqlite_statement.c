@@ -31,7 +31,7 @@
 #include "php_pdo_sqlite_int.h"
 
 
-static int pdo_sqlite_stmt_dtor(pdo_stmt_t *stmt TSRMLS_DC)
+static int pdo_sqlite_stmt_dtor(pdo_stmt_t *stmt, TSRMLS_D)
 {
 	pdo_sqlite_stmt *S = (pdo_sqlite_stmt*)stmt->driver_data;
 
@@ -43,7 +43,7 @@ static int pdo_sqlite_stmt_dtor(pdo_stmt_t *stmt TSRMLS_DC)
 	return 1;
 }
 
-static int pdo_sqlite_stmt_execute(pdo_stmt_t *stmt TSRMLS_DC)
+static int pdo_sqlite_stmt_execute(pdo_stmt_t *stmt, TSRMLS_D)
 {
 	pdo_sqlite_stmt *S = (pdo_sqlite_stmt*)stmt->driver_data;
 
@@ -76,7 +76,7 @@ static int pdo_sqlite_stmt_execute(pdo_stmt_t *stmt TSRMLS_DC)
 }
 
 static int pdo_sqlite_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_data *param,
-		enum pdo_param_event event_type TSRMLS_DC)
+		enum pdo_param_event event_type, TSRMLS_D)
 {
 	pdo_sqlite_stmt *S = (pdo_sqlite_stmt*)stmt->driver_data;
 
@@ -135,7 +135,7 @@ static int pdo_sqlite_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_d
 								Z_STRLEN_P(param->parameter) = php_stream_copy_to_mem(stm,
 									&Z_STRVAL_P(param->parameter), PHP_STREAM_COPY_ALL, 0);
 							} else {
-								pdo_raise_impl_error(stmt->dbh, stmt, "HY105", "Expected a stream resource" TSRMLS_CC);
+								pdo_raise_impl_error(stmt->dbh, stmt, "HY105", "Expected a stream resource", TSRMLS_C);
 								return 0;
 							}
 						} else if (Z_TYPE_P(param->parameter) == IS_NULL) {
@@ -185,7 +185,7 @@ static int pdo_sqlite_stmt_param_hook(pdo_stmt_t *stmt, struct pdo_bound_param_d
 }
 
 static int pdo_sqlite_stmt_fetch(pdo_stmt_t *stmt,
-	enum pdo_fetch_orientation ori, long offset TSRMLS_DC)
+	enum pdo_fetch_orientation ori, long offset, TSRMLS_D)
 {
 	pdo_sqlite_stmt *S = (pdo_sqlite_stmt*)stmt->driver_data;
 	int i;
@@ -217,7 +217,7 @@ static int pdo_sqlite_stmt_fetch(pdo_stmt_t *stmt,
 	}
 }
 
-static int pdo_sqlite_stmt_describe(pdo_stmt_t *stmt, int colno TSRMLS_DC)
+static int pdo_sqlite_stmt_describe(pdo_stmt_t *stmt, int colno, TSRMLS_D)
 {
 	pdo_sqlite_stmt *S = (pdo_sqlite_stmt*)stmt->driver_data;
 
@@ -246,7 +246,7 @@ static int pdo_sqlite_stmt_describe(pdo_stmt_t *stmt, int colno TSRMLS_DC)
 	return 1;
 }
 
-static int pdo_sqlite_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsigned long *len, int *caller_frees TSRMLS_DC)
+static int pdo_sqlite_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsigned long *len, int *caller_frees, TSRMLS_D)
 {
 	pdo_sqlite_stmt *S = (pdo_sqlite_stmt*)stmt->driver_data;
 	if (!S->stmt) {
@@ -275,7 +275,7 @@ static int pdo_sqlite_stmt_get_col(pdo_stmt_t *stmt, int colno, char **ptr, unsi
 	}
 }
 
-static int pdo_sqlite_stmt_col_meta(pdo_stmt_t *stmt, long colno, zval *return_value TSRMLS_DC)
+static int pdo_sqlite_stmt_col_meta(pdo_stmt_t *stmt, long colno, zval *return_value, TSRMLS_D)
 {
 	pdo_sqlite_stmt *S = (pdo_sqlite_stmt*)stmt->driver_data;
 	const char *str;
@@ -331,7 +331,7 @@ static int pdo_sqlite_stmt_col_meta(pdo_stmt_t *stmt, long colno, zval *return_v
 	return SUCCESS;
 }
 
-static int pdo_sqlite_stmt_cursor_closer(pdo_stmt_t *stmt TSRMLS_DC)
+static int pdo_sqlite_stmt_cursor_closer(pdo_stmt_t *stmt, TSRMLS_D)
 {
 	pdo_sqlite_stmt *S = (pdo_sqlite_stmt*)stmt->driver_data;
 	sqlite3_reset(S->stmt);

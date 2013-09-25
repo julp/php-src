@@ -32,7 +32,7 @@ typedef struct {
 } formatter_data;
 
 formatter_data* formatter_data_create( TSRMLS_D );
-void formatter_data_init( formatter_data* nf_data TSRMLS_DC );
-void formatter_data_free( formatter_data* nf_data TSRMLS_DC );
+void formatter_data_init( formatter_data* nf_data, TSRMLS_D );
+void formatter_data_free( formatter_data* nf_data, TSRMLS_D );
 
 #endif // FORMATTER_DATA_H

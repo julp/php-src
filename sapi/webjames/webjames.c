@@ -39,7 +39,7 @@ static php_webjames_globals webjames_globals;
 
 #define WG(v) (webjames_globals.v)
 
-static int sapi_webjames_ub_write(const char *str, uint str_length TSRMLS_DC)
+static int sapi_webjames_ub_write(const char *str, uint str_length, TSRMLS_D)
 /*unbuffered write - send data straight out to socket*/
 {
 	int totalbytes = 0;
@@ -61,7 +61,7 @@ static int sapi_webjames_ub_write(const char *str, uint str_length TSRMLS_DC)
 	return totalbytes;
 }
 
-static void sapi_webjames_send_header(sapi_header_struct *sapi_header, void *server_context TSRMLS_DC)
+static void sapi_webjames_send_header(sapi_header_struct *sapi_header, void *server_context, TSRMLS_D)
 /*send an HTTP header*/
 {
 	char *header = sapi_header->header;
@@ -84,7 +84,7 @@ static void sapi_webjames_send_header(sapi_header_struct *sapi_header, void *ser
 	}
 }
 
-static int sapi_webjames_read_post(char *buffer, uint count_bytes TSRMLS_DC)
+static int sapi_webjames_read_post(char *buffer, uint count_bytes, TSRMLS_D)
 /*read some of the post data*/
 {
 	if (WG(conn)->body==NULL) return 0;
@@ -101,19 +101,19 @@ static char *sapi_webjames_read_cookies(TSRMLS_D)
 
 #define BUF_SIZE 512
 #define ADD_STRING(name,string)\
-	php_register_variable(name, string, track_vars_array TSRMLS_CC)
+	php_register_variable(name, string, track_vars_array, TSRMLS_C)
 
 #define ADD_NUM(name,field) {\
 	snprintf(buf, BUF_SIZE, "%d", WG(conn)->field);\
-	php_register_variable(name, buf, track_vars_array TSRMLS_CC);\
+	php_register_variable(name, buf, track_vars_array, TSRMLS_C);\
 }
 
 #define ADD_FIELD(name, field) \
 	if (WG(conn)->field) { \
-		php_register_variable(name, WG(conn)->field, track_vars_array TSRMLS_CC); \
+		php_register_variable(name, WG(conn)->field, track_vars_array, TSRMLS_C); \
 	}
 
-static void sapi_webjames_register_variables(zval *track_vars_array TSRMLS_DC)
+static void sapi_webjames_register_variables(zval *track_vars_array, TSRMLS_D)
 {
 	char buf[BUF_SIZE + 1];
 	char *docroot;
@@ -212,7 +212,7 @@ static void webjames_module_main(TSRMLS_D)
 		return;
 	}
 	
-	php_execute_script(&file_handle TSRMLS_CC);
+	php_execute_script(&file_handle, TSRMLS_C);
 	php_request_shutdown(NULL);
 }
 

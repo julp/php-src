@@ -99,8 +99,8 @@ typedef struct _php_snmp_object {
 } php_snmp_object;
 
 
-typedef int (*php_snmp_read_t)(php_snmp_object *snmp_object, zval **retval TSRMLS_DC);
-typedef int (*php_snmp_write_t)(php_snmp_object *snmp_object, zval *newval TSRMLS_DC);
+typedef int (*php_snmp_read_t)(php_snmp_object *snmp_object, zval **retval, TSRMLS_D);
+typedef int (*php_snmp_write_t)(php_snmp_object *snmp_object, zval *newval, TSRMLS_D);
 
 typedef struct _ptp_snmp_prop_handler {
 	const char *name;
@@ -128,7 +128,7 @@ ZEND_END_MODULE_GLOBALS(snmp)
 #endif
 
 #define REGISTER_SNMP_CLASS_CONST_LONG(const_name, value) \
-	zend_declare_class_constant_long(php_snmp_ce, const_name, sizeof(const_name)-1, (long)value TSRMLS_CC);
+	zend_declare_class_constant_long(php_snmp_ce, const_name, sizeof(const_name)-1, (long)value, TSRMLS_C);
 
 #else
 

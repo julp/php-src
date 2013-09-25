@@ -241,7 +241,7 @@ zval* collator_convert_zstr_utf8_to_utf16( zval* utf8_zval )
 /* {{{ collator_convert_object_to_string
  * Convert object to UTF16-encoded string.
  */
-zval* collator_convert_object_to_string( zval* obj TSRMLS_DC )
+zval* collator_convert_object_to_string( zval* obj, TSRMLS_D )
 {
 	zval* zstr        = NULL;
 	UErrorCode status = U_ZERO_ERROR;
@@ -257,7 +257,7 @@ zval* collator_convert_object_to_string( zval* obj TSRMLS_DC )
 	/* Try object's handlers. */
 	if( Z_OBJ_HT_P(obj)->get )
 	{
-		zstr = Z_OBJ_HT_P(obj)->get( obj TSRMLS_CC );
+		zstr = Z_OBJ_HT_P(obj)->get( obj, TSRMLS_C );
 
 		switch( Z_TYPE_P( zstr ) )
 		{
@@ -281,7 +281,7 @@ zval* collator_convert_object_to_string( zval* obj TSRMLS_DC )
 	{
 		ALLOC_INIT_ZVAL( zstr );
 
-		if( Z_OBJ_HT_P(obj)->cast_object( obj, zstr, IS_STRING CAST_OBJECT_SHOULD_FREE TSRMLS_CC ) == FAILURE )
+		if( Z_OBJ_HT_P(obj)->cast_object( obj, zstr, IS_STRING CAST_OBJECT_SHOULD_FREE, TSRMLS_C ) == FAILURE )
 		{
 			/* cast_object failed => bail out. */
 			zval_ptr_dtor( &zstr );

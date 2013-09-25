@@ -29,20 +29,20 @@
 
 #ifdef ZTS
 #define PTSRMLS_D        void ****ptsrm_ls
-#define PTSRMLS_DC       , PTSRMLS_D
+#define P,TSRMLS_D       , PTSRMLS_D
 #define PTSRMLS_C        &tsrm_ls
-#define PTSRMLS_CC       , PTSRMLS_C
+#define P,TSRMLS_C       , PTSRMLS_C
 
 #define PHP_EMBED_START_BLOCK(x,y) { \
     void ***tsrm_ls; \
-    php_embed_init(x, y PTSRMLS_CC); \
+    php_embed_init(x, y P,TSRMLS_C); \
     zend_first_try {
 
 #else
 #define PTSRMLS_D
-#define PTSRMLS_DC
+#define P,TSRMLS_D
 #define PTSRMLS_C
-#define PTSRMLS_CC
+#define P,TSRMLS_C
 
 #define PHP_EMBED_START_BLOCK(x,y) { \
     php_embed_init(x, y); \
@@ -64,7 +64,7 @@
 #endif 
 
 BEGIN_EXTERN_C() 
-EMBED_SAPI_API int php_embed_init(int argc, char **argv PTSRMLS_DC);
+EMBED_SAPI_API int php_embed_init(int argc, char **argv P,TSRMLS_D);
 EMBED_SAPI_API void php_embed_shutdown(TSRMLS_D);
 extern EMBED_SAPI_API sapi_module_struct php_embed_module;
 END_EXTERN_C()

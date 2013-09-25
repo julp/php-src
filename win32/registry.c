@@ -169,7 +169,7 @@ static void delete_internal_hashtable(void *data)
 
 #define RegNotifyFlags (REG_NOTIFY_CHANGE_NAME | REG_NOTIFY_CHANGE_ATTRIBUTES | REG_NOTIFY_CHANGE_LAST_SET)
 
-void UpdateIniFromRegistry(char *path TSRMLS_DC)
+void UpdateIniFromRegistry(char *path, TSRMLS_D)
 {
 	char *p, *orig_path;
 	int path_len;

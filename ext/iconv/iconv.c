@@ -20,6 +20,7 @@
 
 /* $Id$ */
 
+//#define NOCSET
 #ifdef HAVE_CONFIG_H
 #include "config.h"
 #endif
@@ -30,6 +31,7 @@
 #include "main/php_output.h"
 #include "SAPI.h"
 #include "php_ini.h"
+#include "Zend/zend_encodings.h"
 
 #ifdef HAVE_STDLIB_H
 # include <stdlib.h>
@@ -194,7 +196,7 @@ typedef enum _php_iconv_enc_scheme_t {
 static php_iconv_err_t _php_iconv_appendl(smart_str *d, const char *s, size_t l, iconv_t cd);
 static php_iconv_err_t _php_iconv_appendc(smart_str *d, const char c, iconv_t cd);
 
-static void _php_iconv_show_error(php_iconv_err_t err, const char *out_charset, const char *in_charset TSRMLS_DC);
+static void _php_iconv_show_error(php_iconv_err_t err, const char *out_charset, const char *in_charset, TSRMLS_D);
 
 static php_iconv_err_t _php_iconv_strlen(unsigned int *pretval, const char *str, size_t nbytes, const char *enc);
 
@@ -209,8 +211,8 @@ static php_iconv_err_t _php_iconv_mime_decode(smart_str *pretval, const char *st
 static php_iconv_err_t php_iconv_stream_filter_register_factory(TSRMLS_D);
 static php_iconv_err_t php_iconv_stream_filter_unregister_factory(TSRMLS_D);
 
-static int php_iconv_output_conflict(const char *handler_name, size_t handler_name_len TSRMLS_DC);
-static php_output_handler *php_iconv_output_handler_init(const char *name, size_t name_len, size_t chunk_size, int flags TSRMLS_DC);
+static int php_iconv_output_conflict(const char *handler_name, size_t handler_name_len, TSRMLS_D);
+static php_output_handler *php_iconv_output_handler_init(const char *name, size_t name_len, size_t chunk_size, int flags, TSRMLS_D);
 static int php_iconv_output_handler(void **nothing, php_output_context *output_context);
 /* }}} */
 
@@ -222,10 +224,14 @@ static char _generic_superset_name[] = ICONV_UCS4_ENCODING;
 
 static PHP_INI_MH(OnUpdateStringIconvCharset)
 {
+#ifdef NOCSET
 	if(new_value_length >= ICONV_CSNMAXLEN) {
 		return FAILURE;
 	}
-	OnUpdateString(entry, new_value, new_value_length, mh_arg1, mh_arg2, mh_arg3, stage TSRMLS_CC);
+	OnUpdateString(entry, new_value, new_value_length, mh_arg1, mh_arg2, mh_arg3, stage, TSRMLS_C);
+#else
+	php_error_docref(NULL, TSRMLS_C, E_DEPRECATED, "directive %s is deprecated", entry->name);
+#endif
 	return SUCCESS;
 }
 
@@ -276,8 +282,8 @@ PHP_MINIT_FUNCTION(miconv)
 		return FAILURE;
 	}
 
-	php_output_handler_alias_register(ZEND_STRL("ob_iconv_handler"), php_iconv_output_handler_init TSRMLS_CC);
-	php_output_handler_conflict_register(ZEND_STRL("ob_iconv_handler"), php_iconv_output_conflict TSRMLS_CC);
+	php_output_handler_alias_register(ZEND_STRL("ob_iconv_handler"), php_iconv_output_handler_init, TSRMLS_C);
+	php_output_handler_conflict_register(ZEND_STRL("ob_iconv_handler"), php_iconv_output_conflict, TSRMLS_C);
 
 	return SUCCESS;
 }
@@ -297,8 +303,8 @@ PHP_MINFO_FUNCTION(miconv)
 {
 	zval iconv_impl, iconv_ver;
 
-	zend_get_constant("ICONV_IMPL", sizeof("ICONV_IMPL")-1, &iconv_impl TSRMLS_CC);
-	zend_get_constant("ICONV_VERSION", sizeof("ICONV_VERSION")-1, &iconv_ver TSRMLS_CC);
+	zend_get_constant("ICONV_IMPL", sizeof("ICONV_IMPL")-1, &iconv_impl, TSRMLS_C);
+	zend_get_constant("ICONV_VERSION", sizeof("ICONV_VERSION")-1, &iconv_ver, TSRMLS_C);
 
 	php_info_print_table_start();
 	php_info_print_table_row(2, "iconv support", "enabled");
@@ -313,20 +319,20 @@ PHP_MINFO_FUNCTION(miconv)
 }
 /* }}} */
 
-static int php_iconv_output_conflict(const char *handler_name, size_t handler_name_len TSRMLS_DC)
+static int php_iconv_output_conflict(const char *handler_name, size_t handler_name_len, TSRMLS_D)
 {
 	if (php_output_get_level(TSRMLS_C)) {
-		if (php_output_handler_conflict(handler_name, handler_name_len, ZEND_STRL("ob_iconv_handler") TSRMLS_CC)
-		||	php_output_handler_conflict(handler_name, handler_name_len, ZEND_STRL("mb_output_handler") TSRMLS_CC)) {
+		if (php_output_handler_conflict(handler_name, handler_name_len, ZEND_STRL("ob_iconv_handler"), TSRMLS_C)
+		||	php_output_handler_conflict(handler_name, handler_name_len, ZEND_STRL("mb_output_handler"), TSRMLS_C)) {
 			return FAILURE;
 		}
 	}
 	return SUCCESS;
 }
 
-static php_output_handler *php_iconv_output_handler_init(const char *handler_name, size_t handler_name_len, size_t chunk_size, int flags TSRMLS_DC)
+static php_output_handler *php_iconv_output_handler_init(const char *handler_name, size_t handler_name_len, size_t chunk_size, int flags, TSRMLS_D)
 {
-	return php_output_handler_create_internal(handler_name, handler_name_len, php_iconv_output_handler, chunk_size, flags TSRMLS_CC);
+	return php_output_handler_create_internal(handler_name, handler_name_len, php_iconv_output_handler, chunk_size, flags, TSRMLS_C);
 }
 
 static int php_iconv_output_handler(void **nothing, php_output_context *output_context)
@@ -363,14 +369,14 @@ static int php_iconv_output_handler(void **nothing, php_output_context *output_c
 			}
 			if (content_type && SUCCESS == sapi_add_header(content_type, len, 0)) {
 				SG(sapi_headers).send_default_content_type = 0;
-				php_output_handler_hook(PHP_OUTPUT_HANDLER_HOOK_IMMUTABLE, NULL TSRMLS_CC);
+				php_output_handler_hook(PHP_OUTPUT_HANDLER_HOOK_IMMUTABLE, NULL, TSRMLS_C);
 			}
 		}
 	}
 
 	if (output_context->in.used) {
 		output_context->out.free = 1;
-		_php_iconv_show_error(php_iconv_string(output_context->in.data, output_context->in.used, &output_context->out.data, &output_context->out.used, ICONVG(output_encoding), ICONVG(internal_encoding)), ICONVG(output_encoding), ICONVG(internal_encoding) TSRMLS_CC);
+		_php_iconv_show_error(php_iconv_string(output_context->in.data, output_context->in.used, &output_context->out.data, &output_context->out.used, ICONVG(output_encoding), ICONVG(internal_encoding)), ICONVG(output_encoding), ICONVG(internal_encoding), TSRMLS_C);
 	}
 
 	return SUCCESS;
@@ -1913,41 +1919,41 @@ out:
 /* }}} */
 
 /* {{{ php_iconv_show_error() */
-static void _php_iconv_show_error(php_iconv_err_t err, const char *out_charset, const char *in_charset TSRMLS_DC)
+static void _php_iconv_show_error(php_iconv_err_t err, const char *out_charset, const char *in_charset, TSRMLS_D)
 {
 	switch (err) {
 		case PHP_ICONV_ERR_SUCCESS:
 			break;
 
 		case PHP_ICONV_ERR_CONVERTER:
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Cannot open converter");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Cannot open converter");
 			break;
 
 		case PHP_ICONV_ERR_WRONG_CHARSET:
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Wrong charset, conversion from `%s' to `%s' is not allowed",
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Wrong charset, conversion from `%s' to `%s' is not allowed",
 			          in_charset, out_charset);
 			break;
 
 		case PHP_ICONV_ERR_ILLEGAL_CHAR:
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected an incomplete multibyte character in input string");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected an incomplete multibyte character in input string");
 			break;
 
 		case PHP_ICONV_ERR_ILLEGAL_SEQ:
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Detected an illegal character in input string");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Detected an illegal character in input string");
 			break;
 
 		case PHP_ICONV_ERR_TOO_BIG:
 			/* should not happen */
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Buffer length exceeded");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Buffer length exceeded");
 			break;
 
 		case PHP_ICONV_ERR_MALFORMED:
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Malformed string");
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Malformed string");
 			break;
 
 		default:
 			/* other error */
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Unknown error (%d)", errno);
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Unknown error (%d)", errno);
 			break;
 	}
 }
@@ -1957,27 +1963,55 @@ static void _php_iconv_show_error(php_iconv_err_t err, const char *out_charset, 
    Returns the character count of str */
 PHP_FUNCTION(iconv_strlen)
 {
+	const char *realcharset = NULL;
+#ifdef NOCSET
 	char *charset = ICONVG(internal_encoding);
+#else
+	char *charset = NULL;
+	EncodingPtr enc;
+#endif
+	char *str = NULL;
+	int str_len = 0;
 	int charset_len = 0;
-	char *str;
-	int str_len;
 
 	php_iconv_err_t err;
 
 	unsigned int retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|s",
-		&str, &str_len, &charset, &charset_len) == FAILURE) {
+#ifdef NOCSET
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|s",
+		&str, &str_len, &charset, &charset_len) == FAILURE)
+#else
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "E|s", &str, &str_len, &enc, &charset, &charset_len) == FAILURE)
+#endif
+	{
 		RETURN_FALSE;
 	}
-
+#ifdef NOCSET
+	realcharset = charset;
+#else
+	if (2 == ZEND_NUM_ARGS()) {
+		php_error_docref(NULL, TSRMLS_C, E_DEPRECATED, "this is no longer useful to specify charset");
+		if (enc == enc_unassociated) {
+			realcharset = charset;
+		} else {
+			realcharset = enc_name(enc);
+			if (enc != enc_by_name(charset)) {
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "User specified '%s' as charset when string is detected as '%s'", charset, realcharset);
+				RETURN_FALSE;
+			}
+		}
+	} else {
+		realcharset = enc_name(enc);
+	}
+#endif
 	if (charset_len >= ICONV_CSNMAXLEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 		RETURN_FALSE;
 	}
-
-	err = _php_iconv_strlen(&retval, str, str_len, charset);
-	_php_iconv_show_error(err, GENERIC_SUPERSET_NAME, charset TSRMLS_CC);
+printf(">%s< (%d) = >%s<\n", str, str_len, realcharset);
+	err = _php_iconv_strlen(&retval, str, str_len, realcharset);
+	_php_iconv_show_error(err, GENERIC_SUPERSET_NAME, realcharset, TSRMLS_C);
 	if (err == PHP_ICONV_ERR_SUCCESS) {
 		RETVAL_LONG(retval);
 	} else {
@@ -2000,14 +2034,14 @@ PHP_FUNCTION(iconv_substr)
 
 	smart_str retval = {0};
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl|ls",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sl|ls",
 		&str, &str_len, &offset, &length,
 		&charset, &charset_len) == FAILURE) {
 		RETURN_FALSE;
 	}
 
 	if (charset_len >= ICONV_CSNMAXLEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 		RETURN_FALSE;
 	}
 
@@ -2016,7 +2050,7 @@ PHP_FUNCTION(iconv_substr)
 	}
 
 	err = _php_iconv_substr(&retval, str, str_len, offset, length, charset);
-	_php_iconv_show_error(err, GENERIC_SUPERSET_NAME, charset TSRMLS_CC);
+	_php_iconv_show_error(err, GENERIC_SUPERSET_NAME, charset, TSRMLS_C);
 
 	if (err == PHP_ICONV_ERR_SUCCESS && str != NULL && retval.c != NULL) {
 		RETURN_STRINGL(retval.c, retval.len, 0);
@@ -2042,19 +2076,19 @@ PHP_FUNCTION(iconv_strpos)
 
 	unsigned int retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|ls",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss|ls",
 		&haystk, &haystk_len, &ndl, &ndl_len,
 		&offset, &charset, &charset_len) == FAILURE) {
 		RETURN_FALSE;
 	}
 
 	if (charset_len >= ICONV_CSNMAXLEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 		RETURN_FALSE;
 	}
 
 	if (offset < 0) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Offset not contained in string.");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Offset not contained in string.");
 		RETURN_FALSE;
 	}
 
@@ -2064,7 +2098,7 @@ PHP_FUNCTION(iconv_strpos)
 
 	err = _php_iconv_strpos(&retval, haystk, haystk_len, ndl, ndl_len,
 	                        offset, charset);
-	_php_iconv_show_error(err, GENERIC_SUPERSET_NAME, charset TSRMLS_CC);
+	_php_iconv_show_error(err, GENERIC_SUPERSET_NAME, charset, TSRMLS_C);
 
 	if (err == PHP_ICONV_ERR_SUCCESS && retval != (unsigned int)-1) {
 		RETVAL_LONG((long)retval);
@@ -2089,7 +2123,7 @@ PHP_FUNCTION(iconv_strrpos)
 
 	unsigned int retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|s",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss|s",
 		&haystk, &haystk_len, &ndl, &ndl_len,
 		&charset, &charset_len) == FAILURE) {
 		RETURN_FALSE;
@@ -2100,13 +2134,13 @@ PHP_FUNCTION(iconv_strrpos)
 	}
 
 	if (charset_len >= ICONV_CSNMAXLEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 		RETURN_FALSE;
 	}
 
 	err = _php_iconv_strpos(&retval, haystk, haystk_len, ndl, ndl_len,
 	                        -1, charset);
-	_php_iconv_show_error(err, GENERIC_SUPERSET_NAME, charset TSRMLS_CC);
+	_php_iconv_show_error(err, GENERIC_SUPERSET_NAME, charset, TSRMLS_C);
 
 	if (err == PHP_ICONV_ERR_SUCCESS && retval != (unsigned int)-1) {
 		RETVAL_LONG((long)retval);
@@ -2135,7 +2169,7 @@ PHP_FUNCTION(iconv_mime_encode)
 	const char *lfchars = "\r\n";
 	php_iconv_enc_scheme_t scheme_id = PHP_ICONV_ENC_SCHEME_BASE64;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss|a",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss|a",
 		&field_name, &field_name_len, &field_value, &field_value_len,
 		&pref) == FAILURE) {
 
@@ -2161,7 +2195,7 @@ PHP_FUNCTION(iconv_mime_encode)
 
 		if (zend_hash_find(Z_ARRVAL_P(pref), "input-charset", sizeof("input-charset"), (void **)&ppval) == SUCCESS) {
 			if (Z_STRLEN_PP(ppval) >= ICONV_CSNMAXLEN) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 				RETURN_FALSE;
 			}
 
@@ -2173,7 +2207,7 @@ PHP_FUNCTION(iconv_mime_encode)
 
 		if (zend_hash_find(Z_ARRVAL_P(pref), "output-charset", sizeof("output-charset"), (void **)&ppval) == SUCCESS) {
 			if (Z_STRLEN_PP(ppval) >= ICONV_CSNMAXLEN) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 				RETURN_FALSE;
 			}
 
@@ -2217,7 +2251,7 @@ PHP_FUNCTION(iconv_mime_encode)
 	err = _php_iconv_mime_encode(&retval, field_name, field_name_len,
 		field_value, field_value_len, line_len, lfchars, scheme_id,
 		out_charset, in_charset);
-	_php_iconv_show_error(err, out_charset, in_charset TSRMLS_CC);
+	_php_iconv_show_error(err, out_charset, in_charset, TSRMLS_C);
 
 	if (err == PHP_ICONV_ERR_SUCCESS) {
 		if (retval.c != NULL) {
@@ -2250,19 +2284,19 @@ PHP_FUNCTION(iconv_mime_decode)
 
 	php_iconv_err_t err;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|ls",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|ls",
 		&encoded_str, &encoded_str_len, &mode, &charset, &charset_len) == FAILURE) {
 
 		RETURN_FALSE;
 	}
 
 	if (charset_len >= ICONV_CSNMAXLEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 		RETURN_FALSE;
 	}
 
 	err = _php_iconv_mime_decode(&retval, encoded_str, encoded_str_len, charset, NULL, mode);
-	_php_iconv_show_error(err, charset, "???" TSRMLS_CC);
+	_php_iconv_show_error(err, charset, "???", TSRMLS_C);
 
 	if (err == PHP_ICONV_ERR_SUCCESS) {
 		if (retval.c != NULL) {
@@ -2289,14 +2323,14 @@ PHP_FUNCTION(iconv_mime_decode_headers)
 
 	php_iconv_err_t err = PHP_ICONV_ERR_SUCCESS;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|ls",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|ls",
 		&encoded_str, &encoded_str_len, &mode, &charset, &charset_len) == FAILURE) {
 
 		RETURN_FALSE;
 	}
 
 	if (charset_len >= ICONV_CSNMAXLEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 		RETURN_FALSE;
 	}
 
@@ -2367,7 +2401,7 @@ PHP_FUNCTION(iconv_mime_decode_headers)
 	}
 
 	if (err != PHP_ICONV_ERR_SUCCESS) {
-		_php_iconv_show_error(err, charset, "???" TSRMLS_CC);
+		_php_iconv_show_error(err, charset, "???", TSRMLS_C);
 		zval_dtor(return_value);
 		RETVAL_FALSE;
 	}
@@ -2383,18 +2417,18 @@ PHP_NAMED_FUNCTION(php_if_iconv)
 	int in_charset_len = 0, out_charset_len = 0, in_buffer_len;
 	php_iconv_err_t err;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sss",
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sss",
 		&in_charset, &in_charset_len, &out_charset, &out_charset_len, &in_buffer, &in_buffer_len) == FAILURE)
 		return;
 
 	if (in_charset_len >= ICONV_CSNMAXLEN || out_charset_len >= ICONV_CSNMAXLEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 		RETURN_FALSE;
 	}
 
 	err = php_iconv_string(in_buffer, (size_t)in_buffer_len,
 		&out_buffer, &out_len, out_charset, in_charset);
-	_php_iconv_show_error(err, out_charset, in_charset TSRMLS_CC);
+	_php_iconv_show_error(err, out_charset, in_charset, TSRMLS_C);
 	if (err == PHP_ICONV_ERR_SUCCESS && out_buffer != NULL) {
 		RETVAL_STRINGL(out_buffer, out_len, 0);
 	} else {
@@ -2413,11 +2447,11 @@ PHP_FUNCTION(iconv_set_encoding)
 	char *type, *charset;
 	int type_len, charset_len =0, retval;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "ss", &type, &type_len, &charset, &charset_len) == FAILURE)
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ss", &type, &type_len, &charset, &charset_len) == FAILURE)
 		return;
 
 	if (charset_len >= ICONV_CSNMAXLEN) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Charset parameter exceeds the maximum allowed length of %d characters", ICONV_CSNMAXLEN);
 		RETURN_FALSE;
 	}
 
@@ -2446,7 +2480,7 @@ PHP_FUNCTION(iconv_get_encoding)
 	char *type = "all";
 	int type_len = sizeof("all")-1;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "|s", &type, &type_len) == FAILURE)
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "|s", &type, &type_len) == FAILURE)
 		return;
 
 	if (!strcasecmp("all", type)) {
@@ -2526,7 +2560,7 @@ static int php_iconv_stream_filter_append_bucket(
 		php_stream *stream, php_stream_filter *filter,
 		php_stream_bucket_brigade *buckets_out,
 		const char *ps, size_t buf_len, size_t *consumed,
-		int persistent TSRMLS_DC)
+		int persistent, TSRMLS_D)
 {
 	php_stream_bucket *new_bucket;
 	char *out_buf = NULL;
@@ -2559,14 +2593,14 @@ static int php_iconv_stream_filter_append_bucket(
 #if ICONV_SUPPORTS_ERRNO
 				switch (errno) {
 					case EILSEQ:
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): invalid multibyte sequence", self->from_charset, self->to_charset);
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): invalid multibyte sequence", self->from_charset, self->to_charset);
 						goto out_failure;
 
 					case EINVAL:
 						if (ps != NULL) {
 							if (icnt > 0) {
 								if (self->stub_len >= sizeof(self->stub)) {
-									php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): insufficient buffer", self->from_charset, self->to_charset);
+									php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): insufficient buffer", self->from_charset, self->to_charset);
 									goto out_failure;
 								}
 								self->stub[self->stub_len++] = *(ps++);
@@ -2588,11 +2622,11 @@ static int php_iconv_stream_filter_append_bucket(
 
 						if (new_out_buf_size < out_buf_size) {
 							/* whoa! no bigger buckets are sold anywhere... */
-							if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent TSRMLS_CC))) {
+							if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent, TSRMLS_C))) {
 								goto out_failure;
 							}
 
-							php_stream_bucket_append(buckets_out, new_bucket TSRMLS_CC);
+							php_stream_bucket_append(buckets_out, new_bucket, TSRMLS_C);
 
 							out_buf_size = ocnt = initial_out_buf_size;
 							if (NULL == (out_buf = pemalloc(out_buf_size, persistent))) {
@@ -2601,11 +2635,11 @@ static int php_iconv_stream_filter_append_bucket(
 							pd = out_buf;
 						} else {
 							if (NULL == (new_out_buf = perealloc(out_buf, new_out_buf_size, persistent))) {
-								if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent TSRMLS_CC))) {
+								if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent, TSRMLS_C))) {
 									goto out_failure;
 								}
 
-								php_stream_bucket_append(buckets_out, new_bucket TSRMLS_CC);
+								php_stream_bucket_append(buckets_out, new_bucket, TSRMLS_C);
 								return FAILURE;
 							}
 							pd = new_out_buf + (pd - out_buf);
@@ -2616,12 +2650,12 @@ static int php_iconv_stream_filter_append_bucket(
 					} break;
 
 					default:
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unknown error", self->from_charset, self->to_charset);
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unknown error", self->from_charset, self->to_charset);
 						goto out_failure;
 				}
 #else
 				if (ocnt == prev_ocnt) {
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unknown error", self->from_charset, self->to_charset);
+					php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unknown error", self->from_charset, self->to_charset);
 					goto out_failure;
 				}
 #endif
@@ -2638,13 +2672,13 @@ static int php_iconv_stream_filter_append_bucket(
 #if ICONV_SUPPORTS_ERRNO
 			switch (errno) {
 				case EILSEQ:
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): invalid multibyte sequence", self->from_charset, self->to_charset);
+					php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): invalid multibyte sequence", self->from_charset, self->to_charset);
 					goto out_failure;
 
 				case EINVAL:
 					if (ps != NULL) {
 						if (icnt > sizeof(self->stub)) {
-							php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): insufficient buffer", self->from_charset, self->to_charset);
+							php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): insufficient buffer", self->from_charset, self->to_charset);
 							goto out_failure;
 						}
 						memcpy(self->stub, ps, icnt);
@@ -2652,7 +2686,7 @@ static int php_iconv_stream_filter_append_bucket(
 						ps += icnt;
 						icnt = 0;
 					} else {
-						php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unexpected octet values", self->from_charset, self->to_charset);
+						php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unexpected octet values", self->from_charset, self->to_charset);
 						goto out_failure;
 					}
 					break;
@@ -2665,11 +2699,11 @@ static int php_iconv_stream_filter_append_bucket(
 
 					if (new_out_buf_size < out_buf_size) {
 						/* whoa! no bigger buckets are sold anywhere... */
-						if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent TSRMLS_CC))) {
+						if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent, TSRMLS_C))) {
 							goto out_failure;
 						}
 
-						php_stream_bucket_append(buckets_out, new_bucket TSRMLS_CC);
+						php_stream_bucket_append(buckets_out, new_bucket, TSRMLS_C);
 
 						out_buf_size = ocnt = initial_out_buf_size;
 						if (NULL == (out_buf = pemalloc(out_buf_size, persistent))) {
@@ -2678,11 +2712,11 @@ static int php_iconv_stream_filter_append_bucket(
 						pd = out_buf;
 					} else {
 						if (NULL == (new_out_buf = perealloc(out_buf, new_out_buf_size, persistent))) {
-							if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent TSRMLS_CC))) {
+							if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent, TSRMLS_C))) {
 								goto out_failure;
 							}
 
-							php_stream_bucket_append(buckets_out, new_bucket TSRMLS_CC);
+							php_stream_bucket_append(buckets_out, new_bucket, TSRMLS_C);
 							return FAILURE;
 						}
 						pd = new_out_buf + (pd - out_buf);
@@ -2693,12 +2727,12 @@ static int php_iconv_stream_filter_append_bucket(
 				} break;
 
 				default:
-					php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unknown error", self->from_charset, self->to_charset);
+					php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unknown error", self->from_charset, self->to_charset);
 					goto out_failure;
 			}
 #else
 			if (ocnt == prev_ocnt) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unknown error", self->from_charset, self->to_charset);
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "iconv stream filter (\"%s\"=>\"%s\"): unknown error", self->from_charset, self->to_charset);
 				goto out_failure;
 			}
 #endif
@@ -2711,10 +2745,10 @@ static int php_iconv_stream_filter_append_bucket(
 	}
 
 	if (out_buf_size - ocnt > 0) {
-		if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent TSRMLS_CC))) {
+		if (NULL == (new_bucket = php_stream_bucket_new(stream, out_buf, (out_buf_size - ocnt), 1, persistent, TSRMLS_C))) {
 			goto out_failure;
 		}
-		php_stream_bucket_append(buckets_out, new_bucket TSRMLS_CC);
+		php_stream_bucket_append(buckets_out, new_bucket, TSRMLS_C);
 	} else {
 		pefree(out_buf, persistent);
 	}
@@ -2733,7 +2767,7 @@ static php_stream_filter_status_t php_iconv_stream_filter_do_filter(
 		php_stream *stream, php_stream_filter *filter,
 		php_stream_bucket_brigade *buckets_in,
 		php_stream_bucket_brigade *buckets_out,
-		size_t *bytes_consumed, int flags TSRMLS_DC)
+		size_t *bytes_consumed, int flags, TSRMLS_D)
 {
 	php_stream_bucket *bucket = NULL;
 	size_t consumed = 0;
@@ -2742,21 +2776,21 @@ static php_stream_filter_status_t php_iconv_stream_filter_do_filter(
 	while (buckets_in->head != NULL) {
 		bucket = buckets_in->head;
 
-		php_stream_bucket_unlink(bucket TSRMLS_CC);
+		php_stream_bucket_unlink(bucket, TSRMLS_C);
 
 		if (php_iconv_stream_filter_append_bucket(self, stream, filter,
 				buckets_out, bucket->buf, bucket->buflen, &consumed,
-				php_stream_is_persistent(stream) TSRMLS_CC) != SUCCESS) {
+				php_stream_is_persistent(stream), TSRMLS_C) != SUCCESS) {
 			goto out_failure;
 		}
 
-		php_stream_bucket_delref(bucket TSRMLS_CC);
+		php_stream_bucket_delref(bucket, TSRMLS_C);
 	}
 
 	if (flags != PSFS_FLAG_NORMAL) {
 		if (php_iconv_stream_filter_append_bucket(self, stream, filter,
 				buckets_out, NULL, 0, &consumed,
-				php_stream_is_persistent(stream) TSRMLS_CC) != SUCCESS) {
+				php_stream_is_persistent(stream), TSRMLS_C) != SUCCESS) {
 			goto out_failure;
 		}
 	}
@@ -2769,14 +2803,14 @@ static php_stream_filter_status_t php_iconv_stream_filter_do_filter(
 
 out_failure:
 	if (bucket != NULL) {
-		php_stream_bucket_delref(bucket TSRMLS_CC);
+		php_stream_bucket_delref(bucket, TSRMLS_C);
 	}
 	return PSFS_ERR_FATAL;
 }
 /* }}} */
 
 /* {{{ php_iconv_stream_filter_cleanup */
-static void php_iconv_stream_filter_cleanup(php_stream_filter *filter TSRMLS_DC)
+static void php_iconv_stream_filter_cleanup(php_stream_filter *filter, TSRMLS_D)
 {
 	php_iconv_stream_filter_dtor((php_iconv_stream_filter *)filter->abstract);
 	pefree(filter->abstract, ((php_iconv_stream_filter *)filter->abstract)->persistent);
@@ -2790,7 +2824,7 @@ static php_stream_filter_ops php_iconv_stream_filter_ops = {
 };
 
 /* {{{ php_iconv_stream_filter_create */
-static php_stream_filter *php_iconv_stream_filter_factory_create(const char *name, zval *params, int persistent TSRMLS_DC)
+static php_stream_filter *php_iconv_stream_filter_factory_create(const char *name, zval *params, int persistent, TSRMLS_D)
 {
 	php_stream_filter *retval = NULL;
 	php_iconv_stream_filter *inst;
@@ -2843,7 +2877,7 @@ static php_iconv_err_t php_iconv_stream_filter_register_factory(TSRMLS_D)
 
 	if (FAILURE == php_stream_filter_register_factory(
 				php_iconv_stream_filter_ops.label,
-				&filter_factory TSRMLS_CC)) {
+				&filter_factory, TSRMLS_C)) {
 		return PHP_ICONV_ERR_UNKNOWN;
 	}
 	return PHP_ICONV_ERR_SUCCESS;
@@ -2854,7 +2888,7 @@ static php_iconv_err_t php_iconv_stream_filter_register_factory(TSRMLS_D)
 static php_iconv_err_t php_iconv_stream_filter_unregister_factory(TSRMLS_D)
 {
 	if (FAILURE == php_stream_filter_unregister_factory(
-				php_iconv_stream_filter_ops.label TSRMLS_CC)) {
+				php_iconv_stream_filter_ops.label, TSRMLS_C)) {
 		return PHP_ICONV_ERR_UNKNOWN;
 	}
 	return PHP_ICONV_ERR_SUCCESS;

@@ -31,21 +31,21 @@
 #include "php_fopen_wrappers.h"
 #include "SAPI.h"
 
-static size_t php_stream_output_write(php_stream *stream, const char *buf, size_t count TSRMLS_DC) /* {{{ */
+static size_t php_stream_output_write(php_stream *stream, const char *buf, size_t count, TSRMLS_D) /* {{{ */
 {
 	PHPWRITE(buf, count);
 	return count;
 }
 /* }}} */
 
-static size_t php_stream_output_read(php_stream *stream, char *buf, size_t count TSRMLS_DC) /* {{{ */
+static size_t php_stream_output_read(php_stream *stream, char *buf, size_t count, TSRMLS_D) /* {{{ */
 {
 	stream->eof = 1;
 	return 0;
 }
 /* }}} */
 
-static int php_stream_output_close(php_stream *stream, int close_handle TSRMLS_DC) /* {{{ */
+static int php_stream_output_close(php_stream *stream, int close_handle, TSRMLS_D) /* {{{ */
 {
 	return 0;
 }
@@ -63,13 +63,13 @@ php_stream_ops php_stream_output_ops = {
 	NULL  /* set_option */
 };
 
-static size_t php_stream_input_write(php_stream *stream, const char *buf, size_t count TSRMLS_DC) /* {{{ */
+static size_t php_stream_input_write(php_stream *stream, const char *buf, size_t count, TSRMLS_D) /* {{{ */
 {
 	return -1;
 }
 /* }}} */
 
-static size_t php_stream_input_read(php_stream *stream, char *buf, size_t count TSRMLS_DC) /* {{{ */
+static size_t php_stream_input_read(php_stream *stream, char *buf, size_t count, TSRMLS_D) /* {{{ */
 {
 	off_t *position = (off_t*)stream->abstract;
 	size_t read_bytes = 0;
@@ -86,7 +86,7 @@ static size_t php_stream_input_read(php_stream *stream, char *buf, size_t count 
 				memcpy(buf, SG(request_info).raw_post_data + *position, read_bytes);
 			}
 		} else if (sapi_module.read_post) {
-			read_bytes = sapi_module.read_post(buf, count TSRMLS_CC);
+			read_bytes = sapi_module.read_post(buf, count, TSRMLS_C);
 			if (read_bytes <= 0) {
 				stream->eof = 1;
 				read_bytes = 0;
@@ -104,7 +104,7 @@ static size_t php_stream_input_read(php_stream *stream, char *buf, size_t count 
 }
 /* }}} */
 
-static int php_stream_input_close(php_stream *stream, int close_handle TSRMLS_DC) /* {{{ */
+static int php_stream_input_close(php_stream *stream, int close_handle, TSRMLS_D) /* {{{ */
 {
 	efree(stream->abstract);
 
@@ -112,7 +112,7 @@ static int php_stream_input_close(php_stream *stream, int close_handle TSRMLS_DC
 }
 /* }}} */
 
-static int php_stream_input_flush(php_stream *stream TSRMLS_DC) /* {{{ */
+static int php_stream_input_flush(php_stream *stream, TSRMLS_D) /* {{{ */
 {
 	return -1;
 }
@@ -130,7 +130,7 @@ php_stream_ops php_stream_input_ops = {
 	NULL  /* set_option */
 };
 
-static void php_stream_apply_filter_list(php_stream *stream, char *filterlist, int read_chain, int write_chain TSRMLS_DC) /* {{{ */
+static void php_stream_apply_filter_list(php_stream *stream, char *filterlist, int read_chain, int write_chain, TSRMLS_D) /* {{{ */
 {
 	char *p, *token;
 	php_stream_filter *temp_filter;
@@ -139,17 +139,17 @@ static void php_stream_apply_filter_list(php_stream *stream, char *filterlist, i
 	while (p) {
 		php_url_decode(p, strlen(p));
 		if (read_chain) {
-			if ((temp_filter = php_stream_filter_create(p, NULL, php_stream_is_persistent(stream) TSRMLS_CC))) {
+			if ((temp_filter = php_stream_filter_create(p, NULL, php_stream_is_persistent(stream), TSRMLS_C))) {
 				php_stream_filter_append(&stream->readfilters, temp_filter);
 			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to create filter (%s)", p);
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to create filter (%s)", p);
 			}
 		}
 		if (write_chain) {
-			if ((temp_filter = php_stream_filter_create(p, NULL, php_stream_is_persistent(stream) TSRMLS_CC))) {
+			if ((temp_filter = php_stream_filter_create(p, NULL, php_stream_is_persistent(stream), TSRMLS_C))) {
 				php_stream_filter_append(&stream->writefilters, temp_filter);
 			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to create filter (%s)", p);
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to create filter (%s)", p);
 			}
 		}
 		p = php_strtok_r(NULL, "|", &token);
@@ -157,7 +157,7 @@ static void php_stream_apply_filter_list(php_stream *stream, char *filterlist, i
 }
 /* }}} */
 
-php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, char *mode, int options, char **opened_path, php_stream_context *context STREAMS_DC TSRMLS_DC) /* {{{ */
+php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, char *mode, int options, char **opened_path, php_stream_context *context STREAMS_DC, TSRMLS_D) /* {{{ */
 {
 	int fd = -1;
 	int mode_rw = 0;
@@ -177,7 +177,7 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 			path += 11;
 			max_memory = strtol(path, NULL, 10);
 			if (max_memory < 0) {
-				php_error_docref(NULL TSRMLS_CC, E_RECOVERABLE_ERROR, "Max memory must be >= 0");
+				php_error_docref(NULL, TSRMLS_C, E_RECOVERABLE_ERROR, "Max memory must be >= 0");
 				return NULL;
 			}
 		}
@@ -205,7 +205,7 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 	if (!strcasecmp(path, "input")) {
 		if ((options & STREAM_OPEN_FOR_INCLUDE) && !PG(allow_url_include) ) {
 			if (options & REPORT_ERRORS) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "URL file-access is disabled in the server configuration");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "URL file-access is disabled in the server configuration");
 			}
 			return NULL;
 		}
@@ -215,7 +215,7 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 	if (!strcasecmp(path, "stdin")) {
 		if ((options & STREAM_OPEN_FOR_INCLUDE) && !PG(allow_url_include) ) {
 			if (options & REPORT_ERRORS) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "URL file-access is disabled in the server configuration");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "URL file-access is disabled in the server configuration");
 			}
 			return NULL;
 		}
@@ -265,14 +265,14 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 
 		if (strcmp(sapi_module.name, "cli")) {
 			if (options & REPORT_ERRORS) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Direct access to file descriptors is only available from command-line PHP");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Direct access to file descriptors is only available from command-line PHP");
 			}
 			return NULL;
 		}
 
 		if ((options & STREAM_OPEN_FOR_INCLUDE) && !PG(allow_url_include) ) {
 			if (options & REPORT_ERRORS) {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "URL file-access is disabled in the server configuration");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "URL file-access is disabled in the server configuration");
 			}
 			return NULL;
 		}
@@ -280,7 +280,7 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 		start = &path[3];
 		fildes_ori = strtol(start, &end, 10);
 		if (end == start || *end != '\0') {
-			php_stream_wrapper_log_error(wrapper, options TSRMLS_CC,
+			php_stream_wrapper_log_error(wrapper, options, TSRMLS_C,
 				"php://fd/ stream must be specified in the form php://fd/<orig fd>");
 			return NULL;
 		}
@@ -292,14 +292,14 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 #endif
 
 		if (fildes_ori < 0 || fildes_ori >= dtablesize) {
-			php_stream_wrapper_log_error(wrapper, options TSRMLS_CC,
+			php_stream_wrapper_log_error(wrapper, options, TSRMLS_C,
 				"The file descriptors must be non-negative numbers smaller than %d", dtablesize);
 			return NULL;
 		}
 		
 		fd = dup(fildes_ori);
 		if (fd == -1) {
-			php_stream_wrapper_log_error(wrapper, options TSRMLS_CC,
+			php_stream_wrapper_log_error(wrapper, options, TSRMLS_C,
 				"Error duping file descriptor %ld; possibly it doesn't exist: "
 				"[%d]: %s", fildes_ori, errno, strerror(errno));
 			return NULL;
@@ -315,7 +315,7 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 		pathdup = estrndup(path + 6, strlen(path + 6));
 		p = strstr(pathdup, "/resource=");
 		if (!p) {
-			php_error_docref(NULL TSRMLS_CC, E_RECOVERABLE_ERROR, "No URL resource specified");
+			php_error_docref(NULL, TSRMLS_C, E_RECOVERABLE_ERROR, "No URL resource specified");
 			efree(pathdup);
 			return NULL;
 		}
@@ -329,11 +329,11 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 		p = php_strtok_r(pathdup + 1, "/", &token);
 		while (p) {
 			if (!strncasecmp(p, "read=", 5)) {
-				php_stream_apply_filter_list(stream, p + 5, 1, 0 TSRMLS_CC);
+				php_stream_apply_filter_list(stream, p + 5, 1, 0, TSRMLS_C);
 			} else if (!strncasecmp(p, "write=", 6)) {
-				php_stream_apply_filter_list(stream, p + 6, 0, 1 TSRMLS_CC);
+				php_stream_apply_filter_list(stream, p + 6, 0, 1, TSRMLS_C);
 			} else {
-				php_stream_apply_filter_list(stream, p, mode_rw & PHP_STREAM_FILTER_READ, mode_rw & PHP_STREAM_FILTER_WRITE TSRMLS_CC);
+				php_stream_apply_filter_list(stream, p, mode_rw & PHP_STREAM_FILTER_READ, mode_rw & PHP_STREAM_FILTER_WRITE, TSRMLS_C);
 			}
 			p = php_strtok_r(NULL, "/", &token);
 		}
@@ -342,7 +342,7 @@ php_stream * php_stream_url_wrap_php(php_stream_wrapper *wrapper, char *path, ch
 		return stream;
 	} else {
 		/* invalid php://thingy */
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Invalid php:// URL specified");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Invalid php:// URL specified");
 		return NULL;
 	}
 

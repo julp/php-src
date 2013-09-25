@@ -336,15 +336,15 @@ PHP_FUNCTION(nsapi_virtual)
 	Request *rq;
 	nsapi_request_context *rc = (nsapi_request_context *)SG(server_context);
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &uri, &uri_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &uri, &uri_len) == FAILURE) {
 		return;
 	}
 
 	if (!nsapi_servact_service) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to include uri '%s' - Sub-requests not supported on this platform", uri);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to include uri '%s' - Sub-requests not supported on this platform", uri);
 		RETURN_FALSE;
 	} else if (zend_ini_long("zlib.output_compression", sizeof("zlib.output_compression"), 0)) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to include uri '%s' - Sub-requests do not work with zlib.output_compression", uri);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to include uri '%s' - Sub-requests do not work with zlib.output_compression", uri);
 		RETURN_FALSE;
 	} else {
 		php_output_end_all(TSRMLS_C);
@@ -353,7 +353,7 @@ PHP_FUNCTION(nsapi_virtual)
 		/* do the sub-request */
 		/* thanks to Chris Elving from Sun for this code sniplet */
 		if ((rq = request_restart_internal(uri, NULL)) == NULL) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to include uri '%s' - Internal request creation failed", uri);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to include uri '%s' - Internal request creation failed", uri);
 			RETURN_FALSE;
 		}
 
@@ -385,7 +385,7 @@ PHP_FUNCTION(nsapi_virtual)
 		} while (rv == REQ_RESTART);
 
 		if (rq->status_num != 200) {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to include uri '%s' - HTTP status code %d during subrequest", uri, rq->status_num);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to include uri '%s' - HTTP status code %d during subrequest", uri, rq->status_num);
 			request_free(rq);
 			RETURN_FALSE;
 		}
@@ -450,7 +450,7 @@ PHP_FUNCTION(nsapi_response_headers)
 /* SAPI part */
 /*************/
 
-static int sapi_nsapi_ub_write(const char *str, unsigned int str_length TSRMLS_DC)
+static int sapi_nsapi_ub_write(const char *str, unsigned int str_length, TSRMLS_D)
 {
 	int retval;
 	nsapi_request_context *rc = (nsapi_request_context *)SG(server_context);
@@ -490,7 +490,7 @@ static void sapi_nsapi_flush(void *server_context)
 }
 
 /* callback for zend_llist_apply on SAPI_HEADER_DELETE_ALL operation */
-static int php_nsapi_remove_header(sapi_header_struct *sapi_header TSRMLS_DC)
+static int php_nsapi_remove_header(sapi_header_struct *sapi_header, TSRMLS_D)
 {
 	char *header_name, *p;
 	nsapi_request_context *rc = (nsapi_request_context *)SG(server_context);
@@ -515,7 +515,7 @@ static int php_nsapi_remove_header(sapi_header_struct *sapi_header TSRMLS_DC)
 	return ZEND_HASH_APPLY_KEEP;
 }
 
-static int sapi_nsapi_header_handler(sapi_header_struct *sapi_header, sapi_header_op_enum op, sapi_headers_struct *sapi_headers TSRMLS_DC)
+static int sapi_nsapi_header_handler(sapi_header_struct *sapi_header, sapi_header_op_enum op, sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
 	char *header_name, *header_content, *p;
 	nsapi_request_context *rc = (nsapi_request_context *)SG(server_context);
@@ -523,12 +523,12 @@ static int sapi_nsapi_header_handler(sapi_header_struct *sapi_header, sapi_heade
 	switch(op) {
 		case SAPI_HEADER_DELETE_ALL:
 			/* this only deletes headers set or overwritten by PHP, headers previously set by NSAPI are left intact */
-			zend_llist_apply(&sapi_headers->headers, (llist_apply_func_t) php_nsapi_remove_header TSRMLS_CC);
+			zend_llist_apply(&sapi_headers->headers, (llist_apply_func_t) php_nsapi_remove_header, TSRMLS_C);
 			return 0;
 
 		case SAPI_HEADER_DELETE:
 			/* reuse the zend_llist_apply callback function for this, too */
-			php_nsapi_remove_header(sapi_header TSRMLS_CC);
+			php_nsapi_remove_header(sapi_header, TSRMLS_C);
 			return 0;
 
 		case SAPI_HEADER_ADD:
@@ -565,7 +565,7 @@ static int sapi_nsapi_header_handler(sapi_header_struct *sapi_header, sapi_heade
 	}
 }
 
-static int sapi_nsapi_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
+static int sapi_nsapi_send_headers(sapi_headers_struct *sapi_headers, TSRMLS_D)
 {
 	int retval;
 	nsapi_request_context *rc = (nsapi_request_context *)SG(server_context);
@@ -588,7 +588,7 @@ static int sapi_nsapi_send_headers(sapi_headers_struct *sapi_headers TSRMLS_DC)
 	}
 }
 
-static int sapi_nsapi_read_post(char *buffer, uint count_bytes TSRMLS_DC)
+static int sapi_nsapi_read_post(char *buffer, uint count_bytes, TSRMLS_D)
 {
 	nsapi_request_context *rc = (nsapi_request_context *)SG(server_context);
 	char *read_ptr = buffer, *content_length_str = NULL;
@@ -655,7 +655,7 @@ static char *sapi_nsapi_read_cookies(TSRMLS_D)
 	return cookie_string;
 }
 
-static void sapi_nsapi_register_server_variables(zval *track_vars_array TSRMLS_DC)
+static void sapi_nsapi_register_server_variables(zval *track_vars_array, TSRMLS_D)
 {
 	nsapi_request_context *rc = (nsapi_request_context *)SG(server_context);
 	register size_t i;
@@ -667,7 +667,7 @@ static void sapi_nsapi_register_server_variables(zval *track_vars_array TSRMLS_D
 	for (i = 0; i < nsapi_reqpb_size; i++) {
 		value = pblock_findval(nsapi_reqpb[i].nsapi_eq, rc->rq->reqpb);
 		if (value) {
-			php_register_variable((char *)nsapi_reqpb[i].env_var, value, track_vars_array TSRMLS_CC);
+			php_register_variable((char *)nsapi_reqpb[i].env_var, value, track_vars_array, TSRMLS_C);
 		}
 	}
 
@@ -688,7 +688,7 @@ static void sapi_nsapi_register_server_variables(zval *track_vars_array TSRMLS_D
 						*p = '_';
 					}
 				}
-				php_register_variable(value, entry->param->value, track_vars_array TSRMLS_CC);
+				php_register_variable(value, entry->param->value, track_vars_array, TSRMLS_C);
 				efree(value);
 			}
 			entry=entry->next;
@@ -698,50 +698,50 @@ static void sapi_nsapi_register_server_variables(zval *track_vars_array TSRMLS_D
 	for (i = 0; i < nsapi_vars_size; i++) {
 		value = pblock_findval(nsapi_vars[i].nsapi_eq, rc->rq->vars);
 		if (value) {
-			php_register_variable((char *)nsapi_vars[i].env_var, value, track_vars_array TSRMLS_CC);
+			php_register_variable((char *)nsapi_vars[i].env_var, value, track_vars_array, TSRMLS_C);
 		}
 	}
 
 	for (i = 0; i < nsapi_client_size; i++) {
 		value = pblock_findval(nsapi_client[i].nsapi_eq, rc->sn->client);
 		if (value) {
-			php_register_variable((char *)nsapi_client[i].env_var, value, track_vars_array TSRMLS_CC);
+			php_register_variable((char *)nsapi_client[i].env_var, value, track_vars_array, TSRMLS_C);
 		}
 	}
 
 	if (value = session_dns(rc->sn)) {
-		php_register_variable("REMOTE_HOST", value, track_vars_array TSRMLS_CC);
+		php_register_variable("REMOTE_HOST", value, track_vars_array, TSRMLS_C);
 		nsapi_free(value);
 	}
 
 	slprintf(buf, sizeof(buf), "%d", conf_getglobals()->Vport);
-	php_register_variable("SERVER_PORT", buf, track_vars_array TSRMLS_CC);
-	php_register_variable("SERVER_NAME", conf_getglobals()->Vserver_hostname, track_vars_array TSRMLS_CC);
+	php_register_variable("SERVER_PORT", buf, track_vars_array, TSRMLS_C);
+	php_register_variable("SERVER_NAME", conf_getglobals()->Vserver_hostname, track_vars_array, TSRMLS_C);
 
 	value = http_uri2url_dynamic("", "", rc->sn, rc->rq);
-	php_register_variable("SERVER_URL", value, track_vars_array TSRMLS_CC);
+	php_register_variable("SERVER_URL", value, track_vars_array, TSRMLS_C);
 	nsapi_free(value);
 
-	php_register_variable("SERVER_SOFTWARE", system_version(), track_vars_array TSRMLS_CC);
+	php_register_variable("SERVER_SOFTWARE", system_version(), track_vars_array, TSRMLS_C);
 	if (security_active) {
-		php_register_variable("HTTPS", "ON", track_vars_array TSRMLS_CC);
+		php_register_variable("HTTPS", "ON", track_vars_array, TSRMLS_C);
 	}
-	php_register_variable("GATEWAY_INTERFACE", "CGI/1.1", track_vars_array TSRMLS_CC);
+	php_register_variable("GATEWAY_INTERFACE", "CGI/1.1", track_vars_array, TSRMLS_C);
 
 	/* DOCUMENT_ROOT */
 	if (value = request_translate_uri("/", rc->sn)) {
 		pos = strlen(value);
-		php_register_variable_safe("DOCUMENT_ROOT", value, pos-1, track_vars_array TSRMLS_CC);
+		php_register_variable_safe("DOCUMENT_ROOT", value, pos-1, track_vars_array, TSRMLS_C);
 		nsapi_free(value);
 	}
 
 	/* PATH_INFO / PATH_TRANSLATED */
 	if (rc->path_info) {
 		if (value = request_translate_uri(rc->path_info, rc->sn)) {
-			php_register_variable("PATH_TRANSLATED", value, track_vars_array TSRMLS_CC);
+			php_register_variable("PATH_TRANSLATED", value, track_vars_array, TSRMLS_C);
 			nsapi_free(value);
 		}
-		php_register_variable("PATH_INFO", rc->path_info, track_vars_array TSRMLS_CC);
+		php_register_variable("PATH_INFO", rc->path_info, track_vars_array, TSRMLS_C);
 	}
 
 	/* Create full Request-URI & Script-Name */
@@ -751,11 +751,11 @@ static void sapi_nsapi_register_server_variables(zval *track_vars_array TSRMLS_D
 		if (SG(request_info).query_string) {
 			spprintf(&value, 0, "%s?%s", SG(request_info).request_uri, SG(request_info).query_string);
 			if (value) {
-				php_register_variable("REQUEST_URI", value, track_vars_array TSRMLS_CC);
+				php_register_variable("REQUEST_URI", value, track_vars_array, TSRMLS_C);
 				efree(value);
 			}
 		} else {
-			php_register_variable_safe("REQUEST_URI", SG(request_info).request_uri, pos, track_vars_array TSRMLS_CC);
+			php_register_variable_safe("REQUEST_URI", SG(request_info).request_uri, pos, track_vars_array, TSRMLS_C);
 		}
 
 		if (rc->path_info) {
@@ -764,18 +764,18 @@ static void sapi_nsapi_register_server_variables(zval *track_vars_array TSRMLS_D
 				pos = 0;
 			}
 		}
-		php_register_variable_safe("SCRIPT_NAME", SG(request_info).request_uri, pos, track_vars_array TSRMLS_CC);
+		php_register_variable_safe("SCRIPT_NAME", SG(request_info).request_uri, pos, track_vars_array, TSRMLS_C);
 	}
-	php_register_variable("SCRIPT_FILENAME", SG(request_info).path_translated, track_vars_array TSRMLS_CC);
+	php_register_variable("SCRIPT_FILENAME", SG(request_info).path_translated, track_vars_array, TSRMLS_C);
 
 	/* special variables in error mode */
 	if (rc->http_error) {
 		slprintf(buf, sizeof(buf), "%d", rc->http_error);
-		php_register_variable("ERROR_TYPE", buf, track_vars_array TSRMLS_CC);
+		php_register_variable("ERROR_TYPE", buf, track_vars_array, TSRMLS_C);
 	}
 }
 
-static void nsapi_log_message(char *message TSRMLS_DC)
+static void nsapi_log_message(char *message, TSRMLS_D)
 {
 	nsapi_request_context *rc = (nsapi_request_context *)SG(server_context);
 
@@ -842,7 +842,7 @@ static sapi_module_struct nsapi_sapi_module = {
 	STANDARD_SAPI_MODULE_PROPERTIES
 };
 
-static void nsapi_php_ini_entries(NSLS_D TSRMLS_DC)
+static void nsapi_php_ini_entries(NSLS_D, TSRMLS_D)
 {
 	struct pb_entry *entry;
 	register int i,j,ok;
@@ -1028,9 +1028,9 @@ int NSAPI_PUBLIC php5_execute(pblock *pb, Session *sn, Request *rq)
 	SG(request_info).content_length = (content_length == NULL) ? 0 : strtoul(content_length, 0, 0);
 	SG(sapi_headers).http_response_code = (error_directive) ? rq->status_num : 200;
 	
-	nsapi_php_ini_entries(NSLS_C TSRMLS_CC);
+	nsapi_php_ini_entries(NSLS_C, TSRMLS_C);
 
-	php_handle_auth_data(pblock_findval("authorization", rq->headers) TSRMLS_CC);
+	php_handle_auth_data(pblock_findval("authorization", rq->headers), TSRMLS_C);
 
 	file_handle.type = ZEND_HANDLE_FILENAME;
 	file_handle.filename = SG(request_info).path_translated;
@@ -1040,7 +1040,7 @@ int NSAPI_PUBLIC php5_execute(pblock *pb, Session *sn, Request *rq)
 	fst = request_stat_path(SG(request_info).path_translated, rq);
 	if (fst && S_ISREG(fst->st_mode)) {
 		if (php_request_startup(TSRMLS_C) == SUCCESS) {
-			php_execute_script(&file_handle TSRMLS_CC);
+			php_execute_script(&file_handle, TSRMLS_C);
 			php_request_shutdown(NULL);
 			retval=REQ_PROCEED;
 		} else {

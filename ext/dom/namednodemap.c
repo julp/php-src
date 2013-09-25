@@ -83,7 +83,7 @@ readonly=yes
 URL: http://www.w3.org/TR/2003/WD-DOM-Level-3-Core-20030226/DOM3-Core.html#core-ID-6D0FB19E
 Since: 
 */
-int dom_namednodemap_length_read(dom_object *obj, zval **retval TSRMLS_DC)
+int dom_namednodemap_length_read(dom_object *obj, zval **retval, TSRMLS_D)
 {
 	dom_nnodemap_object *objmap;
 	xmlAttrPtr curnode;
@@ -136,11 +136,11 @@ PHP_FUNCTION(dom_namednodemap_get_named_item)
 	xmlNodePtr nodep;
 	xmlNotation *notep = NULL;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ou", &id, dom_namednodemap_class_entry, &named, &namedlen) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ou", &id, dom_namednodemap_class_entry, &named, &namedlen) == FAILURE) {
 		return;
 	}
 
-	intern = (dom_object *)zend_object_store_get_object(id TSRMLS_CC);
+	intern = (dom_object *)zend_object_store_get_object(id, TSRMLS_C);
 
 	objmap = (dom_nnodemap_object *)intern->ptr;
 
@@ -210,11 +210,11 @@ PHP_FUNCTION(dom_namednodemap_item)
 	xmlNodePtr nodep, curnode;
 	int count;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ol", &id, dom_namednodemap_class_entry, &index) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ol", &id, dom_namednodemap_class_entry, &index) == FAILURE) {
 		return;
 	}
 	if (index >= 0) {
-		intern = (dom_object *)zend_object_store_get_object(id TSRMLS_CC);
+		intern = (dom_object *)zend_object_store_get_object(id, TSRMLS_C);
 
 		objmap = (dom_nnodemap_object *)intern->ptr;
 
@@ -268,11 +268,11 @@ PHP_FUNCTION(dom_namednodemap_get_named_item_ns)
 	xmlNodePtr nodep;
 	xmlNotation *notep = NULL;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS() TSRMLS_CC, getThis(), "Ou!u", &id, dom_namednodemap_class_entry, &uri, &urilen, &named, &namedlen) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ou!u", &id, dom_namednodemap_class_entry, &uri, &urilen, &named, &namedlen) == FAILURE) {
 		return;
 	}
 
-	intern = (dom_object *)zend_object_store_get_object(id TSRMLS_CC);
+	intern = (dom_object *)zend_object_store_get_object(id, TSRMLS_C);
 
 	objmap = (dom_nnodemap_object *)intern->ptr;
 

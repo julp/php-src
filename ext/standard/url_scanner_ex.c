@@ -213,7 +213,7 @@ done:
 #undef YYLIMIT
 #undef YYMARKER
 
-static inline void tag_arg(url_adapt_state_ex_t *ctx, char quotes, char type TSRMLS_DC)
+static inline void tag_arg(url_adapt_state_ex_t *ctx, char quotes, char type, TSRMLS_D)
 {
 	char f = 0;
 
@@ -247,8 +247,8 @@ enum {
 #define YYMARKER q
 #define STATE ctx->state
 
-#define STD_PARA url_adapt_state_ex_t *ctx, char *start, char *YYCURSOR TSRMLS_DC
-#define STD_ARGS ctx, start, xp TSRMLS_CC
+#define STD_PARA url_adapt_state_ex_t *ctx, char *start, char *YYCURSOR, TSRMLS_D
+#define STD_ARGS ctx, start, xp, TSRMLS_C
 
 #if SCANNER_DEBUG
 #define scdebug(x) printf x
@@ -333,10 +333,10 @@ static inline void handle_arg(STD_PARA)
 static inline void handle_val(STD_PARA, char quotes, char type) 
 {
 	smart_str_setl(&ctx->val, start + quotes, YYCURSOR - start - quotes * 2);
-	tag_arg(ctx, quotes, type TSRMLS_CC);
+	tag_arg(ctx, quotes, type, TSRMLS_C);
 }
 
-static inline void xx_mainloop(url_adapt_state_ex_t *ctx, const char *newdata, size_t newlen TSRMLS_DC)
+static inline void xx_mainloop(url_adapt_state_ex_t *ctx, const char *newdata, size_t newlen, TSRMLS_D)
 {
 	char *end, *q;
 	char *xp;
@@ -919,7 +919,7 @@ stop:
 	ctx->buf.len = rest;
 }
 
-char *php_url_scanner_adapt_single_url(const char *url, size_t urllen, const char *name, const char *value, size_t *newlen TSRMLS_DC)
+char *php_url_scanner_adapt_single_url(const char *url, size_t urllen, const char *name, const char *value, size_t *newlen, TSRMLS_D)
 {
 	smart_str surl = {0};
 	smart_str buf = {0};
@@ -942,14 +942,14 @@ char *php_url_scanner_adapt_single_url(const char *url, size_t urllen, const cha
 }
 
 
-static char *url_adapt_ext(const char *src, size_t srclen, size_t *newlen, zend_bool do_flush TSRMLS_DC)
+static char *url_adapt_ext(const char *src, size_t srclen, size_t *newlen, zend_bool do_flush, TSRMLS_D)
 {
 	url_adapt_state_ex_t *ctx;
 	char *retval;
 
 	ctx = &BG(url_adapt_state_ex);
 
-	xx_mainloop(ctx, src, srclen TSRMLS_CC);
+	xx_mainloop(ctx, src, srclen, TSRMLS_C);
 
 	*newlen = ctx->result.len;
 	if (!ctx->result.c) {
@@ -992,12 +992,12 @@ static int php_url_scanner_ex_deactivate(TSRMLS_D)
 	return SUCCESS;
 }
 
-static void php_url_scanner_output_handler(char *output, uint output_len, char **handled_output, uint *handled_output_len, int mode TSRMLS_DC)
+static void php_url_scanner_output_handler(char *output, uint output_len, char **handled_output, uint *handled_output_len, int mode, TSRMLS_D)
 {
 	size_t len;
 
 	if (BG(url_adapt_state_ex).url_app.len != 0) {
-		*handled_output = url_adapt_ext(output, output_len, &len, (zend_bool) (mode & (PHP_OUTPUT_HANDLER_END | PHP_OUTPUT_HANDLER_CONT | PHP_OUTPUT_HANDLER_FLUSH | PHP_OUTPUT_HANDLER_FINAL) ? 1 : 0) TSRMLS_CC);
+		*handled_output = url_adapt_ext(output, output_len, &len, (zend_bool) (mode & (PHP_OUTPUT_HANDLER_END | PHP_OUTPUT_HANDLER_CONT | PHP_OUTPUT_HANDLER_FLUSH | PHP_OUTPUT_HANDLER_FINAL) ? 1 : 0), TSRMLS_C);
 		if (sizeof(uint) < sizeof(size_t)) {
 			if (len > UINT_MAX)
 				len = UINT_MAX;
@@ -1023,7 +1023,7 @@ static void php_url_scanner_output_handler(char *output, uint output_len, char *
 	}
 }
 
-PHPAPI int php_url_scanner_add_var(char *name, int name_len, char *value, int value_len, int urlencode TSRMLS_DC)
+PHPAPI int php_url_scanner_add_var(char *name, int name_len, char *value, int value_len, int urlencode, TSRMLS_D)
 {
 	char *encoded;
 	int encoded_len;
@@ -1031,7 +1031,7 @@ PHPAPI int php_url_scanner_add_var(char *name, int name_len, char *value, int va
 	
 	if (! BG(url_adapt_state_ex).active) {
 		php_url_scanner_ex_activate(TSRMLS_C);
-		php_output_start_internal(ZEND_STRL("URL-Rewriter"), php_url_scanner_output_handler, 0, PHP_OUTPUT_HANDLER_STDFLAGS TSRMLS_CC);
+		php_output_start_internal(ZEND_STRL("URL-Rewriter"), php_url_scanner_output_handler, 0, PHP_OUTPUT_HANDLER_STDFLAGS, TSRMLS_C);
 		BG(url_adapt_state_ex).active = 1;
 	}
 

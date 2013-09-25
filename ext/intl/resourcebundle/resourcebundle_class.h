@@ -38,7 +38,7 @@ typedef struct {
 	INTL_METHOD_FETCH_OBJECT(ResourceBundle, rb);					\
 	if (RESOURCEBUNDLE_OBJECT(rb) == NULL) {						\
 		intl_errors_set(&rb->error, U_ILLEGAL_ARGUMENT_ERROR,		\
-				"Found unconstructed ResourceBundle", 0 TSRMLS_CC);	\
+				"Found unconstructed ResourceBundle", 0, TSRMLS_C);	\
 		RETURN_FALSE;												\
 	}
 

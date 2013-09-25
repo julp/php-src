@@ -265,8 +265,8 @@ static inline size_t parse_uiv(const unsigned char *p)
 	return result;
 }
 
-#define UNSERIALIZE_PARAMETER zval **rval, const unsigned char **p, const unsigned char *max, php_unserialize_data_t *var_hash TSRMLS_DC
-#define UNSERIALIZE_PASSTHRU rval, p, max, var_hash TSRMLS_CC
+#define UNSERIALIZE_PARAMETER zval **rval, const unsigned char **p, const unsigned char *max, php_unserialize_data_t *var_hash, TSRMLS_D
+#define UNSERIALIZE_PASSTHRU rval, p, max, var_hash, TSRMLS_C
 
 static inline int process_nested_data(UNSERIALIZE_PARAMETER, HashTable *ht, long elements, int objprops)
 {
@@ -275,7 +275,7 @@ static inline int process_nested_data(UNSERIALIZE_PARAMETER, HashTable *ht, long
 
 		ALLOC_INIT_ZVAL(key);
 
-		if (!php_var_unserialize(&key, p, max, NULL TSRMLS_CC)) {
+		if (!php_var_unserialize(&key, p, max, NULL, TSRMLS_C)) {
 			zval_dtor(key);
 			FREE_ZVAL(key);
 			return 0;
@@ -289,7 +289,7 @@ static inline int process_nested_data(UNSERIALIZE_PARAMETER, HashTable *ht, long
 
 		ALLOC_INIT_ZVAL(data);
 
-		if (!php_var_unserialize(&data, p, max, var_hash TSRMLS_CC)) {
+		if (!php_var_unserialize(&data, p, max, var_hash, TSRMLS_C)) {
 			zval_dtor(key);
 			FREE_ZVAL(key);
 			zval_dtor(data);
@@ -358,7 +358,7 @@ static inline int object_custom(UNSERIALIZE_PARAMETER, zend_class_entry *ce)
 	if (ce->unserialize == NULL) {
 		zend_error(E_WARNING, "Class %s has no unserializer", ce->name);
 		object_init_ex(*rval, ce);
-	} else if (ce->unserialize(rval, ce, (const unsigned char*)*p, datalen, (zend_unserialize_data *)var_hash TSRMLS_CC) != SUCCESS) {
+	} else if (ce->unserialize(rval, ce, (const unsigned char*)*p, datalen, (zend_unserialize_data *)var_hash, TSRMLS_C) != SUCCESS) {
 		return 0;
 	}
 
@@ -396,7 +396,7 @@ static inline int object_common2(UNSERIALIZE_PARAMETER, long elements)
 		INIT_PZVAL(&fname);
 		ZVAL_STRINGL(&fname, "__wakeup", sizeof("__wakeup") - 1, 0);
 		BG(serialize_lock)++;
-		call_user_function_ex(CG(function_table), rval, &fname, &retval_ptr, 0, 0, 1, NULL TSRMLS_CC);
+		call_user_function_ex(CG(function_table), rval, &fname, &retval_ptr, 0, 0, 1, NULL, TSRMLS_C);
 		BG(serialize_lock)--;
 	}
 
@@ -684,7 +684,7 @@ object ":" uiv ":" ["]	{
 	do {
 		/* Try to find class directly */
 		BG(serialize_lock) = 1;
-		if (zend_lookup_class(class_name, len2, &pce TSRMLS_CC) == SUCCESS) {
+		if (zend_lookup_class(class_name, len2, &pce, TSRMLS_C) == SUCCESS) {
 			BG(serialize_lock) = 0;
 			if (EG(exception)) {
 				efree(class_name);
@@ -714,7 +714,7 @@ object ":" uiv ":" ["]	{
 		MAKE_STD_ZVAL(arg_func_name);
 		ZVAL_STRING(arg_func_name, class_name, 1);
 		BG(serialize_lock) = 1;
-		if (call_user_function_ex(CG(function_table), NULL, user_func, &retval_ptr, 1, args, 0, NULL TSRMLS_CC) != SUCCESS) {
+		if (call_user_function_ex(CG(function_table), NULL, user_func, &retval_ptr, 1, args, 0, NULL, TSRMLS_C) != SUCCESS) {
 			BG(serialize_lock) = 0;
 			if (EG(exception)) {
 				efree(class_name);
@@ -722,7 +722,7 @@ object ":" uiv ":" ["]	{
 				zval_ptr_dtor(&arg_func_name);
 				return 0;
 			}
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "defined (%s) but not found", user_func->value.str.val);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "defined (%s) but not found", user_func->value.str.val);
 			incomplete_class = 1;
 			ce = PHP_IC_ENTRY;
 			zval_ptr_dtor(&user_func);
@@ -741,10 +741,10 @@ object ":" uiv ":" ["]	{
 		}
 		
 		/* The callback function may have defined the class */
-		if (zend_lookup_class(class_name, len2, &pce TSRMLS_CC) == SUCCESS) {
+		if (zend_lookup_class(class_name, len2, &pce, TSRMLS_C) == SUCCESS) {
 			ce = *pce;
 		} else {
-			php_error_docref(NULL TSRMLS_CC, E_WARNING, "Function %s() hasn't defined the class it was called for", user_func->value.str.val);
+			php_error_docref(NULL, TSRMLS_C, E_WARNING, "Function %s() hasn't defined the class it was called for", user_func->value.str.val);
 			incomplete_class = 1;
 			ce = PHP_IC_ENTRY;
 		}
@@ -778,7 +778,7 @@ object ":" uiv ":" ["]	{
 
 "}" {
 	/* this is the case where we have less data than planned */
-	php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Unexpected end of serialized data");
+	php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Unexpected end of serialized data");
 	return 0; /* not sure if it should be 0 or 1 here? */
 }
 

@@ -84,7 +84,7 @@ U_CFUNC int32_t umsg_format_arg_count(UMessageFormat *fmt)
 }
 
 static HashTable *umsg_get_numeric_types(MessageFormatter_object *mfo,
-										 intl_error& err TSRMLS_DC)
+										 intl_error& err, TSRMLS_D)
 {
 	HashTable *ret;
 	int32_t parts_count;
@@ -111,7 +111,7 @@ static HashTable *umsg_get_numeric_types(MessageFormatter_object *mfo,
 		if (zend_hash_index_update(ret, (ulong)i, (void*)&t, sizeof(t), NULL)
 				== FAILURE) {
 			intl_errors_set(&err, U_MEMORY_ALLOCATION_ERROR,
-				"Write to argument types hash table failed", 0 TSRMLS_CC);
+				"Write to argument types hash table failed", 0, TSRMLS_C);
 			break;
 		}
 	}
@@ -131,7 +131,7 @@ static HashTable *umsg_get_numeric_types(MessageFormatter_object *mfo,
 #ifdef HAS_MESSAGE_PATTERN
 static HashTable *umsg_parse_format(MessageFormatter_object *mfo,
 									const MessagePattern& mp,
-									intl_error& err TSRMLS_DC)
+									intl_error& err, TSRMLS_D)
 {
 	HashTable *ret;
 	int32_t parts_count;
@@ -141,7 +141,7 @@ static HashTable *umsg_parse_format(MessageFormatter_object *mfo,
 	}
 
 	if (!((MessageFormat *)mfo->mf_data.umsgf)->usesNamedArguments()) {
-		return umsg_get_numeric_types(mfo, err TSRMLS_CC);
+		return umsg_get_numeric_types(mfo, err, TSRMLS_C);
 	}
 
 	if (mfo->mf_data.arg_types) {
@@ -187,7 +187,7 @@ static HashTable *umsg_parse_format(MessageFormatter_object *mfo,
 				if (zend_hash_update(ret, (char*)argName.getBuffer(), argName.length(),
 						(void*)&bogusType, sizeof(bogusType), (void**)&storedType) == FAILURE) {
 					intl_errors_set(&err, U_MEMORY_ALLOCATION_ERROR,
-						"Write to argument types hash table failed", 0 TSRMLS_CC);
+						"Write to argument types hash table failed", 0, TSRMLS_C);
 					continue;
 				}
 			}
@@ -195,7 +195,7 @@ static HashTable *umsg_parse_format(MessageFormatter_object *mfo,
 			int32_t argNumber = name_part.getValue();
 			if (argNumber < 0) {
 				intl_errors_set(&err, U_INVALID_FORMAT_ERROR,
-					"Found part with negative number", 0 TSRMLS_CC);
+					"Found part with negative number", 0, TSRMLS_C);
 				continue;
 			}
 			if (zend_hash_index_find(ret, (ulong)argNumber, (void**)&storedType)
@@ -205,7 +205,7 @@ static HashTable *umsg_parse_format(MessageFormatter_object *mfo,
 				if (zend_hash_index_update(ret, (ulong)argNumber, (void*)&bogusType,
 						sizeof(bogusType), (void**)&storedType) == FAILURE) {
 					intl_errors_set(&err, U_MEMORY_ALLOCATION_ERROR,
-						"Write to argument types hash table failed", 0 TSRMLS_CC);
+						"Write to argument types hash table failed", 0, TSRMLS_C);
 					continue;
 				}
 			}
@@ -252,7 +252,7 @@ static HashTable *umsg_parse_format(MessageFormatter_object *mfo,
 					 * is broken. */
 					intl_errors_set(&err, U_PARSE_ERROR,
 						"Expected UMSGPAT_PART_TYPE_ARG_TYPE part following "
-						"UMSGPAT_ARG_TYPE_SIMPLE part", 0 TSRMLS_CC);
+						"UMSGPAT_ARG_TYPE_SIMPLE part", 0, TSRMLS_C);
 					continue;
 				}
 			} else if (argType == UMSGPAT_ARG_TYPE_PLURAL) {
@@ -269,7 +269,7 @@ static HashTable *umsg_parse_format(MessageFormatter_object *mfo,
 		/* We found a different type for the same arg! */
 		if (*storedType != Formattable::kObject && *storedType != type) {
 			intl_errors_set(&err, U_ARGUMENT_TYPE_MISMATCH,
-				"Inconsistent types declared for an argument", 0 TSRMLS_CC);
+				"Inconsistent types declared for an argument", 0, TSRMLS_C);
 			continue;
 		}
 
@@ -290,27 +290,27 @@ static HashTable *umsg_parse_format(MessageFormatter_object *mfo,
 #endif
 
 static HashTable *umsg_get_types(MessageFormatter_object *mfo,
-								 intl_error& err TSRMLS_DC)
+								 intl_error& err, TSRMLS_D)
 {
 	MessageFormat *mf = (MessageFormat *)mfo->mf_data.umsgf;
 
 #ifdef HAS_MESSAGE_PATTERN
 	const MessagePattern mp = MessageFormatAdapter::getMessagePattern(mf);
 
-	return umsg_parse_format(mfo, mp, err TSRMLS_CC);
+	return umsg_parse_format(mfo, mp, err, TSRMLS_C);
 #else
 	if (mf->usesNamedArguments()) {
 			intl_errors_set(&err, U_UNSUPPORTED_ERROR,
 				"This extension supports named arguments only on ICU 4.8+",
-				0 TSRMLS_CC);
+				0, TSRMLS_C);
 		return NULL;
 	}
-	return umsg_get_numeric_types(mfo, err TSRMLS_CC);
+	return umsg_get_numeric_types(mfo, err, TSRMLS_C);
 #endif
 }
 
 static void umsg_set_timezone(MessageFormatter_object *mfo,
-							  intl_error& err TSRMLS_DC)
+							  intl_error& err, TSRMLS_D)
 {
 	MessageFormat *mf = (MessageFormat *)mfo->mf_data.umsgf;
 	TimeZone	  *used_tz = NULL;
@@ -330,7 +330,7 @@ static void umsg_set_timezone(MessageFormatter_object *mfo,
 	
 	if (formats == NULL) {
 		intl_errors_set(&err, U_MEMORY_ALLOCATION_ERROR,
-			"Out of memory retrieving subformats", 0 TSRMLS_CC);
+			"Out of memory retrieving subformats", 0, TSRMLS_C);
 	}
 
 	for (int i = 0; U_SUCCESS(err.code) && i < count; i++) {
@@ -344,7 +344,7 @@ static void umsg_set_timezone(MessageFormatter_object *mfo,
 			zval nullzv = zval_used_for_init,
 				 *zvptr = &nullzv;
 			used_tz = timezone_process_timezone_argument(&zvptr, &err,
-				"msgfmt_format" TSRMLS_CC);
+				"msgfmt_format", TSRMLS_C);
 			if (used_tz == NULL) {
 				continue;
 			}
@@ -361,7 +361,7 @@ static void umsg_set_timezone(MessageFormatter_object *mfo,
 U_CFUNC void umsg_format_helper(MessageFormatter_object *mfo,
 								HashTable *args,
 								UChar **formatted,
-								int *formatted_len TSRMLS_DC)
+								int *formatted_len, TSRMLS_D)
 {
 	int arg_count = zend_hash_num_elements(args);
 	std::vector<Formattable> fargs;
@@ -374,9 +374,9 @@ U_CFUNC void umsg_format_helper(MessageFormatter_object *mfo,
 		return;
 	}
 
-	types = umsg_get_types(mfo, err TSRMLS_CC);
+	types = umsg_get_types(mfo, err, TSRMLS_C);
 	
-	umsg_set_timezone(mfo, err TSRMLS_CC);
+	umsg_set_timezone(mfo, err, TSRMLS_C);
 
 	fargs.resize(arg_count);
 	farg_names.resize(arg_count);
@@ -409,7 +409,7 @@ U_CFUNC void umsg_format_helper(MessageFormatter_object *mfo,
 			/* includes case where index < 0 because it's exposed as unsigned */
 			if (num_index > (ulong)INT32_MAX) {
 				intl_errors_set(&err, U_ILLEGAL_ARGUMENT_ERROR,
-					"Found negative or too large array key", 0 TSRMLS_CC);
+					"Found negative or too large array key", 0, TSRMLS_C);
 				continue;
 			}
 
@@ -425,7 +425,7 @@ U_CFUNC void umsg_format_helper(MessageFormatter_object *mfo,
 				char *message;
 				spprintf(&message, 0,
 					"Invalid UTF-8 data in argument key: '%s'", str_index);
-				intl_errors_set(&err, err.code,	message, 1 TSRMLS_CC);
+				intl_errors_set(&err, err.code,	message, 1, TSRMLS_C);
 				efree(message);
 				continue;
 			}
@@ -460,7 +460,7 @@ U_CFUNC void umsg_format_helper(MessageFormatter_object *mfo,
 						char *message;
 						spprintf(&message, 0, "Invalid UTF-8 data in string argument: "
 							"'%s'", Z_STRVAL_PP(elem));
-						intl_errors_set(&err, err.code, message, 1 TSRMLS_CC);
+						intl_errors_set(&err, err.code, message, 1, TSRMLS_C);
 						efree(message);
 						delete text;
 						continue;
@@ -477,7 +477,7 @@ U_CFUNC void umsg_format_helper(MessageFormatter_object *mfo,
 						d = (double)Z_LVAL_PP(elem);
 					} else {
 						SEPARATE_ZVAL_IF_NOT_REF(elem);
-						convert_scalar_to_number(*elem TSRMLS_CC);
+						convert_scalar_to_number(*elem, TSRMLS_C);
 						d = (Z_TYPE_PP(elem) == IS_DOUBLE)
 							? Z_DVAL_PP(elem)
 							: (double)Z_LVAL_PP(elem);
@@ -494,7 +494,7 @@ retry_klong:
 								Z_DVAL_PP(elem) < (double)INT32_MIN) {
 							intl_errors_set(&err, U_ILLEGAL_ARGUMENT_ERROR,
 								"Found PHP float with absolute value too large for "
-								"32 bit integer argument", 0 TSRMLS_CC);
+								"32 bit integer argument", 0, TSRMLS_C);
 						} else {
 							tInt32 = (int32_t)Z_DVAL_PP(elem);
 						}
@@ -503,13 +503,13 @@ retry_klong:
 								Z_LVAL_PP(elem) < INT32_MIN) {
 							intl_errors_set(&err, U_ILLEGAL_ARGUMENT_ERROR,
 								"Found PHP integer with absolute value too large "
-								"for 32 bit integer argument", 0 TSRMLS_CC);
+								"for 32 bit integer argument", 0, TSRMLS_C);
 						} else {
 							tInt32 = (int32_t)Z_LVAL_PP(elem);
 						}
 					} else {
 						SEPARATE_ZVAL_IF_NOT_REF(elem);
-						convert_scalar_to_number(*elem TSRMLS_CC);
+						convert_scalar_to_number(*elem, TSRMLS_C);
 						goto retry_klong;
 					}
 					formattable.setLong(tInt32);
@@ -524,7 +524,7 @@ retry_kint64:
 								Z_DVAL_PP(elem) < (double)U_INT64_MIN) {
 							intl_errors_set(&err, U_ILLEGAL_ARGUMENT_ERROR,
 								"Found PHP float with absolute value too large for "
-								"64 bit integer argument", 0 TSRMLS_CC);
+								"64 bit integer argument", 0, TSRMLS_C);
 						} else {
 							tInt64 = (int64_t)Z_DVAL_PP(elem);
 						}
@@ -533,7 +533,7 @@ retry_kint64:
 						tInt64 = (int64_t)Z_LVAL_PP(elem);
 					} else {
 						SEPARATE_ZVAL_IF_NOT_REF(elem);
-						convert_scalar_to_number(*elem TSRMLS_CC);
+						convert_scalar_to_number(*elem, TSRMLS_C);
 						goto retry_kint64;
 					}
 					formattable.setInt64(tInt64);
@@ -541,7 +541,7 @@ retry_kint64:
 				}
 			case Formattable::kDate:
 				{
-					double dd = intl_zval_to_millis(*elem, &err, "msgfmt_format" TSRMLS_CC);
+					double dd = intl_zval_to_millis(*elem, &err, "msgfmt_format", TSRMLS_C);
 					if (U_FAILURE(err.code)) {
 						char *message, *key_char;
 						int key_len;
@@ -550,7 +550,7 @@ retry_kint64:
 								&status) == SUCCESS) {
 							spprintf(&message, 0, "The argument for key '%s' "
 								"cannot be used as a date or time", key_char);
-							intl_errors_set(&err, err.code, message, 1 TSRMLS_CC);
+							intl_errors_set(&err, err.code, message, 1, TSRMLS_C);
 							efree(key_char);
 							efree(message);
 						}
@@ -561,7 +561,7 @@ retry_kint64:
 				}
 			default:
 				intl_errors_set(&err, U_ILLEGAL_ARGUMENT_ERROR,
-					"Found unsupported argument type", 0 TSRMLS_CC);
+					"Found unsupported argument type", 0, TSRMLS_C);
 				break;
 			}
 		} else {
@@ -595,7 +595,7 @@ retry_kint64:
 							"value given for the argument with key '%s' "
 							"is available", key_char);
 						intl_errors_set(&err,
-							U_ILLEGAL_ARGUMENT_ERROR, message, 1 TSRMLS_CC);
+							U_ILLEGAL_ARGUMENT_ERROR, message, 1, TSRMLS_C);
 						efree(key_char);
 						efree(message);
 					}
@@ -617,7 +617,7 @@ retry_kint64:
 
 	if (U_FAILURE(err.code)) {
 		intl_errors_set(&err, err.code,
-			"Call to ICU MessageFormat::format() has failed", 0 TSRMLS_CC);
+			"Call to ICU MessageFormat::format() has failed", 0, TSRMLS_C);
 		return;
 	}
 
@@ -626,7 +626,7 @@ retry_kint64:
 	resultStr.extract(*formatted, *formatted_len+1, err.code);
 	if (U_FAILURE(err.code)) {
 		intl_errors_set(&err, err.code,
-			"Error copying format() result", 0 TSRMLS_CC);
+			"Error copying format() result", 0, TSRMLS_C);
 		return;
 	}
 }

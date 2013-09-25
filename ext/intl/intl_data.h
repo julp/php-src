@@ -35,40 +35,40 @@ typedef struct _intl_data {
 #define INTL_METHOD_INIT_VARS(oclass, obj)		\
 	zval*             object  = NULL;			\
 	oclass##_object*  obj     = NULL;			\
-	intl_error_reset( NULL TSRMLS_CC );			
+	intl_error_reset( NULL, TSRMLS_C );			
 
 #define INTL_DATA_ERROR(obj)				(((intl_object *)(obj))->error)
 #define INTL_DATA_ERROR_P(obj)				(&(INTL_DATA_ERROR((obj))))
 #define INTL_DATA_ERROR_CODE(obj)			INTL_ERROR_CODE(INTL_DATA_ERROR((obj)))
 
 #define INTL_METHOD_FETCH_OBJECT(oclass, obj)									\
-	obj = (oclass##_object *) zend_object_store_get_object( object TSRMLS_CC );	\
-    intl_error_reset( INTL_DATA_ERROR_P(obj) TSRMLS_CC );						\
+	obj = (oclass##_object *) zend_object_store_get_object( object, TSRMLS_C );	\
+    intl_error_reset( INTL_DATA_ERROR_P(obj), TSRMLS_C );						\
 
 /* Check status by error code, if error - exit */
 #define INTL_CHECK_STATUS(err, msg)											\
-    intl_error_set_code( NULL, (err) TSRMLS_CC );							\
+    intl_error_set_code( NULL, (err), TSRMLS_C );							\
     if( U_FAILURE((err)) )													\
     {																		\
-        intl_error_set_custom_msg( NULL, msg, 0 TSRMLS_CC );				\
+        intl_error_set_custom_msg( NULL, msg, 0, TSRMLS_C );				\
         RETURN_FALSE;														\
     }
 
 /* Check status in object, if error - exit */
 #define INTL_METHOD_CHECK_STATUS(obj, msg)											\
-    intl_error_set_code( NULL, INTL_DATA_ERROR_CODE((obj)) TSRMLS_CC );				\
+    intl_error_set_code( NULL, INTL_DATA_ERROR_CODE((obj)), TSRMLS_C );				\
     if( U_FAILURE( INTL_DATA_ERROR_CODE((obj)) ) )									\
     {																				\
-        intl_errors_set_custom_msg( INTL_DATA_ERROR_P((obj)), msg, 0 TSRMLS_CC );	\
+        intl_errors_set_custom_msg( INTL_DATA_ERROR_P((obj)), msg, 0, TSRMLS_C );	\
         RETURN_FALSE;										\
     }
 
 /* Check status, if error - destroy value and exit */
 #define INTL_CTOR_CHECK_STATUS(obj, msg)											\
-    intl_error_set_code( NULL, INTL_DATA_ERROR_CODE((obj)) TSRMLS_CC );				\
+    intl_error_set_code( NULL, INTL_DATA_ERROR_CODE((obj)), TSRMLS_C );				\
     if( U_FAILURE( INTL_DATA_ERROR_CODE((obj)) ) )									\
     {																				\
-        intl_errors_set_custom_msg( INTL_DATA_ERROR_P((obj)), msg, 0 TSRMLS_CC );	\
+        intl_errors_set_custom_msg( INTL_DATA_ERROR_P((obj)), msg, 0, TSRMLS_C );	\
 		zval_dtor(return_value);													\
         RETURN_NULL();																\
     }
@@ -90,14 +90,14 @@ typedef struct _intl_data {
 #define INTL_CHECK_LOCALE_LEN(locale_len)												\
 	if((locale_len) > INTL_MAX_LOCALE_LEN) {											\
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,									\
-	"Locale string too long, should be no longer than 80 characters", 0 TSRMLS_CC );	\
+	"Locale string too long, should be no longer than 80 characters", 0, TSRMLS_C );	\
 		RETURN_NULL();																	\
 	}
 
 #define INTL_CHECK_LOCALE_LEN_OBJ(locale_len, object)									\
 	if((locale_len) > INTL_MAX_LOCALE_LEN) {											\
 		intl_error_set( NULL, U_ILLEGAL_ARGUMENT_ERROR,									\
-	"Locale string too long, should be no longer than 80 characters", 0 TSRMLS_CC );	\
+	"Locale string too long, should be no longer than 80 characters", 0, TSRMLS_C );	\
 		zval_dtor(object);																\
 		ZVAL_NULL(object);																\
 		RETURN_NULL();																	\

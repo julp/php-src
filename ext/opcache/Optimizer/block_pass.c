@@ -1,7 +1,7 @@
 #define DEBUG_BLOCKPASS 0
 
 /* Checks if a constant (like "true") may be replaced by its value */
-static int zend_get_persistent_constant(char *name, uint name_len, zval *result, int copy TSRMLS_DC ELS_DC)
+static int zend_get_persistent_constant(char *name, uint name_len, zval *result, int copy, TSRMLS_D ELS_DC)
 {
 	zend_constant *c;
 	char *lookup_name;
@@ -558,7 +558,7 @@ static void zend_rebuild_access_path(zend_cfg *cfg, zend_op_array *op_array, int
 		convert_to_string((v)); \
 	}
 
-static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array, char *used_ext TSRMLS_DC)
+static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array, char *used_ext, TSRMLS_D)
 {
 	zend_op *opline = block->start_opline;
 	zend_op *end, *last_op = NULL;
@@ -731,7 +731,7 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 				int flen = FUNCTION_CACHE->funcs[Z_LVAL(ZEND_OP1_LITERAL(fcall))].name_len;
 				if(flen == sizeof("defined")-1 && zend_binary_strcasecmp(fname, flen, "defined", sizeof("defined")-1) == 0) {
 					zval c;
-					if(zend_get_persistent_constant(Z_STRVAL_P(arg), Z_STRLEN_P(arg), &c, 0 TSRMLS_CC ELS_CC) != 0) {
+					if(zend_get_persistent_constant(Z_STRVAL_P(arg), Z_STRLEN_P(arg), &c, 0, TSRMLS_C ELS_CC) != 0) {
 						literal_dtor(arg);
 						MAKE_NOP(sv);
 						MAKE_NOP(fcall);
@@ -751,11 +751,11 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 					}
 				} else if(flen == sizeof("constant")-1 && zend_binary_strcasecmp(fname, flen, "constant", sizeof("constant")-1) == 0) {
 					zval c;
-					if(zend_get_persistent_constant(Z_STRVAL_P(arg), Z_STRLEN_P(arg), &c, 1 TSRMLS_CC ELS_CC) != 0) {
+					if(zend_get_persistent_constant(Z_STRVAL_P(arg), Z_STRLEN_P(arg), &c, 1, TSRMLS_C ELS_CC) != 0) {
 						literal_dtor(arg);
 						MAKE_NOP(sv);
 						MAKE_NOP(fcall);
-						ZEND_OP1_LITERAL(opline) = zend_optimizer_add_literal(op_array, &c TSRMLS_CC);
+						ZEND_OP1_LITERAL(opline) = zend_optimizer_add_literal(op_array, &c, TSRMLS_C);
 						/* no copy ctor - get already copied it */
 						ZEND_OP1_TYPE(opline) = IS_CONST;
 					}
@@ -918,7 +918,7 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 			Z_STRVAL(ZEND_OP1_LITERAL(last_op))[l] = '\0';
 			zval_dtor(&ZEND_OP1_LITERAL(opline));
 #if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
-			Z_STRVAL(ZEND_OP1_LITERAL(opline)) = (char*)zend_new_interned_string(Z_STRVAL(ZEND_OP1_LITERAL(last_op)), l + 1, 1 TSRMLS_CC);
+			Z_STRVAL(ZEND_OP1_LITERAL(opline)) = (char*)zend_new_interned_string(Z_STRVAL(ZEND_OP1_LITERAL(last_op)), l + 1, 1, TSRMLS_C);
 			Z_TYPE(ZEND_OP1_LITERAL(last_op)) = IS_NULL;
 #else
 			Z_STRVAL(ZEND_OP1_LITERAL(opline)) = Z_STRVAL(ZEND_OP1_LITERAL(last_op));
@@ -964,7 +964,7 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 				efree(Z_STRVAL(ZEND_OP2_LITERAL(opline)));
 			}
 #if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
-			Z_STRVAL(ZEND_OP2_LITERAL(opline)) = (char*)zend_new_interned_string(Z_STRVAL(ZEND_OP2_LITERAL(src)), l + 1, 1 TSRMLS_CC);
+			Z_STRVAL(ZEND_OP2_LITERAL(opline)) = (char*)zend_new_interned_string(Z_STRVAL(ZEND_OP2_LITERAL(src)), l + 1, 1, TSRMLS_C);
 			Z_TYPE(ZEND_OP2_LITERAL(src)) = IS_NULL;
 #else
 			Z_STRVAL(ZEND_OP2_LITERAL(opline)) = Z_STRVAL(ZEND_OP2_LITERAL(src));
@@ -1002,7 +1002,7 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 					ZEND_OP1_TYPE(opline)==IS_CONST &&
 					ZEND_OP2_TYPE(opline)==IS_CONST) {
 			/* evaluate constant expressions */
-			int (*binary_op)(zval *result, zval *op1, zval *op2 TSRMLS_DC) = get_binary_op(opline->opcode);
+			int (*binary_op)(zval *result, zval *op1, zval *op2, TSRMLS_D) = get_binary_op(opline->opcode);
 			zval result;
 			int er;
 
@@ -1019,7 +1019,7 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 			}
 			er = EG(error_reporting);
 			EG(error_reporting) = 0;
-			if (binary_op(&result, &ZEND_OP1_LITERAL(opline), &ZEND_OP2_LITERAL(opline) TSRMLS_CC) == SUCCESS) {
+			if (binary_op(&result, &ZEND_OP1_LITERAL(opline), &ZEND_OP2_LITERAL(opline), TSRMLS_C) == SUCCESS) {
 				PZ_SET_REFCOUNT_P(&result, 1);
 				PZ_UNSET_ISREF_P(&result);
 
@@ -1042,7 +1042,7 @@ static void zend_optimize_block(zend_code_block *block, zend_op_array *op_array,
 #if ZEND_EXTENSION_API_NO < PHP_5_3_X_API_NO
 				unary_op(&result, &ZEND_OP1_LITERAL(opline));
 #else
-				unary_op(&result, &ZEND_OP1_LITERAL(opline) TSRMLS_CC);
+				unary_op(&result, &ZEND_OP1_LITERAL(opline), TSRMLS_C);
 #endif
 				literal_dtor(&ZEND_OP1_LITERAL(opline));
 			} else {
@@ -1341,7 +1341,7 @@ static void assemble_code_blocks(zend_cfg *cfg, zend_op_array *op_array)
 #endif
 }
 
-static void zend_jmp_optimization(zend_code_block *block, zend_op_array *op_array, zend_code_block *blocks TSRMLS_DC)
+static void zend_jmp_optimization(zend_code_block *block, zend_op_array *op_array, zend_code_block *blocks, TSRMLS_D)
 {
 	/* last_op is the last opcode of the current block */
 	zend_op *last_op = (block->start_opline + block->len - 1);
@@ -1388,7 +1388,7 @@ static void zend_jmp_optimization(zend_code_block *block, zend_op_array *op_arra
 					if (ZEND_OP1_TYPE(last_op) == IS_CONST) {
 						zval zv = ZEND_OP1_LITERAL(last_op);
 						zval_copy_ctor(&zv);
-						last_op->op1.constant = zend_optimizer_add_literal(op_array, &zv TSRMLS_CC);
+						last_op->op1.constant = zend_optimizer_add_literal(op_array, &zv, TSRMLS_C);
 					}
 #endif
 					del_source(block, block->op1_to);
@@ -1424,7 +1424,7 @@ static void zend_jmp_optimization(zend_code_block *block, zend_op_array *op_arra
 					if (ZEND_OP1_TYPE(last_op) == IS_CONST) {
 						zval zv = ZEND_OP1_LITERAL(last_op);
 						zval_copy_ctor(&zv);
-						last_op->op1.constant = zend_optimizer_add_literal(op_array, &zv TSRMLS_CC);
+						last_op->op1.constant = zend_optimizer_add_literal(op_array, &zv, TSRMLS_C);
 					}
 #endif
 					del_source(block, block->op1_to);
@@ -2047,7 +2047,7 @@ static void zend_t_usage(zend_code_block *block, zend_op_array *op_array, char *
 
 #define PASSES 3
 
-static void zend_block_optimization(zend_op_array *op_array TSRMLS_DC)
+static void zend_block_optimization(zend_op_array *op_array, TSRMLS_D)
 {
 	zend_cfg cfg;
 	zend_code_block *cur_block;
@@ -2083,7 +2083,7 @@ static void zend_block_optimization(zend_op_array *op_array TSRMLS_DC)
 			if (!cur_block->access) {
 				continue;
 			}
-			zend_optimize_block(cur_block, op_array, usage TSRMLS_CC);
+			zend_optimize_block(cur_block, op_array, usage, TSRMLS_C);
 		}
 
 		/* Jump optimization for each block */
@@ -2091,7 +2091,7 @@ static void zend_block_optimization(zend_op_array *op_array TSRMLS_DC)
 			if (!cur_block->access) {
 				continue;
 			}
-			zend_jmp_optimization(cur_block, op_array, cfg.blocks TSRMLS_CC);
+			zend_jmp_optimization(cur_block, op_array, cfg.blocks, TSRMLS_C);
 		}
 
 		/* Eliminate unreachable basic blocks */

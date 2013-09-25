@@ -30,7 +30,7 @@
 #include "php_com_dotnet_internal.h"
 
 
-PHP_COM_DOTNET_API OLECHAR *php_com_string_to_olestring(char *string, uint string_len, int codepage TSRMLS_DC)
+PHP_COM_DOTNET_API OLECHAR *php_com_string_to_olestring(char *string, uint string_len, int codepage, TSRMLS_D)
 {
 	OLECHAR *olestring = NULL;
 	DWORD flags = codepage == CP_UTF8 ? 0 : MB_PRECOMPOSED | MB_ERR_INVALID_CHARS;
@@ -56,7 +56,7 @@ PHP_COM_DOTNET_API OLECHAR *php_com_string_to_olestring(char *string, uint strin
 	if (!ok) {
 		char *msg = php_win32_error_to_msg(GetLastError());
 
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,
 			"Could not convert string to unicode: `%s'", msg);
 
 		LocalFree(msg);
@@ -65,7 +65,7 @@ PHP_COM_DOTNET_API OLECHAR *php_com_string_to_olestring(char *string, uint strin
 	return olestring;
 }
 
-PHP_COM_DOTNET_API char *php_com_olestring_to_string(OLECHAR *olestring, uint *string_len, int codepage TSRMLS_DC)
+PHP_COM_DOTNET_API char *php_com_olestring_to_string(OLECHAR *olestring, uint *string_len, int codepage, TSRMLS_D)
 {
 	char *string;
 	uint length = 0;
@@ -87,7 +87,7 @@ PHP_COM_DOTNET_API char *php_com_olestring_to_string(OLECHAR *olestring, uint *s
 	if (!ok) {
 		char *msg = php_win32_error_to_msg(GetLastError());
 
-		php_error_docref(NULL TSRMLS_CC, E_WARNING,
+		php_error_docref(NULL, TSRMLS_C, E_WARNING,
 			"Could not convert string from unicode: `%s'", msg);
 
 		LocalFree(msg);

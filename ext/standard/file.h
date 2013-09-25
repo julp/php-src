@@ -73,14 +73,14 @@ PHP_FUNCTION(sys_get_temp_dir);
 PHP_MINIT_FUNCTION(user_streams);
 
 PHPAPI int php_le_stream_context(TSRMLS_D);
-PHPAPI int php_set_sock_blocking(int socketd, int block TSRMLS_DC);
-PHPAPI int php_copy_file(char *src, char *dest TSRMLS_DC);
-PHPAPI int php_copy_file_ex(char *src, char *dest, int src_chk TSRMLS_DC);
-PHPAPI int php_copy_file_ctx(char *src, char *dest, int src_chk, php_stream_context *ctx TSRMLS_DC);
-PHPAPI int php_mkdir_ex(char *dir, long mode, int options TSRMLS_DC);
-PHPAPI int php_mkdir(char *dir, long mode TSRMLS_DC);
-PHPAPI void php_fgetcsv(php_stream *stream, char delimiter, char enclosure, char escape_char, size_t buf_len, char *buf, zval *return_value TSRMLS_DC);
-PHPAPI int php_fputcsv(php_stream *stream, zval *fields, char delimiter, char enclosure, char escape_char TSRMLS_DC);
+PHPAPI int php_set_sock_blocking(int socketd, int block, TSRMLS_D);
+PHPAPI int php_copy_file(char *src, char *dest, TSRMLS_D);
+PHPAPI int php_copy_file_ex(char *src, char *dest, int src_chk, TSRMLS_D);
+PHPAPI int php_copy_file_ctx(char *src, char *dest, int src_chk, php_stream_context *ctx, TSRMLS_D);
+PHPAPI int php_mkdir_ex(char *dir, long mode, int options, TSRMLS_D);
+PHPAPI int php_mkdir(char *dir, long mode, TSRMLS_D);
+PHPAPI void php_fgetcsv(php_stream *stream, char delimiter, char enclosure, char escape_char, size_t buf_len, char *buf, zval *return_value, TSRMLS_D);
+PHPAPI int php_fputcsv(php_stream *stream, zval *fields, char delimiter, char enclosure, char escape_char, TSRMLS_D);
 
 #define META_DEF_BUFSIZE 8192
 
@@ -112,7 +112,7 @@ typedef struct _php_meta_tags_data {
 	int in_meta;
 } php_meta_tags_data;
 
-php_meta_tags_token php_next_meta_token(php_meta_tags_data * TSRMLS_DC);
+php_meta_tags_token php_next_meta_token(php_meta_tags_data *, TSRMLS_D);
 
 typedef struct {
 	int pclose_ret;

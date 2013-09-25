@@ -57,7 +57,7 @@
  * If type==3, output will be printed binary, no lines will be saved or returned (passthru)
  *
  */
-PHPAPI int php_exec(int type, char *cmd, zval *array, zval *return_value TSRMLS_DC)
+PHPAPI int php_exec(int type, char *cmd, zval *array, zval *return_value, TSRMLS_D)
 {
 	FILE *fp;
 	char *buf;
@@ -79,7 +79,7 @@ PHPAPI int php_exec(int type, char *cmd, zval *array, zval *return_value TSRMLS_
 	fp = VCWD_POPEN(cmd, "r");
 #endif
 	if (!fp) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to fork [%s]", cmd);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to fork [%s]", cmd);
 		goto err;
 	}
 
@@ -176,27 +176,27 @@ static void php_exec_ex(INTERNAL_FUNCTION_PARAMETERS, int mode) /* {{{ */
 	int ret;
 
 	if (mode) {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|z/", &cmd, &cmd_len, &ret_code) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|z/", &cmd, &cmd_len, &ret_code) == FAILURE) {
 			RETURN_FALSE;
 		}
 	} else {
-		if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s|z/z/", &cmd, &cmd_len, &ret_array, &ret_code) == FAILURE) {
+		if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|z/z/", &cmd, &cmd_len, &ret_array, &ret_code) == FAILURE) {
 			RETURN_FALSE;
 		}
 	}
 	if (!cmd_len) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot execute a blank command");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot execute a blank command");
 		RETURN_FALSE;
 	}
 
 	if (!ret_array) {
-		ret = php_exec(mode, cmd, NULL, return_value TSRMLS_CC);
+		ret = php_exec(mode, cmd, NULL, return_value, TSRMLS_C);
 	} else {
 		if (Z_TYPE_P(ret_array) != IS_ARRAY) {
 			zval_dtor(ret_array);
 			array_init(ret_array);
 		}
-		ret = php_exec(2, cmd, ret_array, return_value TSRMLS_CC);
+		ret = php_exec(2, cmd, ret_array, return_value, TSRMLS_C);
 	}
 	if (ret_code) {
 		zval_dtor(ret_code);
@@ -399,7 +399,7 @@ PHP_FUNCTION(escapeshellcmd)
 	int command_len;
 	char *cmd = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &command, &command_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &command, &command_len) == FAILURE) {
 		return;
 	}
 
@@ -420,7 +420,7 @@ PHP_FUNCTION(escapeshellarg)
 	int argument_len;
 	char *cmd = NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &argument, &argument_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &argument, &argument_len) == FAILURE) {
 		return;
 	}
 
@@ -442,7 +442,7 @@ PHP_FUNCTION(shell_exec)
 	char *ret;
 	php_stream *stream;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &command, &command_len) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &command, &command_len) == FAILURE) {
 		return;
 	}
 
@@ -451,7 +451,7 @@ PHP_FUNCTION(shell_exec)
 #else
 	if ((in=VCWD_POPEN(command, "r"))==NULL) {
 #endif
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Unable to execute '%s'", command);
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Unable to execute '%s'", command);
 		RETURN_FALSE;
 	}
 
@@ -472,14 +472,14 @@ PHP_FUNCTION(proc_nice)
 {
 	long pri;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "l", &pri) == FAILURE) {
+	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "l", &pri) == FAILURE) {
 		RETURN_FALSE;
 	}
 
 	errno = 0;
 	php_ignore_value(nice(pri));
 	if (errno) {
-		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Only a super user may attempt to increase the priority of a process");
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "Only a super user may attempt to increase the priority of a process");
 		RETURN_FALSE;
 	}
 

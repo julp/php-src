@@ -84,7 +84,7 @@
 #define HTTP_WRAPPER_HEADER_INIT    1
 #define HTTP_WRAPPER_REDIRECTED     2
 
-php_stream *php_stream_url_wrap_http_ex(php_stream_wrapper *wrapper, char *path, char *mode, int options, char **opened_path, php_stream_context *context, int redirect_max, int flags STREAMS_DC TSRMLS_DC) /* {{{ */
+php_stream *php_stream_url_wrap_http_ex(php_stream_wrapper *wrapper, char *path, char *mode, int options, char **opened_path, php_stream_context *context, int redirect_max, int flags STREAMS_DC, TSRMLS_D) /* {{{ */
 {
 	php_stream *stream = NULL;
 	php_url *resource = NULL;
@@ -118,7 +118,7 @@ php_stream *php_stream_url_wrap_http_ex(php_stream_wrapper *wrapper, char *path,
 	tmp_line[0] = '\0';
 
 	if (redirect_max < 1) {
-		php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Redirection limit reached, aborting");
+		php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "Redirection limit reached, aborting");
 		return NULL;
 	}
 
@@ -146,7 +146,7 @@ php_stream *php_stream_url_wrap_http_ex(php_stream_wrapper *wrapper, char *path,
 		/* Normal http request (possibly with proxy) */
 	
 		if (strpbrk(mode, "awx+")) {
-			php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "HTTP wrapper does not support writeable connections");
+			php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "HTTP wrapper does not support writeable connections");
 			php_url_free(resource);
 			return NULL;
 		}
@@ -189,7 +189,7 @@ php_stream *php_stream_url_wrap_http_ex(php_stream_wrapper *wrapper, char *path,
 	}
 			
 	if (errstr) {
-		php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "%s", errstr);
+		php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "%s", errstr);
 		efree(errstr);
 		errstr = NULL;
 	}
@@ -268,7 +268,7 @@ finish:
 		smart_str_appendl(&header, "\r\n", sizeof("\r\n")-1);
 
 		if (php_stream_write(stream, header.c, header.len) != header.len) {
-			php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Cannot connect to HTTPS server through proxy");
+			php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "Cannot connect to HTTPS server through proxy");
 			php_stream_close(stream);
 			stream = NULL;
 		}
@@ -289,9 +289,9 @@ finish:
 
 		/* enable SSL transport layer */
 		if (stream) {
-			if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_SSLv23_CLIENT, NULL TSRMLS_CC) < 0 ||
-			    php_stream_xport_crypto_enable(stream, 1 TSRMLS_CC) < 0) {
-				php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Cannot connect to HTTPS server through proxy");
+			if (php_stream_xport_crypto_setup(stream, STREAM_CRYPTO_METHOD_SSLv23_CLIENT, NULL, TSRMLS_C) < 0 ||
+			    php_stream_xport_crypto_enable(stream, 1, TSRMLS_C) < 0) {
+				php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "Cannot connect to HTTPS server through proxy");
 				php_stream_close(stream);
 				stream = NULL;
 			}
@@ -414,13 +414,13 @@ finish:
 			smart_str_0(&tmpstr);
 			/* Remove newlines and spaces from start and end. there's at least one extra \r\n at the end that needs to go. */
 			if (tmpstr.c) {
-				tmp = php_trim(tmpstr.c, strlen(tmpstr.c), NULL, 0, NULL, 3 TSRMLS_CC);
+				tmp = php_trim(tmpstr.c, strlen(tmpstr.c), NULL, 0, NULL, 3, TSRMLS_C);
 				smart_str_free(&tmpstr);
 			}
 		}
 		if (Z_TYPE_PP(tmpzval) == IS_STRING && Z_STRLEN_PP(tmpzval)) {
 			/* Remove newlines and spaces from start and end php_trim will estrndup() */
-			tmp = php_trim(Z_STRVAL_PP(tmpzval), Z_STRLEN_PP(tmpzval), NULL, 0, NULL, 3 TSRMLS_CC);
+			tmp = php_trim(Z_STRVAL_PP(tmpzval), Z_STRLEN_PP(tmpzval), NULL, 0, NULL, 3, TSRMLS_C);
 		}
 		if (tmp && strlen(tmp) > 0) {
 			char *s;
@@ -450,7 +450,7 @@ finish:
 				}
 
 				efree(tmp_c);
-				tmp_c = php_trim(tmp, strlen(tmp), NULL, 0, NULL, 3 TSRMLS_CC);
+				tmp_c = php_trim(tmp, strlen(tmp), NULL, 0, NULL, 3, TSRMLS_C);
 				efree(tmp);
 				tmp = tmp_c;
 			}
@@ -584,7 +584,7 @@ finish:
 				ua[ua_len] = 0;
 				php_stream_write(stream, ua, ua_len);
 			} else {
-				php_error_docref(NULL TSRMLS_CC, E_WARNING, "Cannot construct User-agent header");
+				php_error_docref(NULL, TSRMLS_C, E_WARNING, "Cannot construct User-agent header");
 			}
 
 			if (ua) {
@@ -625,7 +625,7 @@ finish:
 		if (!(have_header & HTTP_HEADER_TYPE)) {
 			php_stream_write(stream, "Content-Type: application/x-www-form-urlencoded\r\n",
 				sizeof("Content-Type: application/x-www-form-urlencoded\r\n") - 1);
-			php_error_docref(NULL TSRMLS_CC, E_NOTICE, "Content-type not specified assuming application/x-www-form-urlencoded");
+			php_error_docref(NULL, TSRMLS_C, E_NOTICE, "Content-type not specified assuming application/x-www-form-urlencoded");
 		}
 		php_stream_write(stream, "\r\n", sizeof("\r\n")-1);
 		php_stream_write(stream, Z_STRVAL_PP(tmpzval), Z_STRLEN_PP(tmpzval));
@@ -702,7 +702,7 @@ finish:
 			zend_hash_next_index_insert(Z_ARRVAL_P(response_header), &http_response, sizeof(zval *), NULL);
 		}
 	} else {
-		php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "HTTP request failed, unexpected end of socket!");
+		php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "HTTP request failed, unexpected end of socket!");
 		goto out;
 	}
 	
@@ -717,7 +717,7 @@ finish:
 			if (*e != '\n') {
 				do { /* partial header */
 					if (php_stream_get_line(stream, http_header_line, HTTP_HEADER_BLOCK_SIZE, &http_header_line_length) == NULL) {
-						php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Failed to read HTTP headers");
+						php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "Failed to read HTTP headers");
 						goto out;
 					}
 					e = http_header_line + http_header_line_length - 1;
@@ -759,7 +759,7 @@ finish:
 						decode = Z_LVAL_PP(tmpzval);
 					}
 					if (decode) {
-						transfer_encoding = php_stream_filter_create("dechunk", NULL, php_stream_is_persistent(stream) TSRMLS_CC);
+						transfer_encoding = php_stream_filter_create("dechunk", NULL, php_stream_is_persistent(stream), TSRMLS_C);
 						if (transfer_encoding) {
 							/* don't store transfer-encodeing header */
 							continue;
@@ -842,7 +842,7 @@ finish:
 			php_url_free(resource);
 			/* check for invalid redirection URLs */
 			if ((resource = php_url_parse(new_path)) == NULL) {
-				php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Invalid redirect URL! %s", new_path);
+				php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "Invalid redirect URL! %s", new_path);
 				goto out;
 			}
 
@@ -854,7 +854,7 @@ finish:
 		s = (unsigned char*)val; e = s + l; \
 		while (s < e) { \
 			if (iscntrl(*s)) { \
-				php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "Invalid redirect URL! %s", new_path); \
+				php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "Invalid redirect URL! %s", new_path); \
 				goto out; \
 			} \
 			s++; \
@@ -867,9 +867,9 @@ finish:
 				CHECK_FOR_CNTRL_CHARS(resource->pass)
 				CHECK_FOR_CNTRL_CHARS(resource->path)
 			}
-			stream = php_stream_url_wrap_http_ex(wrapper, new_path, mode, options, opened_path, context, --redirect_max, HTTP_WRAPPER_REDIRECTED STREAMS_CC TSRMLS_CC);
+			stream = php_stream_url_wrap_http_ex(wrapper, new_path, mode, options, opened_path, context, --redirect_max, HTTP_WRAPPER_REDIRECTED STREAMS_CC, TSRMLS_C);
 		} else {
-			php_stream_wrapper_log_error(wrapper, options TSRMLS_CC, "HTTP request failed! %s", tmp_line);
+			php_stream_wrapper_log_error(wrapper, options, TSRMLS_C, "HTTP request failed! %s", tmp_line);
 		}
 	}
 out:
@@ -914,20 +914,20 @@ out:
 			php_stream_filter_append(&stream->readfilters, transfer_encoding);
 		}
 	} else if (transfer_encoding) {
-		php_stream_filter_free(transfer_encoding TSRMLS_CC);
+		php_stream_filter_free(transfer_encoding, TSRMLS_C);
 	}
 
 	return stream;
 }
 /* }}} */
 
-php_stream *php_stream_url_wrap_http(php_stream_wrapper *wrapper, char *path, char *mode, int options, char **opened_path, php_stream_context *context STREAMS_DC TSRMLS_DC) /* {{{ */
+php_stream *php_stream_url_wrap_http(php_stream_wrapper *wrapper, char *path, char *mode, int options, char **opened_path, php_stream_context *context STREAMS_DC, TSRMLS_D) /* {{{ */
 {
-	return php_stream_url_wrap_http_ex(wrapper, path, mode, options, opened_path, context, PHP_URL_REDIRECT_MAX, HTTP_WRAPPER_HEADER_INIT STREAMS_CC TSRMLS_CC);
+	return php_stream_url_wrap_http_ex(wrapper, path, mode, options, opened_path, context, PHP_URL_REDIRECT_MAX, HTTP_WRAPPER_HEADER_INIT STREAMS_CC, TSRMLS_C);
 }
 /* }}} */
 
-static int php_stream_http_stream_stat(php_stream_wrapper *wrapper, php_stream *stream, php_stream_statbuf *ssb TSRMLS_DC) /* {{{ */
+static int php_stream_http_stream_stat(php_stream_wrapper *wrapper, php_stream *stream, php_stream_statbuf *ssb, TSRMLS_D) /* {{{ */
 {
 	/* one day, we could fill in the details based on Date: and Content-Length:
 	 * headers.  For now, we return with a failure code to prevent the underlying

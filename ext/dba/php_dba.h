@@ -74,44 +74,44 @@ extern zend_module_entry dba_module_entry;
 typedef struct dba_handler {
 	char *name; /* handler name */
 	int flags; /* whether and how dba does locking and other flags*/
-	int (*open)(dba_info *, char **error TSRMLS_DC);
-	void (*close)(dba_info * TSRMLS_DC);
-	char* (*fetch)(dba_info *, char *, int, int, int * TSRMLS_DC);
-	int (*update)(dba_info *, char *, int, char *, int, int TSRMLS_DC);
-	int (*exists)(dba_info *, char *, int TSRMLS_DC);
-	int (*delete)(dba_info *, char *, int TSRMLS_DC);
-	char* (*firstkey)(dba_info *, int * TSRMLS_DC);
-	char* (*nextkey)(dba_info *, int * TSRMLS_DC);
-	int (*optimize)(dba_info * TSRMLS_DC);
-	int (*sync)(dba_info * TSRMLS_DC);
-	char* (*info)(struct dba_handler *hnd, dba_info * TSRMLS_DC);
+	int (*open)(dba_info *, char **error, TSRMLS_D);
+	void (*close)(dba_info *, TSRMLS_D);
+	char* (*fetch)(dba_info *, char *, int, int, int *, TSRMLS_D);
+	int (*update)(dba_info *, char *, int, char *, int, int, TSRMLS_D);
+	int (*exists)(dba_info *, char *, int, TSRMLS_D);
+	int (*delete)(dba_info *, char *, int, TSRMLS_D);
+	char* (*firstkey)(dba_info *, int *, TSRMLS_D);
+	char* (*nextkey)(dba_info *, int *, TSRMLS_D);
+	int (*optimize)(dba_info *, TSRMLS_D);
+	int (*sync)(dba_info *, TSRMLS_D);
+	char* (*info)(struct dba_handler *hnd, dba_info *, TSRMLS_D);
 		/* dba_info==NULL: Handler info, dba_info!=NULL: Database info */
 } dba_handler;
 
 /* common prototypes which must be supplied by modules */
 
 #define DBA_OPEN_FUNC(x) \
-	int dba_open_##x(dba_info *info, char **error TSRMLS_DC)
+	int dba_open_##x(dba_info *info, char **error, TSRMLS_D)
 #define DBA_CLOSE_FUNC(x) \
-	void dba_close_##x(dba_info *info TSRMLS_DC)
+	void dba_close_##x(dba_info *info, TSRMLS_D)
 #define DBA_FETCH_FUNC(x) \
-	char *dba_fetch_##x(dba_info *info, char *key, int keylen, int skip, int *newlen TSRMLS_DC)
+	char *dba_fetch_##x(dba_info *info, char *key, int keylen, int skip, int *newlen, TSRMLS_D)
 #define DBA_UPDATE_FUNC(x) \
-	int dba_update_##x(dba_info *info, char *key, int keylen, char *val, int vallen, int mode TSRMLS_DC)
+	int dba_update_##x(dba_info *info, char *key, int keylen, char *val, int vallen, int mode, TSRMLS_D)
 #define DBA_EXISTS_FUNC(x) \
-	int dba_exists_##x(dba_info *info, char *key, int keylen TSRMLS_DC)
+	int dba_exists_##x(dba_info *info, char *key, int keylen, TSRMLS_D)
 #define DBA_DELETE_FUNC(x) \
-	int dba_delete_##x(dba_info *info, char *key, int keylen TSRMLS_DC)
+	int dba_delete_##x(dba_info *info, char *key, int keylen, TSRMLS_D)
 #define DBA_FIRSTKEY_FUNC(x) \
-	char *dba_firstkey_##x(dba_info *info, int *newlen TSRMLS_DC)
+	char *dba_firstkey_##x(dba_info *info, int *newlen, TSRMLS_D)
 #define DBA_NEXTKEY_FUNC(x) \
-	char *dba_nextkey_##x(dba_info *info, int *newlen TSRMLS_DC)
+	char *dba_nextkey_##x(dba_info *info, int *newlen, TSRMLS_D)
 #define DBA_OPTIMIZE_FUNC(x) \
-	int dba_optimize_##x(dba_info *info TSRMLS_DC)
+	int dba_optimize_##x(dba_info *info, TSRMLS_D)
 #define DBA_SYNC_FUNC(x) \
-	int dba_sync_##x(dba_info *info TSRMLS_DC)
+	int dba_sync_##x(dba_info *info, TSRMLS_D)
 #define DBA_INFO_FUNC(x) \
-	char *dba_info_##x(dba_handler *hnd, dba_info *info TSRMLS_DC)
+	char *dba_info_##x(dba_handler *hnd, dba_info *info, TSRMLS_D)
 
 #define DBA_FUNCS(x) \
 	DBA_OPEN_FUNC(x); \

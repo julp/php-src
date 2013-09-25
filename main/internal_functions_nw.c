@@ -86,7 +86,7 @@ static zend_module_entry *php_builtin_extensions[] = {
 
 PHPAPI int php_register_internal_extensions(TSRMLS_D)
 {
-	return php_register_extensions(php_builtin_extensions, EXTCOUNT TSRMLS_CC);
+	return php_register_extensions(php_builtin_extensions, EXTCOUNT, TSRMLS_C);
 }
 
 

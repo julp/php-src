@@ -25,7 +25,7 @@ typedef void (*php_stream_notification_func)(php_stream_context *context,
 		int notifycode, int severity,
 		char *xmsg, int xcode,
 		size_t bytes_sofar, size_t bytes_max,
-		void * ptr TSRMLS_DC);
+		void * ptr, TSRMLS_D);
 
 #define PHP_STREAM_NOTIFIER_PROGRESS	1
 
@@ -33,7 +33,7 @@ typedef void (*php_stream_notification_func)(php_stream_context *context,
    If no context was passed, use the default context
    The default context has not yet been created, do it now. */
 #define php_stream_context_from_zval(zcontext, nocontext) ( \
-		(zcontext) ? zend_fetch_resource(&(zcontext) TSRMLS_CC, -1, "Stream-Context", NULL, 1, php_le_stream_context(TSRMLS_C)) : \
+		(zcontext) ? zend_fetch_resource(&(zcontext), TSRMLS_C, -1, "Stream-Context", NULL, 1, php_le_stream_context(TSRMLS_C)) : \
 		(nocontext) ? NULL : \
 		FG(default_context) ? FG(default_context) : \
 		(FG(default_context) = php_stream_context_alloc(TSRMLS_C)) )
@@ -86,17 +86,17 @@ END_EXTERN_C()
 
 BEGIN_EXTERN_C()
 PHPAPI void php_stream_notification_notify(php_stream_context *context, int notifycode, int severity,
-		char *xmsg, int xcode, size_t bytes_sofar, size_t bytes_max, void * ptr TSRMLS_DC);
+		char *xmsg, int xcode, size_t bytes_sofar, size_t bytes_max, void * ptr, TSRMLS_D);
 PHPAPI php_stream_context *php_stream_context_set(php_stream *stream, php_stream_context *context);
 END_EXTERN_C()
 
 #define php_stream_notify_info(context, code, xmsg, xcode)	do { if ((context) && (context)->notifier) { \
 	php_stream_notification_notify((context), (code), PHP_STREAM_NOTIFY_SEVERITY_INFO, \
-				(xmsg), (xcode), 0, 0, NULL TSRMLS_CC); } } while (0)
+				(xmsg), (xcode), 0, 0, NULL, TSRMLS_C); } } while (0)
 			
 #define php_stream_notify_progress(context, bsofar, bmax) do { if ((context) && (context)->notifier) { \
 	php_stream_notification_notify((context), PHP_STREAM_NOTIFY_PROGRESS, PHP_STREAM_NOTIFY_SEVERITY_INFO, \
-			NULL, 0, (bsofar), (bmax), NULL TSRMLS_CC); } } while(0)
+			NULL, 0, (bsofar), (bmax), NULL, TSRMLS_C); } } while(0)
 
 #define php_stream_notify_progress_init(context, sofar, bmax) do { if ((context) && (context)->notifier) { \
 	(context)->notifier->progress = (sofar); \
@@ -111,11 +111,11 @@ END_EXTERN_C()
 
 #define php_stream_notify_file_size(context, file_size, xmsg, xcode) do { if ((context) && (context)->notifier) { \
 	php_stream_notification_notify((context), PHP_STREAM_NOTIFY_FILE_SIZE_IS, PHP_STREAM_NOTIFY_SEVERITY_INFO, \
-			(xmsg), (xcode), 0, (file_size), NULL TSRMLS_CC); } } while(0)
+			(xmsg), (xcode), 0, (file_size), NULL, TSRMLS_C); } } while(0)
 	
 #define php_stream_notify_error(context, code, xmsg, xcode) do { if ((context) && (context)->notifier) {\
 	php_stream_notification_notify((context), (code), PHP_STREAM_NOTIFY_SEVERITY_ERR, \
-			(xmsg), (xcode), 0, 0, NULL TSRMLS_CC); } } while(0)
+			(xmsg), (xcode), 0, 0, NULL, TSRMLS_C); } } while(0)
 	
 
 /*

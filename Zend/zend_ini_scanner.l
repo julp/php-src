@@ -142,13 +142,17 @@ ZEND_API zend_ini_scanner_globals ini_scanner_globals;
 	return type;                                 \
 }
 
-static void _yy_push_state(int new_state TSRMLS_DC)
+static void _yy_push_state(int new_state, TSRMLS_D)
 {
 	zend_stack_push(&SCNG(state_stack), (void *) &YYGETCONDITION(), sizeof(int));
 	YYSETCONDITION(new_state);
 }
 
+#if 0
 #define yy_push_state(state_and_tsrm) _yy_push_state(yyc##state_and_tsrm)
+#else
+#define yy_push_state(state, tsrm) _yy_push_state(yyc##state, tsrm)
+#endif
 
 static void yy_pop_state(TSRMLS_D)
 {
@@ -158,7 +162,7 @@ static void yy_pop_state(TSRMLS_D)
 	zend_stack_del_top(&SCNG(state_stack));
 }
 
-static void yy_scan_buffer(char *str, unsigned int len TSRMLS_DC)
+static void yy_scan_buffer(char *str, unsigned int len, TSRMLS_D)
 {
 	YYCURSOR = (YYCTYPE*)str;
 	SCNG(yy_start) = YYCURSOR;
@@ -169,7 +173,7 @@ static void yy_scan_buffer(char *str, unsigned int len TSRMLS_DC)
 
 /* {{{ init_ini_scanner()
 */
-static int init_ini_scanner(int scanner_mode, zend_file_handle *fh TSRMLS_DC)
+static int init_ini_scanner(int scanner_mode, zend_file_handle *fh, TSRMLS_D)
 {
 	/* Sanity check */
 	if (scanner_mode != ZEND_INI_SCANNER_NORMAL && scanner_mode != ZEND_INI_SCANNER_RAW) {
@@ -223,21 +227,21 @@ char *zend_ini_scanner_get_filename(TSRMLS_D)
 
 /* {{{ zend_ini_open_file_for_scanning()
 */
-int zend_ini_open_file_for_scanning(zend_file_handle *fh, int scanner_mode TSRMLS_DC)
+int zend_ini_open_file_for_scanning(zend_file_handle *fh, int scanner_mode, TSRMLS_D)
 {
 	char *buf;
 	size_t size;
 
-	if (zend_stream_fixup(fh, &buf, &size TSRMLS_CC) == FAILURE) {
+	if (zend_stream_fixup(fh, &buf, &size, TSRMLS_C) == FAILURE) {
 		return FAILURE;
 	}
 
-	if (init_ini_scanner(scanner_mode, fh TSRMLS_CC) == FAILURE) {
-		zend_file_handle_dtor(fh TSRMLS_CC);
+	if (init_ini_scanner(scanner_mode, fh, TSRMLS_C) == FAILURE) {
+		zend_file_handle_dtor(fh, TSRMLS_C);
 		return FAILURE;
 	}
 
-	yy_scan_buffer(buf, size TSRMLS_CC);
+	yy_scan_buffer(buf, size, TSRMLS_C);
 
 	return SUCCESS;
 }
@@ -245,15 +249,15 @@ int zend_ini_open_file_for_scanning(zend_file_handle *fh, int scanner_mode TSRML
 
 /* {{{ zend_ini_prepare_string_for_scanning()
 */
-int zend_ini_prepare_string_for_scanning(char *str, int scanner_mode TSRMLS_DC)
+int zend_ini_prepare_string_for_scanning(char *str, int scanner_mode, TSRMLS_D)
 {
 	int len = strlen(str);
 
-	if (init_ini_scanner(scanner_mode, NULL TSRMLS_CC) == FAILURE) {
+	if (init_ini_scanner(scanner_mode, NULL, TSRMLS_C) == FAILURE) {
 		return FAILURE;
 	}
 
-	yy_scan_buffer(str, len TSRMLS_CC);
+	yy_scan_buffer(str, len, TSRMLS_C);
 
 	return SUCCESS;
 }
@@ -261,7 +265,7 @@ int zend_ini_prepare_string_for_scanning(char *str, int scanner_mode TSRMLS_DC)
 
 /* {{{ zend_ini_escape_string()
  */
-static void zend_ini_escape_string(zval *lval, char *str, int len, char quote_type TSRMLS_DC)
+static void zend_ini_escape_string(zval *lval, char *str, int len, char quote_type, TSRMLS_D)
 {
 	register char *s, *t;
 	char *end;
@@ -308,7 +312,7 @@ static void zend_ini_escape_string(zval *lval, char *str, int len, char quote_ty
 }
 /* }}} */
 
-int ini_lex(zval *ini_lval TSRMLS_DC)
+int ini_lex(zval *ini_lval, TSRMLS_D)
 {
 restart:
 	SCNG(yy_text) = YYCURSOR;
@@ -358,9 +362,9 @@ SECTION_VALUE_CHARS ([^$\n\r;"'\]\\]|("\\"{ANY_CHAR})|{LITERAL_DOLLAR})
 <INITIAL>"[" { /* Section start */
 	/* Enter section data lookup state */
 	if (SCNG(scanner_mode) == ZEND_INI_SCANNER_RAW) {
-		yy_push_state(ST_SECTION_RAW TSRMLS_CC);
+		yy_push_state(ST_SECTION_RAW, TSRMLS_C);
 	} else {
-		yy_push_state(ST_SECTION_VALUE TSRMLS_CC);
+		yy_push_state(ST_SECTION_VALUE, TSRMLS_C);
 	}
 	return TC_SECTION;
 }
@@ -388,7 +392,7 @@ SECTION_VALUE_CHARS ([^$\n\r;"'\]\\]|("\\"{ANY_CHAR})|{LITERAL_DOLLAR})
 	EAT_TRAILING_WHITESPACE_EX('[');
 
 	/* Enter offset lookup state */
-	yy_push_state(ST_OFFSET TSRMLS_CC);
+	yy_push_state(ST_OFFSET, TSRMLS_C);
 
 	RETURN_TOKEN(TC_OFFSET, yytext, yyleng);
 }
@@ -399,7 +403,7 @@ SECTION_VALUE_CHARS ([^$\n\r;"'\]\\]|("\\"{ANY_CHAR})|{LITERAL_DOLLAR})
 }
 
 <ST_DOUBLE_QUOTES,ST_SECTION_VALUE,ST_VALUE,ST_OFFSET>{DOLLAR_CURLY} { /* Variable start */
-	yy_push_state(ST_VARNAME TSRMLS_CC);
+	yy_push_state(ST_VARNAME, TSRMLS_C);
 	return TC_DOLLAR_CURLY;
 }
 
@@ -438,9 +442,9 @@ SECTION_VALUE_CHARS ([^$\n\r;"'\]\\]|("\\"{ANY_CHAR})|{LITERAL_DOLLAR})
 
 <INITIAL>{TABS_AND_SPACES}*[=]{TABS_AND_SPACES}* { /* Start option value */
 	if (SCNG(scanner_mode) == ZEND_INI_SCANNER_RAW) {
-		yy_push_state(ST_RAW TSRMLS_CC);
+		yy_push_state(ST_RAW, TSRMLS_C);
 	} else {
-		yy_push_state(ST_VALUE TSRMLS_CC);
+		yy_push_state(ST_VALUE, TSRMLS_C);
 	}
 	return '=';
 }
@@ -523,7 +527,7 @@ end_raw_value_chars:
 }
 
 <ST_SECTION_VALUE,ST_VALUE,ST_OFFSET>{TABS_AND_SPACES}*["] { /* Double quoted '"' string start */
-	yy_push_state(ST_DOUBLE_QUOTES TSRMLS_CC);
+	yy_push_state(ST_DOUBLE_QUOTES, TSRMLS_C);
 	return '"';
 }
 
@@ -564,7 +568,7 @@ end_raw_value_chars:
 
 	yyleng = YYCURSOR - SCNG(yy_text);
 	
-	zend_ini_escape_string(ini_lval, yytext, yyleng, '"' TSRMLS_CC);
+	zend_ini_escape_string(ini_lval, yytext, yyleng, '"', TSRMLS_C);
 	return TC_QUOTED_STRING;
 }
 

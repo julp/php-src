@@ -29,7 +29,7 @@
  */
 
 /* {{{ resourcebundle_iterator_read */
-static void resourcebundle_iterator_read( ResourceBundle_iterator *iterator TSRMLS_DC ) 
+static void resourcebundle_iterator_read( ResourceBundle_iterator *iterator, TSRMLS_D ) 
 {
 	UErrorCode icuerror = U_ZERO_ERROR;
 	ResourceBundle_object *rb = iterator->subject;
@@ -42,17 +42,17 @@ static void resourcebundle_iterator_read( ResourceBundle_iterator *iterator TSRM
 			iterator->currentkey = estrdup( ures_getKey( rb->child ) );
 		}
 		MAKE_STD_ZVAL( iterator->current );
-		resourcebundle_extract_value( iterator->current, rb TSRMLS_CC );
+		resourcebundle_extract_value( iterator->current, rb, TSRMLS_C );
 	}
 	else {
-		// zend_throw_exception( spl_ce_OutOfRangeException, "Running past end of ResourceBundle", 0 TSRMLS_CC);
+		// zend_throw_exception( spl_ce_OutOfRangeException, "Running past end of ResourceBundle", 0, TSRMLS_C);
 		iterator->current = NULL;
 	}
 }
 /* }}} */
 
 /* {{{ resourcebundle_iterator_invalidate */
-static void resourcebundle_iterator_invalidate( zend_object_iterator *iter TSRMLS_DC ) 
+static void resourcebundle_iterator_invalidate( zend_object_iterator *iter, TSRMLS_D ) 
 {
 	ResourceBundle_iterator *iterator = (ResourceBundle_iterator *) iter;
 
@@ -68,12 +68,12 @@ static void resourcebundle_iterator_invalidate( zend_object_iterator *iter TSRML
 /* }}} */
 
 /* {{{ resourcebundle_iterator_dtor */
-static void resourcebundle_iterator_dtor( zend_object_iterator *iter TSRMLS_DC )
+static void resourcebundle_iterator_dtor( zend_object_iterator *iter, TSRMLS_D )
 {
 	ResourceBundle_iterator *iterator = (ResourceBundle_iterator *) iter;
 	zval                    *object = (zval *)iterator->intern.data;
 
-	resourcebundle_iterator_invalidate( iter TSRMLS_CC );
+	resourcebundle_iterator_invalidate( iter, TSRMLS_C );
 
 	Z_DELREF_P(object);
 
@@ -82,7 +82,7 @@ static void resourcebundle_iterator_dtor( zend_object_iterator *iter TSRMLS_DC )
 /* }}} */
 
 /* {{{ resourcebundle_iterator_has_more */
-static int resourcebundle_iterator_has_more( zend_object_iterator *iter TSRMLS_DC )
+static int resourcebundle_iterator_has_more( zend_object_iterator *iter, TSRMLS_D )
 {
 	ResourceBundle_iterator *iterator = (ResourceBundle_iterator *) iter;
 	return (iterator->i < iterator->length) ? SUCCESS : FAILURE;
@@ -90,23 +90,23 @@ static int resourcebundle_iterator_has_more( zend_object_iterator *iter TSRMLS_D
 /* }}} */
 
 /* {{{ resourcebundle_iterator_current */
-static void resourcebundle_iterator_current( zend_object_iterator *iter, zval ***data TSRMLS_DC )
+static void resourcebundle_iterator_current( zend_object_iterator *iter, zval ***data, TSRMLS_D )
 {
 	ResourceBundle_iterator *iterator = (ResourceBundle_iterator *) iter;
 	if (!iterator->current) {
-		resourcebundle_iterator_read( iterator TSRMLS_CC);
+		resourcebundle_iterator_read( iterator, TSRMLS_C);
 	}
 	*data = &iterator->current;
 }
 /* }}} */
 
 /* {{{ resourcebundle_iterator_key */
-static void resourcebundle_iterator_key( zend_object_iterator *iter, zval *key TSRMLS_DC )
+static void resourcebundle_iterator_key( zend_object_iterator *iter, zval *key, TSRMLS_D )
 {
 	ResourceBundle_iterator *iterator = (ResourceBundle_iterator *) iter;
 
 	if (!iterator->current) {
-		resourcebundle_iterator_read( iterator TSRMLS_CC);
+		resourcebundle_iterator_read( iterator, TSRMLS_C);
 	}
 
 	if (iterator->is_table) {
@@ -118,22 +118,22 @@ static void resourcebundle_iterator_key( zend_object_iterator *iter, zval *key T
 /* }}} */
 
 /* {{{ resourcebundle_iterator_has_more */
-static void resourcebundle_iterator_step( zend_object_iterator *iter TSRMLS_DC )
+static void resourcebundle_iterator_step( zend_object_iterator *iter, TSRMLS_D )
 {
 	ResourceBundle_iterator *iterator = (ResourceBundle_iterator *) iter;
 
 	iterator->i++;
-	resourcebundle_iterator_invalidate( iter TSRMLS_CC );
+	resourcebundle_iterator_invalidate( iter, TSRMLS_C );
 }
 /* }}} */
 
 /* {{{ resourcebundle_iterator_has_reset */
-static void resourcebundle_iterator_reset( zend_object_iterator *iter TSRMLS_DC )
+static void resourcebundle_iterator_reset( zend_object_iterator *iter, TSRMLS_D )
 {
 	ResourceBundle_iterator *iterator = (ResourceBundle_iterator *) iter;
 
 	iterator->i = 0;
-	resourcebundle_iterator_invalidate( iter TSRMLS_CC );
+	resourcebundle_iterator_invalidate( iter, TSRMLS_C );
 }
 /* }}} */
 
@@ -150,9 +150,9 @@ static zend_object_iterator_funcs resourcebundle_iterator_funcs = {
 /* }}} */
 
 /* {{{ resourcebundle_get_iterator */
-zend_object_iterator *resourcebundle_get_iterator( zend_class_entry *ce, zval *object, int byref TSRMLS_DC )
+zend_object_iterator *resourcebundle_get_iterator( zend_class_entry *ce, zval *object, int byref, TSRMLS_D )
 {
-	ResourceBundle_object   *rb = (ResourceBundle_object *) zend_object_store_get_object( object TSRMLS_CC );
+	ResourceBundle_object   *rb = (ResourceBundle_object *) zend_object_store_get_object( object, TSRMLS_C );
 	ResourceBundle_iterator *iterator = emalloc( sizeof( ResourceBundle_iterator ) );
 
 	if (byref) {

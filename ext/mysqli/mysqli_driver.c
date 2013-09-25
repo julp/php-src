@@ -30,7 +30,7 @@
 #include "mysqli_fe.h"
 
 #define MAP_PROPERTY_MYG_BOOL_READ(name, value) \
-static int name(mysqli_object *obj, zval **retval TSRMLS_DC) \
+static int name(mysqli_object *obj, zval **retval, TSRMLS_D) \
 { \
 	MAKE_STD_ZVAL(*retval); \
 	ZVAL_BOOL(*retval, MyG(value)); \
@@ -38,14 +38,14 @@ static int name(mysqli_object *obj, zval **retval TSRMLS_DC) \
 } \
 
 #define MAP_PROPERTY_MYG_BOOL_WRITE(name, value) \
-static int name(mysqli_object *obj, zval *value TSRMLS_DC) \
+static int name(mysqli_object *obj, zval *value, TSRMLS_D) \
 { \
 	MyG(value) = Z_LVAL_P(value) > 0; \
 	return SUCCESS; \
 } \
 
 #define MAP_PROPERTY_MYG_LONG_READ(name, value) \
-static int name(mysqli_object *obj, zval **retval TSRMLS_DC) \
+static int name(mysqli_object *obj, zval **retval, TSRMLS_D) \
 { \
 	MAKE_STD_ZVAL(*retval); \
 	ZVAL_LONG(*retval, MyG(value)); \
@@ -53,14 +53,14 @@ static int name(mysqli_object *obj, zval **retval TSRMLS_DC) \
 } \
 
 #define MAP_PROPERTY_MYG_LONG_WRITE(name, value) \
-static int name(mysqli_object *obj, zval *value TSRMLS_DC) \
+static int name(mysqli_object *obj, zval *value, TSRMLS_D) \
 { \
 	MyG(value) = Z_LVAL_P(value); \
 	return SUCCESS; \
 } \
 
 #define MAP_PROPERTY_MYG_STRING_READ(name, value) \
-static int name(mysqli_object *obj, zval **retval TSRMLS_DC) \
+static int name(mysqli_object *obj, zval **retval, TSRMLS_D) \
 { \
 	MAKE_STD_ZVAL(*retval); \
 	ZVAL_STRING(*retval, MyG(value), 1); \
@@ -68,24 +68,24 @@ static int name(mysqli_object *obj, zval **retval TSRMLS_DC) \
 } \
 
 #define MAP_PROPERTY_MYG_STRING_WRITE(name, value) \
-static int name(mysqli_object *obj, zval *value TSRMLS_DC) \
+static int name(mysqli_object *obj, zval *value, TSRMLS_D) \
 { \
 	MyG(value) = Z_STRVAL_P(value); \
 	return SUCCESS; \
 } \
 
 /* {{{ property driver_report_write */
-static int driver_report_write(mysqli_object *obj, zval *value TSRMLS_DC)
+static int driver_report_write(mysqli_object *obj, zval *value, TSRMLS_D)
 {
 	MyG(report_mode) = Z_LVAL_P(value);
 	/*FIXME*/
-	/* zend_replace_error_handling(MyG(report_mode) & MYSQLI_REPORT_STRICT ? EH_THROW : EH_NORMAL, NULL, NULL TSRMLS_CC); */
+	/* zend_replace_error_handling(MyG(report_mode) & MYSQLI_REPORT_STRICT ? EH_THROW : EH_NORMAL, NULL, NULL, TSRMLS_C); */
 	return SUCCESS;
 }
 /* }}} */
 
 /* {{{ property driver_embedded_read */
-static int driver_embedded_read(mysqli_object *obj, zval **retval TSRMLS_DC)
+static int driver_embedded_read(mysqli_object *obj, zval **retval, TSRMLS_D)
 {
 	MAKE_STD_ZVAL(*retval);
 #ifdef HAVE_EMBEDDED_MYSQLI
@@ -98,7 +98,7 @@ static int driver_embedded_read(mysqli_object *obj, zval **retval TSRMLS_DC)
 /* }}} */
 
 /* {{{ property driver_client_version_read */
-static int driver_client_version_read(mysqli_object *obj, zval **retval TSRMLS_DC)
+static int driver_client_version_read(mysqli_object *obj, zval **retval, TSRMLS_D)
 {
 	MAKE_STD_ZVAL(*retval);
 	ZVAL_LONG(*retval, MYSQL_VERSION_ID);
@@ -107,7 +107,7 @@ static int driver_client_version_read(mysqli_object *obj, zval **retval TSRMLS_D
 /* }}} */
 
 /* {{{ property driver_client_info_read */
-static int driver_client_info_read(mysqli_object *obj, zval **retval TSRMLS_DC)
+static int driver_client_info_read(mysqli_object *obj, zval **retval, TSRMLS_D)
 {
 	MAKE_STD_ZVAL(*retval);
 	ZVAL_STRING(*retval, (char *)mysql_get_client_info(), 1);
@@ -116,7 +116,7 @@ static int driver_client_info_read(mysqli_object *obj, zval **retval TSRMLS_DC)
 /* }}} */
 
 /* {{{ property driver_driver_version_read */
-static int driver_driver_version_read(mysqli_object *obj, zval **retval TSRMLS_DC)
+static int driver_driver_version_read(mysqli_object *obj, zval **retval, TSRMLS_D)
 {
 	MAKE_STD_ZVAL(*retval);
 	ZVAL_LONG(*retval, MYSQLI_VERSION_ID);
@@ -136,7 +136,7 @@ ZEND_FUNCTION(mysqli_driver_construct)
 	mysqli_resource = (MYSQLI_RESOURCE *)ecalloc (1, sizeof(MYSQLI_RESOURCE));
 	mysqli_resource->ptr = 1;
 	mysqli_resource->status = (ZEND_NUM_ARGS() == 1) ? MYSQLI_STATUS_INITIALIZED : MYSQLI_STATUS_VALID;
-	((mysqli_object *) zend_object_store_get_object(getThis() TSRMLS_CC))->ptr = mysqli_resource;
+	((mysqli_object *) zend_object_store_get_object(getThis(), TSRMLS_C))->ptr = mysqli_resource;
 #endif
 }
 

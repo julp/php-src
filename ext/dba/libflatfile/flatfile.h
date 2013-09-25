@@ -37,12 +37,12 @@ typedef struct {
 #define FLATFILE_INSERT 1
 #define FLATFILE_REPLACE 0
 
-int flatfile_store(flatfile *dba, datum key_datum, datum value_datum, int mode TSRMLS_DC);
-datum flatfile_fetch(flatfile *dba, datum key_datum TSRMLS_DC);
-int flatfile_delete(flatfile *dba, datum key_datum TSRMLS_DC);
-int flatfile_findkey(flatfile *dba, datum key_datum TSRMLS_DC);
-datum flatfile_firstkey(flatfile *dba TSRMLS_DC);
-datum flatfile_nextkey(flatfile *dba TSRMLS_DC);
+int flatfile_store(flatfile *dba, datum key_datum, datum value_datum, int mode, TSRMLS_D);
+datum flatfile_fetch(flatfile *dba, datum key_datum, TSRMLS_D);
+int flatfile_delete(flatfile *dba, datum key_datum, TSRMLS_D);
+int flatfile_findkey(flatfile *dba, datum key_datum, TSRMLS_D);
+datum flatfile_firstkey(flatfile *dba, TSRMLS_D);
+datum flatfile_nextkey(flatfile *dba, TSRMLS_D);
 char *flatfile_version();
 
 #endif

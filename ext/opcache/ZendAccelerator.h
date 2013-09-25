@@ -316,13 +316,13 @@ extern zend_accel_globals accel_globals;
 
 extern char *zps_api_failure_reason;
 
-void zend_accel_schedule_restart(zend_accel_restart_reason reason TSRMLS_DC);
-void zend_accel_schedule_restart_if_necessary(zend_accel_restart_reason reason TSRMLS_DC);
-int  zend_accel_invalidate(const char *filename, int filename_len, zend_bool force TSRMLS_DC);
+void zend_accel_schedule_restart(zend_accel_restart_reason reason, TSRMLS_D);
+void zend_accel_schedule_restart_if_necessary(zend_accel_restart_reason reason, TSRMLS_D);
+int  zend_accel_invalidate(const char *filename, int filename_len, zend_bool force, TSRMLS_D);
 int  accelerator_shm_read_lock(TSRMLS_D);
 void accelerator_shm_read_unlock(TSRMLS_D);
 
-char *accel_make_persistent_key_ex(zend_file_handle *file_handle, int path_length, int *key_len TSRMLS_DC);
+char *accel_make_persistent_key_ex(zend_file_handle *file_handle, int path_length, int *key_len, TSRMLS_D);
 
 #if !defined(ZEND_DECLARE_INHERITED_CLASS_DELAYED)
 # define ZEND_DECLARE_INHERITED_CLASS_DELAYED 145
@@ -332,7 +332,7 @@ char *accel_make_persistent_key_ex(zend_file_handle *file_handle, int path_lengt
 
 #if ZEND_EXTENSION_API_NO > PHP_5_3_X_API_NO
 
-const char *accel_new_interned_string(const char *arKey, int nKeyLength, int free_src TSRMLS_DC);
+const char *accel_new_interned_string(const char *arKey, int nKeyLength, int free_src, TSRMLS_D);
 
 # define interned_free(s) do { \
 		if (!IS_INTERNED(s)) { \
