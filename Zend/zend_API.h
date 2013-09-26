@@ -429,6 +429,7 @@ ZEND_API int add_index_bool(zval *arg, ulong idx, int b);
 ZEND_API int add_index_resource(zval *arg, ulong idx, int r);
 ZEND_API int add_index_double(zval *arg, ulong idx, double d);
 ZEND_API int add_index_string(zval *arg, ulong idx, const char *str, int duplicate);
+ZEND_API int add_index_string_enc(zval *arg, ulong index, const char *str, EncodingPtr enc, int duplicate);
 ZEND_API int add_index_stringl(zval *arg, ulong idx, const char *str, uint length, int duplicate);
 ZEND_API int add_index_stringl_enc(zval *arg, ulong index, const char *str, uint length, EncodingPtr enc, int duplicate);
 ZEND_API int add_index_zval(zval *arg, ulong index, zval *value);
@@ -439,7 +440,9 @@ ZEND_API int add_next_index_bool(zval *arg, int b);
 ZEND_API int add_next_index_resource(zval *arg, int r);
 ZEND_API int add_next_index_double(zval *arg, double d);
 ZEND_API int add_next_index_string(zval *arg, const char *str, int duplicate);
+ZEND_API int add_next_index_string_enc(zval *arg, const char *str, EncodingPtr enc, int duplicate);
 ZEND_API int add_next_index_stringl(zval *arg, const char *str, uint length, int duplicate);
+ZEND_API int add_next_index_stringl_enc(zval *arg, const char *str, uint length, EncodingPtr enc, int duplicate);
 ZEND_API int add_next_index_zval(zval *arg, zval *value);
 
 ZEND_API int add_get_assoc_string_ex(zval *arg, const char *key, uint key_len, const char *str, void **dest, int duplicate);
