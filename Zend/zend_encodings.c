@@ -36,6 +36,7 @@ typedef uint8_t AsciiCompatibility;
 
 struct _Encoding {
     const char *name;
+    int8_t max_bytes_per_cp;
     uint16_t windows_code_page; /* http://msdn.microsoft.com/en-us/library/windows/desktop/dd317756.aspx */
     AsciiCompatibility compat;
     const char *aliases[];
@@ -43,6 +44,7 @@ struct _Encoding {
 
 static const Encoding __enc_unassociated = {
     "unassociated",
+    1,
     WINDOWS_CODE_PAGE_NONE,
     ASCII_NON_COMPATIBLE,
     {
@@ -52,6 +54,7 @@ static const Encoding __enc_unassociated = {
 
 static const Encoding __enc_binary = {
     "binary",
+    1,
     WINDOWS_CODE_PAGE_NONE,
     ASCII_NON_COMPATIBLE,
     {
@@ -61,6 +64,7 @@ static const Encoding __enc_binary = {
 
 static const Encoding __enc_ascii = {
     "US-ASCII",
+    1,
     20127,
     ASCII_REAL,
     {
@@ -85,6 +89,7 @@ static const Encoding __enc_ascii = {
 
 static const Encoding __enc_iso_8859_1 = {
     "ISO-8859-1",
+    1,
     28591,
     ASCII_SUPERSET,
     {
@@ -104,6 +109,7 @@ static const Encoding __enc_iso_8859_1 = {
 
 static const Encoding __enc_cp1252 = {
     "cp1252",
+    1,
     1252,
     ASCII_SUPERSET,
     {
@@ -116,6 +122,7 @@ static const Encoding __enc_cp1252 = {
 
 static const Encoding __enc_utf8 = {
     "UTF-8",
+    4,
     65001,
     ASCII_SUPERSET,
     {
@@ -277,6 +284,11 @@ ZEND_API EncodingPtr enc_by_name(const char *name_or_alias)
     }
 
     return NULL;
+}
+
+ZEND_API int8_t enc_max_bytes_per_cp(EncodingPtr enc)
+{
+    return enc->max_bytes_per_cp;
 }
 
 ZEND_API const char *enc_name(EncodingPtr enc)

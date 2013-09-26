@@ -258,3 +258,20 @@ See: [.ZIP File Format Specification](http://www.pkware.com/documents/casestudie
 
 * `string str_encoding(string $str)` return current encoding of given string
 * `bool str_force_encoding(mixed &$variable, string $encoding)` true if the new encoding was successfully associated to the string variable
+
+# Examples
+
+```PHP
+<?php
+declare(encoding='UTF-8');
+
+$ascii = 'a';
+var_dump(
+        str_encoding(utf8_decode('é')), # => string(10) "ISO-8859-1"
+        str_force_encoding($ascii, 'ASCII'), # ok
+        $ascii . 'é', # ok
+        'é' . utf8_decode('é'), # => Warning: concatenation of incompatible charsets found: 'UTF-8' and 'ISO-8859-1'
+        trim(" é "), # => Warning: trim() is not compatible with multibyte strings (string with charset 'UTF-8' found)
+        NULL
+);
+```

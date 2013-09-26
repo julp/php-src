@@ -840,7 +840,7 @@ static void php_do_trim(INTERNAL_FUNCTION_PARAMETERS, int mode)
 	char *what = NULL;
 	int str_len, what_len = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|s", &str, &str_len, &what, &what_len) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s|s", &str, &str_len, &what, &what_len) == FAILURE) {
 		return;
 	}
 
@@ -1366,7 +1366,7 @@ PHP_FUNCTION(strtoupper)
 	char *arg;
 	int arglen;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &arg, &arglen) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s", &arg, &arglen) == FAILURE) {
 		return;
 	}
 
@@ -1400,7 +1400,7 @@ PHP_FUNCTION(strtolower)
 	char *str;
 	int arglen;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &arglen) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &arglen) == FAILURE) {
 		return;
 	}
 
@@ -1707,7 +1707,7 @@ PHP_FUNCTION(stristr)
 	char needle_char[2];
 	zend_bool part = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sz|b", &haystack, &haystack_len, &needle, &part) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "sz|b", &haystack, &haystack_len, &needle, &part) == FAILURE) {
 		return;
 	}
 
@@ -1858,7 +1858,7 @@ PHP_FUNCTION(stripos)
 	char needle_char[2];
 	zval *needle;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sz|l", &haystack, &haystack_len, &needle, &offset) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "sz|l", &haystack, &haystack_len, &needle, &offset) == FAILURE) {
 		return;
 	}
 
@@ -1993,7 +1993,7 @@ PHP_FUNCTION(strripos)
 	char *p, *e, ord_needle[2];
 	char *needle_dup, *haystack_dup;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sz|l", &haystack, &haystack_len, &zneedle, &offset) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "sz|l", &haystack, &haystack_len, &zneedle, &offset) == FAILURE) {
 		RETURN_FALSE;
 	}
 
@@ -2226,7 +2226,7 @@ PHP_FUNCTION(substr)
 	int str_len;
 	int argc = ZEND_NUM_ARGS();
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sl|l", &str, &str_len, &f, &l) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "sl|l", &str, &str_len, &f, &l) == FAILURE) {
 		return;
 	}
 
@@ -2299,7 +2299,7 @@ PHP_FUNCTION(substr_replace)
 	HashPosition pos_str, pos_from, pos_repl, pos_len;
 	zval **tmp_str = NULL, **tmp_from = NULL, **tmp_repl = NULL, **tmp_len= NULL;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ZZZ|Z", &str, &repl, &from, &len) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "ZZZ|Z", &str, &repl, &from, &len) == FAILURE) {
 		return;
 	}
 
@@ -2683,7 +2683,7 @@ PHP_FUNCTION(ucfirst)
 	char *str;
 	int  str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) == FAILURE) {
 		return;
 	}
 
@@ -2713,7 +2713,7 @@ PHP_FUNCTION(lcfirst)
 	char  *str;
 	int   str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) == FAILURE) {
 		return;
 	}
 
@@ -2734,7 +2734,7 @@ PHP_FUNCTION(ucwords)
 	register char *r, *r_end;
 	int str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) == FAILURE) {
 		return;
 	}
 
@@ -3121,6 +3121,9 @@ PHP_FUNCTION(strtr)
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "sZ|s", &str, &str_len, &from, &to, &to_len) == FAILURE) {
 		return;
 	}
+	if (2 == ac && IS_STRING == Z_TYPE_PP(from) && enc_max_bytes_per_cp(Z_STRENC_PP(from)) > 1) {
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "2 arguments form is not compatible with multibyte strings");
+	}
 
 	if (ac == 2 && Z_TYPE_PP(from) != IS_ARRAY) {
 		php_error_docref(NULL, TSRMLS_C, E_WARNING, "The second argument is not an array");
@@ -3157,7 +3160,7 @@ PHP_FUNCTION(strrev)
 	char *e, *n, *p;
 	int  str_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s", &str, &str_len) == FAILURE) {
 		return;
 	}
 
@@ -3956,6 +3959,11 @@ static void php_str_replace_common(INTERNAL_FUNCTION_PARAMETERS, int case_sensit
 	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ZZZ|Z", &search, &replace, &subject, &zcount) == FAILURE) {
 		return;
 	}
+/*
+	if (!case_sensitivity && IS_STRING == Z_TYPE_PP(?) && enc_max_bytes_per_cp(Z_STRENC_PP(?) > 1) {
+		php_error_docref(NULL, TSRMLS_C, E_WARNING, "is incompatible with multibyte strings");
+	}
+*/
 
 	SEPARATE_ZVAL(search);
 	SEPARATE_ZVAL(replace);
@@ -4918,7 +4926,7 @@ PHP_FUNCTION(count_chars)
 	char retstr[256];
 	int retlen=0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|l", &input, &len, &mymode) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s|l", &input, &len, &mymode) == FAILURE) {
 		return;
 	}
 
@@ -5361,7 +5369,7 @@ PHP_FUNCTION(str_shuffle)
 	char *arg;
 	int arglen;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s", &arg, &arglen) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s", &arg, &arglen) == FAILURE) {
 		return;
 	}
 
@@ -5389,7 +5397,7 @@ PHP_FUNCTION(str_word_count)
 	int str_len, char_list_len = 0, word_count = 0;
 	long type = 0;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|ls", &str, &str_len, &type, &char_list, &char_list_len) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s|ls", &str, &str_len, &type, &char_list, &char_list_len) == FAILURE) {
 		return;
 	}
 
@@ -5510,7 +5518,7 @@ PHP_FUNCTION(str_split)
 	char *p;
 	int n_reg_segments;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "s|l", &str, &str_len, &split_length) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "s|l", &str, &str_len, &split_length) == FAILURE) {
 		return;
 	}
 
@@ -5579,7 +5587,7 @@ PHP_FUNCTION(substr_compare)
 	zend_bool cs=0;
 	uint cmp_len;
 
-	if (zend_parse_parameters(ZEND_NUM_ARGS(), TSRMLS_C, "ssl|lb", &s1, &s1_len, &s2, &s2_len, &offset, &len, &cs) == FAILURE) {
+	if (zend_parse_parameters_mbunaware(ZEND_NUM_ARGS(), TSRMLS_C, "ssl|lb", &s1, &s1_len, &s2, &s2_len, &offset, &len, &cs) == FAILURE) {
 		RETURN_FALSE;
 	}
 

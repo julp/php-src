@@ -302,7 +302,7 @@ static int parse_arg_object_to_string(zval **arg, char **p, int *pl, int type, T
 }
 /* }}} */
 
-static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, const char **spec, char **error, int *severity, TSRMLS_D) /* {{{ */
+static const char *zend_parse_arg_impl(int mbaware, EncodingPtr default_enc, int arg_num, zval **arg, va_list *va, const char **spec, char **error, int *severity, TSRMLS_D) /* {{{ */
 {
 	const char *spec_walk = *spec;
 	char c = *spec_walk++;
@@ -429,9 +429,28 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 			{
 				char **p = va_arg(*va, char **);
 				int *pl = va_arg(*va, int *);
-				EncodingPtr enc = enc_unassociated; // TODO: use it
+				EncodingPtr enc = enc_unassociated;
 				EncodingPtr *oenc = NULL; /* output encoding */
 
+#if 1
+				switch (c) {
+					case 'e':
+						enc = va_arg(*va, EncodingPtr);
+						break;
+					case 'E':
+						oenc = va_arg(*va, EncodingPtr *);
+						*oenc = enc_unassociated;
+						break;
+					case 'u':
+						enc = enc_utf8;
+						break;
+					case 's':
+						if (NULL != default_enc) {
+							enc = default_enc;
+						}
+						break;
+				}
+#else
 				if ('e' == c) {
 					enc = va_arg(*va, EncodingPtr);
 				} else if ('E' == c) {
@@ -440,6 +459,7 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 				} else if ('u' == c) {
 					enc = enc_utf8;
 				}
+#endif
 				switch (Z_TYPE_PP(arg)) {
 					case IS_NULL:
 						if (check_null) {
@@ -469,6 +489,13 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 						}
 						if (enc_are_incompatible(Z_STRENC_PP(arg), enc)) {
 							return "a compatible string";
+						}
+						if (!mbaware && enc_max_bytes_per_cp(Z_STRENC_PP(arg)) > 1) {
+							const char *space;
+                        				const char *class_name = get_active_class_name(&space, TSRMLS_C);
+
+							zend_error(E_WARNING, "%s%s%s() is not compatible with multibyte strings (string with charset '%s' found)",
+								class_name, space, get_active_function_name(TSRMLS_C), enc_name(Z_STRENC_PP(arg)));
 						}
 						break;
 
@@ -701,13 +728,13 @@ static const char *zend_parse_arg_impl(int arg_num, zval **arg, va_list *va, con
 }
 /* }}} */
 
-static int zend_parse_arg(int arg_num, zval **arg, va_list *va, const char **spec, int quiet, TSRMLS_D) /* {{{ */
+static int zend_parse_arg(int mbaware, EncodingPtr default_enc, int arg_num, zval **arg, va_list *va, const char **spec, int quiet, TSRMLS_D) /* {{{ */
 {
 	const char *expected_type = NULL;
 	char *error = NULL;
 	int severity = E_WARNING;
 
-	expected_type = zend_parse_arg_impl(arg_num, arg, va, spec, &error, &severity, TSRMLS_C);
+	expected_type = zend_parse_arg_impl(mbaware, default_enc, arg_num, arg, va, spec, &error, &severity, TSRMLS_C);
 	if (expected_type) {
 		if (!quiet && (*expected_type || error)) {
 			const char *space;
@@ -739,13 +766,13 @@ ZEND_API int zend_parse_parameter(int flags, int arg_num, TSRMLS_D, zval **arg, 
 	int quiet = flags & ZEND_PARSE_PARAMS_QUIET;
 
 	va_start(va, spec);
-	ret = zend_parse_arg(arg_num, arg, &va, &spec, quiet, TSRMLS_C);
+	ret = zend_parse_arg(1, NULL, arg_num, arg, &va, &spec, quiet, TSRMLS_C);
 	va_end(va);
 
 	return ret;
 }
 
-static int zend_parse_va_args(int num_args, const char *type_spec, va_list *va, int flags, TSRMLS_D) /* {{{ */
+static int zend_parse_va_args(int mbaware, EncodingPtr default_enc, int num_args, const char *type_spec, va_list *va, int flags, TSRMLS_D) /* {{{ */
 {
 	const  char *spec_walk;
 	int c, i;
@@ -891,7 +918,7 @@ static int zend_parse_va_args(int num_args, const char *type_spec, va_list *va, 
 
 		arg = (zval **) (zend_vm_stack_top(TSRMLS_C) - 1 - (arg_count-i));
 
-		if (zend_parse_arg(i+1, arg, va, &type_spec, quiet, TSRMLS_C) == FAILURE) {
+		if (zend_parse_arg(mbaware, default_enc, i+1, arg, va, &type_spec, quiet, TSRMLS_C) == FAILURE) {
 			/* clean up varargs array if it was used */
 			if (varargs && *varargs) {
 				efree(*varargs);
@@ -919,7 +946,7 @@ static int zend_parse_va_args(int num_args, const char *type_spec, va_list *va, 
 	}\
 }
 
-ZEND_API int zend_parse_method_parameters_ex(int flags, int num_args, TSRMLS_D, zval *this_ptr, const char *type_spec, ...) /* {{{ */
+ZEND_API int _zend_parse_method_parameters_ex(int mbaware, EncodingPtr default_enc, int flags, int num_args, TSRMLS_D, zval *this_ptr, const char *type_spec, ...) /* {{{ */
 {
 	va_list va;
 	int retval;
@@ -932,7 +959,7 @@ ZEND_API int zend_parse_method_parameters_ex(int flags, int num_args, TSRMLS_D, 
 		RETURN_IF_ZERO_ARGS(num_args, p, quiet);
 
 		va_start(va, type_spec);
-		retval = zend_parse_va_args(num_args, type_spec, &va, flags, TSRMLS_C);
+		retval = zend_parse_va_args(mbaware, default_enc, num_args, type_spec, &va, flags, TSRMLS_C);
 		va_end(va);
 	} else {
 		p++;
@@ -953,7 +980,7 @@ ZEND_API int zend_parse_method_parameters_ex(int flags, int num_args, TSRMLS_D, 
 			return FAILURE;
 		}
 
-		retval = zend_parse_va_args(num_args, p, &va, flags, TSRMLS_C);
+		retval = zend_parse_va_args(mbaware, default_enc, num_args, p, &va, flags, TSRMLS_C);
 		va_end(va);
 	}
 	return retval;

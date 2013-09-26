@@ -83,5 +83,6 @@ ZEND_API int enc_are_incompatible(EncodingPtr, EncodingPtr);
 ZEND_API EncodingPtr enc_for_filesystem(void);
 ZEND_API const char *enc_name(EncodingPtr);
 ZEND_API EncodingPtr enc_guess(const char *, int);
+ZEND_API int8_t enc_max_bytes_per_cp(EncodingPtr);
 
 #endif /* ZEND_ENCODINGS_H */
