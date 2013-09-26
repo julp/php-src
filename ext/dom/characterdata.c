@@ -227,7 +227,7 @@ PHP_FUNCTION(dom_characterdata_append_data)
 	char *arg;
 	int arg_len;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ou", &id, dom_characterdata_class_entry, &arg, &arg_len) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Os", &id, dom_characterdata_class_entry, &arg, &arg_len) == FAILURE) {
 		return;
 	}
 
@@ -263,7 +263,7 @@ PHP_FUNCTION(dom_characterdata_insert_data)
 	int         length, arg_len;
 	dom_object	*intern;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Olu", &id, dom_characterdata_class_entry, &offset, &arg, &arg_len) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ols", &id, dom_characterdata_class_entry, &offset, &arg, &arg_len) == FAILURE) {
 		return;
 	}
 
@@ -366,7 +366,7 @@ PHP_FUNCTION(dom_characterdata_replace_data)
 	int         length, arg_len;
 	dom_object	*intern;
 
-	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Ollu", &id, dom_characterdata_class_entry, &offset, &count, &arg, &arg_len) == FAILURE) {
+	if (zend_parse_method_parameters(ZEND_NUM_ARGS(), TSRMLS_C, getThis(), "Olls", &id, dom_characterdata_class_entry, &offset, &count, &arg, &arg_len) == FAILURE) {
 		return;
 	}
 

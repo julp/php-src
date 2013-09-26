@@ -58,13 +58,6 @@ extern zend_module_entry dom_module_entry;
 #include "xml_common.h"
 #include "ext/libxml/php_libxml.h"
 #include "zend_exceptions.h"
-#include "zend_encodings.h"
-#undef ZVAL_STRING
-#undef RETVAL_STRING
-#define ZVAL_STRING(z, s, duplicate) \
-	ZVAL_STRING_UTF8(z, s, duplicate)
-#define RETVAL_STRING(s, duplicate) \
-	RETVAL_STRING_UTF8(s, duplicate)
 #include "dom_ce.h"
 /* DOM API_VERSION, please bump it up, if you change anything in the API
     therefore it's easier for the script-programmers to check, what's working how
