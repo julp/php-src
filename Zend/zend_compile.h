@@ -29,6 +29,7 @@
 #endif
 
 #include "zend_llist.h"
+#include "zend_encodings.h"
 
 #define DEBUG_ZEND 0
 
@@ -295,6 +296,7 @@ struct _zend_op_array {
 
 	zend_uint this_var;
 
+	EncodingPtr encoding;
 	const char *filename;
 	zend_uint line_start;
 	zend_uint line_end;

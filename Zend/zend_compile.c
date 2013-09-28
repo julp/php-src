@@ -5795,7 +5795,7 @@ void zend_do_add_static_array_element(znode *result, znode *offset, const znode 
 				zval_dtor(&offset->u.constant);
 				break;
 			case IS_STRING:
-				zend_symtable_update(result->u.constant.value.ht, offset->u.constant.value.str.val, offset->u.constant.value.str.len+1, &element, sizeof(zval *), NULL);
+				zend_symtable_update/*_enc*/(result->u.constant.value.ht, offset->u.constant.value.str.val, offset->u.constant.value.str.len+1, /*CG(active_op_array)->encoding, */&element, sizeof(zval *), NULL);
 				zval_dtor(&offset->u.constant);
 				break;
 			case IS_NULL:
@@ -6475,7 +6475,7 @@ void zend_do_declare_stmt(znode *var, znode *val, TSRMLS_D) /* {{{ */
 			if (NULL == (enc = enc_by_name(val->u.constant.value.str.val))) {
 				zend_error(E_COMPILE_WARNING, "Unknown encoding '%s'", var->u.constant.value.str.val);
 			} else {
-				CG(source_encoding) = enc;
+				/*CG(active_op_array)->encoding = */CG(source_encoding) = enc;
 			}
 		}
 		zval_dtor(&val->u.constant);

@@ -2195,9 +2195,9 @@ ZEND_API int zend_register_functions(zend_class_entry *scope, const zend_functio
 		fname_len = strlen(ptr->fname);
 		lowercase_name = zend_new_interned_string(zend_str_tolower_dup(ptr->fname, fname_len), fname_len + 1, 1, TSRMLS_C);
 		if (IS_INTERNED(lowercase_name)) {
-			result = zend_hash_quick_add(target_function_table, lowercase_name, fname_len+1, INTERNED_HASH(lowercase_name), &function, sizeof(zend_function), (void**)&reg_function);
+			result = zend_hash_quick_add_enc(target_function_table, lowercase_name, fname_len+1, enc_ascii, INTERNED_HASH(lowercase_name), &function, sizeof(zend_function), (void**)&reg_function);
 		} else {
-			result = zend_hash_add(target_function_table, lowercase_name, fname_len+1, &function, sizeof(zend_function), (void**)&reg_function);
+			result = zend_hash_add_enc(target_function_table, lowercase_name, fname_len+1, enc_ascii, &function, sizeof(zend_function), (void**)&reg_function);
 		}
 		if (result == FAILURE) {
 			unload=1;

@@ -5668,7 +5668,7 @@ PHP_FUNCTION(str_encoding)
         RETURN_FALSE;
     }
     if (Z_TYPE_P(zstr) == IS_STRING) {
-        RETURN_STRING(enc_name(Z_STRENC_P(zstr)), 1);
+        RETURN_STRING_ENC(enc_name(Z_STRENC_P(zstr)), enc_ascii, 1);
     } else {
         php_error_docref(NULL, TSRMLS_C, E_WARNING, "string expected");
         RETURN_FALSE;

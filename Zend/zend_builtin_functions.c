@@ -1725,9 +1725,9 @@ static int copy_function_name(zend_function *func, TSRMLS_D, int num_args, va_li
 	}
 
 	if (func->type == ZEND_INTERNAL_FUNCTION) {
-		add_next_index_stringl(internal_ar, hash_key->arKey, hash_key->nKeyLength-1, 1);
+		add_next_index_stringl_enc(internal_ar, hash_key->arKey, hash_key->nKeyLength-1, hash_key->enc, 1);
 	} else if (func->type == ZEND_USER_FUNCTION) {
-		add_next_index_stringl(user_ar, hash_key->arKey, hash_key->nKeyLength-1, 1);
+		add_next_index_stringl_enc(user_ar, hash_key->arKey, hash_key->nKeyLength-1, hash_key->enc, 1);
 	}
 
 	return 0;

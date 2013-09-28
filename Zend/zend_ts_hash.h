@@ -49,17 +49,17 @@ ZEND_API void zend_ts_hash_clean(TsHashTable *ht);
 
 
 /* additions/updates/changes */
-ZEND_API int _zend_ts_hash_add_or_update(TsHashTable *ht, char *arKey, uint nKeyLength, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC);
+ZEND_API int _zend_ts_hash_add_or_update(TsHashTable *ht, char *arKey, uint nKeyLength, EncodingPtr enc, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC);
 #define zend_ts_hash_update(ht, arKey, nKeyLength, pData, nDataSize, pDest) \
 		_zend_ts_hash_add_or_update(ht, arKey, nKeyLength, pData, nDataSize, pDest, HASH_UPDATE ZEND_FILE_LINE_CC)
 #define zend_ts_hash_add(ht, arKey, nKeyLength, pData, nDataSize, pDest) \
 		_zend_ts_hash_add_or_update(ht, arKey, nKeyLength, pData, nDataSize, pDest, HASH_ADD ZEND_FILE_LINE_CC)
 
-ZEND_API int _zend_ts_hash_quick_add_or_update(TsHashTable *ht, char *arKey, uint nKeyLength, ulong h, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC);
+ZEND_API int _zend_ts_hash_quick_add_or_update(TsHashTable *ht, char *arKey, uint nKeyLength, EncodingPtr enc, ulong h, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC);
 #define zend_ts_hash_quick_update(ht, arKey, nKeyLength, h, pData, nDataSize, pDest) \
-		_zend_ts_hash_quick_add_or_update(ht, arKey, nKeyLength, h, pData, nDataSize, pDest, HASH_UPDATE ZEND_FILE_LINE_CC)
+		_zend_ts_hash_quick_add_or_update(ht, arKey, nKeyLength, enc_unassociated, h, pData, nDataSize, pDest, HASH_UPDATE ZEND_FILE_LINE_CC)
 #define zend_ts_hash_quick_add(ht, arKey, nKeyLength, h, pData, nDataSize, pDest) \
-		_zend_ts_hash_quick_add_or_update(ht, arKey, nKeyLength, h, pData, nDataSize, pDest, HASH_ADD ZEND_FILE_LINE_CC)
+		_zend_ts_hash_quick_add_or_update(ht, arKey, nKeyLength, enc_unassociated, h, pData, nDataSize, pDest, HASH_ADD ZEND_FILE_LINE_CC)
 
 ZEND_API int _zend_ts_hash_index_update_or_next_insert(TsHashTable *ht, ulong h, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC);
 #define zend_ts_hash_index_update(ht, h, pData, nDataSize, pDest) \
@@ -67,7 +67,7 @@ ZEND_API int _zend_ts_hash_index_update_or_next_insert(TsHashTable *ht, ulong h,
 #define zend_ts_hash_next_index_insert(ht, pData, nDataSize, pDest) \
 		_zend_ts_hash_index_update_or_next_insert(ht, 0, pData, nDataSize, pDest, HASH_NEXT_INSERT ZEND_FILE_LINE_CC)
 
-ZEND_API int zend_ts_hash_add_empty_element(TsHashTable *ht, char *arKey, uint nKeyLength);
+ZEND_API int zend_ts_hash_add_empty_element(TsHashTable *ht, char *arKey, uint nKeyLength, EncodingPtr enc);
 
 ZEND_API void zend_ts_hash_graceful_destroy(TsHashTable *ht);
 ZEND_API void zend_ts_hash_apply(TsHashTable *ht, apply_func_t apply_func, TSRMLS_D);

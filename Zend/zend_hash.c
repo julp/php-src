@@ -21,6 +21,7 @@
 
 #include "zend.h"
 #include "zend_globals.h"
+#include "zend_encodings.h"
 
 #define CONNECT_TO_BUCKET_DLLIST(element, list_head)		\
 	(element)->pNext = (list_head);							\
@@ -192,7 +193,7 @@ ZEND_API void zend_hash_set_apply_protection(HashTable *ht, zend_bool bApplyProt
 
 
 
-ZEND_API int _zend_hash_add_or_update(HashTable *ht, const char *arKey, uint nKeyLength, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC)
+ZEND_API int _zend_hash_add_or_update(HashTable *ht, const char *arKey, uint nKeyLength, EncodingPtr enc, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC)
 {
 	ulong h;
 	uint nIndex;
@@ -257,6 +258,7 @@ ZEND_API int _zend_hash_add_or_update(HashTable *ht, const char *arKey, uint nKe
 		p->arKey = (const char*)(p + 1);
 		memcpy((char*)p->arKey, arKey, nKeyLength);
 	}
+	p->enc = enc;
 	p->nKeyLength = nKeyLength;
 	INIT_DATA(ht, p, pData, nDataSize);
 	p->h = h;
@@ -275,7 +277,7 @@ ZEND_API int _zend_hash_add_or_update(HashTable *ht, const char *arKey, uint nKe
 	return SUCCESS;
 }
 
-ZEND_API int _zend_hash_quick_add_or_update(HashTable *ht, const char *arKey, uint nKeyLength, ulong h, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC)
+ZEND_API int _zend_hash_quick_add_or_update(HashTable *ht, const char *arKey, uint nKeyLength, EncodingPtr enc, ulong h, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC)
 {
 	uint nIndex;
 	Bucket *p;
@@ -336,6 +338,7 @@ ZEND_API int _zend_hash_quick_add_or_update(HashTable *ht, const char *arKey, ui
 	}
 
 	p->nKeyLength = nKeyLength;
+	p->enc = enc;
 	INIT_DATA(ht, p, pData, nDataSize);
 	p->h = h;
 	
@@ -356,7 +359,7 @@ ZEND_API int _zend_hash_quick_add_or_update(HashTable *ht, const char *arKey, ui
 }
 
 
-ZEND_API int zend_hash_add_empty_element(HashTable *ht, const char *arKey, uint nKeyLength)
+ZEND_API int zend_hash_add_empty_element_enc(HashTable *ht, const char *arKey, uint nKeyLength, EncodingPtr enc)
 {
 	void *dummy = (void *) 1;
 
@@ -414,6 +417,7 @@ ZEND_API int _zend_hash_index_update_or_next_insert(HashTable *ht, ulong h, void
 		return FAILURE;
 	}
 	p->arKey = NULL;
+	p->enc = enc_unassociated;
 	p->nKeyLength = 0; /* Numeric indices are marked by making the nKeyLength == 0 */
 	p->h = h;
 	INIT_DATA(ht, p, pData, nDataSize);
@@ -766,6 +770,7 @@ ZEND_API void zend_hash_apply_with_arguments(HashTable *ht, TSRMLS_D, apply_func
 	while (p != NULL) {
 		int result;
 		va_start(args, num_args);
+		hash_key.enc = p->enc;
 		hash_key.arKey = p->arKey;
 		hash_key.nKeyLength = p->nKeyLength;
 		hash_key.h = p->h;
@@ -827,7 +832,7 @@ ZEND_API void zend_hash_copy(HashTable *target, HashTable *source, copy_ctor_fun
 			target->pInternalPointer = NULL;
 		}
 		if (p->nKeyLength) {
-			zend_hash_quick_update(target, p->arKey, p->nKeyLength, p->h, p->pData, size, &new_entry);
+			zend_hash_quick_update_enc(target, p->arKey, p->nKeyLength, p->enc, p->h, p->pData, size, &new_entry);
 		} else {
 			zend_hash_index_update(target, p->h, p->pData, size, &new_entry);
 		}
@@ -854,7 +859,7 @@ ZEND_API void _zend_hash_merge(HashTable *target, HashTable *source, copy_ctor_f
 	p = source->pListHead;
 	while (p) {
 		if (p->nKeyLength>0) {
-			if (_zend_hash_quick_add_or_update(target, p->arKey, p->nKeyLength, p->h, p->pData, size, &t, mode ZEND_FILE_LINE_RELAY_CC)==SUCCESS && pCopyConstructor) {
+			if (_zend_hash_quick_add_or_update(target, p->arKey, p->nKeyLength, p->enc, p->h, p->pData, size, &t, mode ZEND_FILE_LINE_RELAY_CC)==SUCCESS && pCopyConstructor) {
 				pCopyConstructor(t);
 			}
 		} else {
@@ -872,6 +877,7 @@ static zend_bool zend_hash_replace_checker_wrapper(HashTable *target, void *sour
 {
 	zend_hash_key hash_key;
 
+	hash_key.enc = p->enc;
 	hash_key.arKey = p->arKey;
 	hash_key.nKeyLength = p->nKeyLength;
 	hash_key.h = p->h;
@@ -890,7 +896,7 @@ ZEND_API void zend_hash_merge_ex(HashTable *target, HashTable *source, copy_ctor
 	p = source->pListHead;
 	while (p) {
 		if (zend_hash_replace_checker_wrapper(target, p->pData, p, pParam, pMergeSource)) {
-			if (zend_hash_quick_update(target, p->arKey, p->nKeyLength, p->h, p->pData, size, &t)==SUCCESS && pCopyConstructor) {
+			if (zend_hash_quick_update_enc(target, p->arKey, p->nKeyLength, p->enc, p->h, p->pData, size, &t)==SUCCESS && pCopyConstructor) {
 				pCopyConstructor(t);
 			}
 		}
@@ -1144,7 +1150,7 @@ ZEND_API int zend_hash_move_backwards_ex(HashTable *ht, HashPosition *pos)
 
 
 /* This function should be made binary safe  */
-ZEND_API int zend_hash_get_current_key_ex(const HashTable *ht, char **str_index, uint *str_length, ulong *num_index, zend_bool duplicate, HashPosition *pos)
+ZEND_API int zend_hash_get_current_key_enc_ex(const HashTable *ht, char **str_index, uint *str_length, EncodingPtr *enc, ulong *num_index, zend_bool duplicate, HashPosition *pos)
 {
 	Bucket *p;
 
@@ -1161,6 +1167,9 @@ ZEND_API int zend_hash_get_current_key_ex(const HashTable *ht, char **str_index,
 			}
 			if (str_length) {
 				*str_length = p->nKeyLength;
+			}
+			if (NULL != enc) {
+				*enc = p->enc;
 			}
 			return HASH_KEY_IS_STRING;
 		} else {
@@ -1184,6 +1193,7 @@ ZEND_API void zend_hash_get_current_key_zval_ex(const HashTable *ht, zval *key, 
 		Z_TYPE_P(key) = IS_STRING;
 		Z_STRVAL_P(key) = estrndup(p->arKey, p->nKeyLength - 1);
 		Z_STRLEN_P(key) = p->nKeyLength - 1;
+		Z_STRENC_P(key) = p->enc;
 	} else {
 		Z_TYPE_P(key) = IS_LONG;
 		Z_LVAL_P(key) = p->h;

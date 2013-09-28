@@ -880,13 +880,12 @@ ZEND_API void zend_multibyte_yyinput_again(zend_encoding_filter old_input_filter
 		zendlval->value.str.len = yyleng; \
 	}
 
-static void zend_scan_escape_string(zval *zendlval, char *str, int len, char quote_type, TSRMLS_D)
+static void zend_scan_escape_string(zval *zendlval, char *str, int len, char quote_type, EncodingPtr enc, TSRMLS_D)
 {
 	register char *s, *t;
 	char *end;
 
-	ZVAL_STRINGL(zendlval, str, len, 1);
-	Z_STRENC_P(zendlval) = CG(source_encoding);
+	ZVAL_STRINGL_ENC(zendlval, str, len, enc, 1);
 
 	/* convert escape sequences */
 	s = t = zendlval->value.str.val;
@@ -2040,7 +2039,7 @@ inline_html:
 	zendlval->value.str.val = estrndup(yytext+bprefix+1, yyleng-bprefix-2);
 	zendlval->value.str.len = yyleng-bprefix-2;
 	zendlval->type = IS_STRING;
-	zendlval->value.str.enc = CG(source_encoding); /* TODO: consider b prefix */
+	zendlval->value.str.enc = bprefix ? enc_binary : CG(source_encoding);
 
 	/* convert escape sequences */
 	s = t = zendlval->value.str.val;
@@ -2089,7 +2088,7 @@ inline_html:
 		switch (*YYCURSOR++) {
 			case '"':
 				yyleng = YYCURSOR - SCNG(yy_text);
-				zend_scan_escape_string(zendlval, yytext+bprefix+1, yyleng-bprefix-2, '"', TSRMLS_C);
+				zend_scan_escape_string(zendlval, yytext+bprefix+1, yyleng-bprefix-2, '"', bprefix ? enc_binary : CG(source_encoding), TSRMLS_C);
 				return T_CONSTANT_ENCAPSED_STRING;
 			case '$':
 				if (IS_LABEL_START(*YYCURSOR) || *YYCURSOR == '{') {
@@ -2256,7 +2255,7 @@ inline_html:
 double_quotes_scan_done:
 	yyleng = YYCURSOR - SCNG(yy_text);
 
-	zend_scan_escape_string(zendlval, yytext, yyleng, '"', TSRMLS_C);
+	zend_scan_escape_string(zendlval, yytext, yyleng, '"', CG(source_encoding), TSRMLS_C);
 	return T_ENCAPSED_AND_WHITESPACE;
 }
 
@@ -2298,7 +2297,7 @@ double_quotes_scan_done:
 
 	yyleng = YYCURSOR - SCNG(yy_text);
 
-	zend_scan_escape_string(zendlval, yytext, yyleng, '`', TSRMLS_C);
+	zend_scan_escape_string(zendlval, yytext, yyleng, '`', CG(source_encoding), TSRMLS_C);
 	return T_ENCAPSED_AND_WHITESPACE;
 }
 
@@ -2372,7 +2371,7 @@ double_quotes_scan_done:
 heredoc_scan_done:
 	yyleng = YYCURSOR - SCNG(yy_text);
 
-	zend_scan_escape_string(zendlval, yytext, yyleng - newline, 0, TSRMLS_C);
+	zend_scan_escape_string(zendlval, yytext, yyleng - newline, 0, CG(source_encoding), TSRMLS_C);
 	return T_ENCAPSED_AND_WHITESPACE;
 }
 

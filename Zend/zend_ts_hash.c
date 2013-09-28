@@ -99,23 +99,23 @@ ZEND_API void zend_ts_hash_clean(TsHashTable *ht)
 	end_write(ht);
 }
 
-ZEND_API int _zend_ts_hash_add_or_update(TsHashTable *ht, char *arKey, uint nKeyLength, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC)
+ZEND_API int _zend_ts_hash_add_or_update(TsHashTable *ht, char *arKey, uint nKeyLength, EncodingPtr enc, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC)
 {
 	int retval;
 
 	begin_write(ht);
-	retval = _zend_hash_add_or_update(TS_HASH(ht), arKey, nKeyLength, pData, nDataSize, pDest, flag ZEND_FILE_LINE_RELAY_CC);
+	retval = _zend_hash_add_or_update(TS_HASH(ht), arKey, nKeyLength, enc, pData, nDataSize, pDest, flag ZEND_FILE_LINE_RELAY_CC);
 	end_write(ht);
 
 	return retval;
 }
 
-ZEND_API int _zend_ts_hash_quick_add_or_update(TsHashTable *ht, char *arKey, uint nKeyLength, ulong h, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC)
+ZEND_API int _zend_ts_hash_quick_add_or_update(TsHashTable *ht, char *arKey, uint nKeyLength, EncodingPtr enc, ulong h, void *pData, uint nDataSize, void **pDest, int flag ZEND_FILE_LINE_DC)
 {
 	int retval;
 
 	begin_write(ht);
-	retval = _zend_hash_quick_add_or_update(TS_HASH(ht), arKey, nKeyLength, h, pData, nDataSize, pDest, flag ZEND_FILE_LINE_RELAY_CC);
+	retval = _zend_hash_quick_add_or_update(TS_HASH(ht), arKey, nKeyLength, enc, h, pData, nDataSize, pDest, flag ZEND_FILE_LINE_RELAY_CC);
 	end_write(ht);
 
 	return retval;
@@ -132,12 +132,12 @@ ZEND_API int _zend_ts_hash_index_update_or_next_insert(TsHashTable *ht, ulong h,
 	return retval;
 }
 
-ZEND_API int zend_ts_hash_add_empty_element(TsHashTable *ht, char *arKey, uint nKeyLength)
+ZEND_API int zend_ts_hash_add_empty_element(TsHashTable *ht, char *arKey, uint nKeyLength, EncodingPtr enc)
 {
 	int retval;
 
 	begin_write(ht);
-	retval = zend_hash_add_empty_element(TS_HASH(ht), arKey, nKeyLength);
+	retval = zend_hash_add_empty_element_enc(TS_HASH(ht), arKey, nKeyLength, enc);
 	end_write(ht);
 
 	return retval;
