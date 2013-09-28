@@ -54,6 +54,7 @@ typedef struct _zend_lex_state {
 typedef struct _zend_heredoc_label {
 	char *label;
 	int length;
+	int bprefixed; // true if b prefixed
 } zend_heredoc_label;
 
 BEGIN_EXTERN_C()

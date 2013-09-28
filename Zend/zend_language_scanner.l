@@ -2129,6 +2129,7 @@ inline_html:
 	zend_heredoc_label *heredoc_label = emalloc(sizeof(zend_heredoc_label));
 
 	CG(zend_lineno)++;
+	heredoc_label->bprefixed = bprefix;
 	heredoc_label->length = yyleng-bprefix-3-1-(yytext[yyleng-2]=='\r'?1:0);
 	s = yytext+bprefix+3;
 	while ((*s == ' ') || (*s == '\t')) {
@@ -2371,7 +2372,7 @@ double_quotes_scan_done:
 heredoc_scan_done:
 	yyleng = YYCURSOR - SCNG(yy_text);
 
-	zend_scan_escape_string(zendlval, yytext, yyleng - newline, 0, CG(source_encoding), TSRMLS_C);
+	zend_scan_escape_string(zendlval, yytext, yyleng - newline, 0, heredoc_label->bprefixed ? enc_binary : CG(source_encoding), TSRMLS_C);
 	return T_ENCAPSED_AND_WHITESPACE;
 }
 
@@ -2429,6 +2430,7 @@ nowdoc_scan_done:
 
 	zend_copy_value(zendlval, yytext, yyleng - newline);
 	zendlval->type = IS_STRING;
+	zendlval->value.str.enc = heredoc_label->bprefixed ? enc_binary : CG(source_encoding);
 	HANDLE_NEWLINES(yytext, yyleng - newline);
 	return T_ENCAPSED_AND_WHITESPACE;
 }
