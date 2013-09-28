@@ -1259,6 +1259,7 @@ ZEND_API int add_assoc_double_ex(zval *arg, const char *key, uint key_len, doubl
 }
 /* }}} */
 
+#if 0
 ZEND_API int add_assoc_string_ex(zval *arg, const char *key, uint key_len, char *str, int duplicate) /* {{{ */
 {
 	zval *tmp;
@@ -1269,7 +1270,19 @@ ZEND_API int add_assoc_string_ex(zval *arg, const char *key, uint key_len, char 
 	return zend_symtable_update(Z_ARRVAL_P(arg), key, key_len, (void *) &tmp, sizeof(zval *), NULL);
 }
 /* }}} */
+#endif
 
+ZEND_API int add_assoc_string_enc_ex(zval *arg, const char *key, uint key_len, char *str, EncodingPtr enc, int duplicate) /* {{{ */
+{
+        zval *tmp;
+
+        MAKE_STD_ZVAL(tmp);
+        ZVAL_STRING_ENC(tmp, str, enc, duplicate);
+
+        return zend_symtable_update(Z_ARRVAL_P(arg), key, key_len, (void *) &tmp, sizeof(zval *), NULL);
+}
+
+#if 0
 ZEND_API int add_assoc_stringl_ex(zval *arg, const char *key, uint key_len, char *str, uint length, int duplicate) /* {{{ */
 {
 	zval *tmp;
@@ -1280,6 +1293,7 @@ ZEND_API int add_assoc_stringl_ex(zval *arg, const char *key, uint key_len, char
 	return zend_symtable_update(Z_ARRVAL_P(arg), key, key_len, (void *) &tmp, sizeof(zval *), NULL);
 }
 /* }}} */
+#endif
 
 ZEND_API int add_assoc_stringl_enc_ex(zval *arg, const char *key, uint key_len, char *str, uint length, EncodingPtr enc, int duplicate) /* {{{ */
 {
@@ -1353,6 +1367,7 @@ ZEND_API int add_index_double(zval *arg, ulong index, double d) /* {{{ */
 }
 /* }}} */
 
+#if 0
 ZEND_API int add_index_string(zval *arg, ulong index, const char *str, int duplicate) /* {{{ */
 {
 	zval *tmp;
@@ -1363,6 +1378,7 @@ ZEND_API int add_index_string(zval *arg, ulong index, const char *str, int dupli
 	return zend_hash_index_update(Z_ARRVAL_P(arg), index, (void *) &tmp, sizeof(zval *), NULL);
 }
 /* }}} */
+#endif
 
 ZEND_API int add_index_string_enc(zval *arg, ulong index, const char *str, EncodingPtr enc, int duplicate) /* {{{ */
 {
@@ -1375,6 +1391,7 @@ ZEND_API int add_index_string_enc(zval *arg, ulong index, const char *str, Encod
 }
 /* }}} */
 
+#if 0
 ZEND_API int add_index_stringl(zval *arg, ulong index, const char *str, uint length, int duplicate) /* {{{ */
 {
 	zval *tmp;
@@ -1385,6 +1402,7 @@ ZEND_API int add_index_stringl(zval *arg, ulong index, const char *str, uint len
 	return zend_hash_index_update(Z_ARRVAL_P(arg), index, (void *) &tmp, sizeof(zval *), NULL);
 }
 /* }}} */
+#endif
 
 ZEND_API int add_index_stringl_enc(zval *arg, ulong index, const char *str, uint length, EncodingPtr enc, int duplicate) /* {{{ */
 {
@@ -1458,6 +1476,7 @@ ZEND_API int add_next_index_double(zval *arg, double d) /* {{{ */
 }
 /* }}} */
 
+#if 0
 ZEND_API int add_next_index_string(zval *arg, const char *str, int duplicate) /* {{{ */
 {
 	zval *tmp;
@@ -1468,6 +1487,7 @@ ZEND_API int add_next_index_string(zval *arg, const char *str, int duplicate) /*
 	return zend_hash_next_index_insert(Z_ARRVAL_P(arg), &tmp, sizeof(zval *), NULL);
 }
 /* }}} */
+#endif
 
 ZEND_API int add_next_index_string_enc(zval *arg, const char *str, EncodingPtr enc, int duplicate) /* {{{ */
 {
@@ -1480,6 +1500,7 @@ ZEND_API int add_next_index_string_enc(zval *arg, const char *str, EncodingPtr e
 }
 /* }}} */
 
+#if 0
 ZEND_API int add_next_index_stringl(zval *arg, const char *str, uint length, int duplicate) /* {{{ */
 {
 	zval *tmp;
@@ -1490,6 +1511,7 @@ ZEND_API int add_next_index_stringl(zval *arg, const char *str, uint length, int
 	return zend_hash_next_index_insert(Z_ARRVAL_P(arg), &tmp, sizeof(zval *), NULL);
 }
 /* }}} */
+#endif
 
 ZEND_API int add_next_index_stringl_enc(zval *arg, const char *str, uint length, EncodingPtr enc, int duplicate) /* {{{ */
 {

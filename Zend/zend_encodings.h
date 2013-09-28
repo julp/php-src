@@ -15,6 +15,7 @@ extern EncodingPtr enc_binary;
 # define Z_STRENC_P(zval_p)   Z_STRENC(*zval_p)
 # define Z_STRENC_PP(zval_pp) Z_STRENC(**zval_pp)
 
+/*
 # define ZVAL_STRING_ENC(z, s, enc, duplicate) \
     do { \
         const char *__s = (s); \
@@ -35,6 +36,7 @@ extern EncodingPtr enc_binary;
         Z_TYPE_P(__z) = IS_STRING; \
         Z_STRENC_P(__z) = enc; \
     } while (0)
+*/
 
 # define ZVAL_STRING_UTF8(z, s, duplicate) \
     ZVAL_STRING_ENC(z, s, enc_utf8, duplicate)

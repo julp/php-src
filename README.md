@@ -67,22 +67,43 @@ None (as far I know) but it will be great to remove iconv.\*\_encoding and mb_in
 
 # Internal API changes
 
-Rewrite all [ZVAL|RETVAL]\_\* macros. In order to not break anything, introduce new macros with a "ENC" suffix which expect a pointer to a charset. "Old" [ZVAL|RETVAL]\_\* macros are redirected to their ENC equivalent with the default encoding. Eg:
+Rewrite all [ZVAL|RETVAL]\_\* macros. In order to not break anything, introduce new macros with a "ENC" suffix which expect a pointer to a charset. "Old" [ZVAL|RETVAL]\_\* macros are redirected to their \*\_ENC equivalent with the default encoding. Eg:
 
-```
-#define ZVAL_STRING_ENC(z, s, enc, duplicate) /* not shown */
-#define ZVAL_STRING(z, s, duplicate) ZVAL_STRING_ENC(z, s, ENC_UNASSOCIATED, duplicate)
+```C
+#define ZVAL_STRING_ENC(z, s, enc, duplicate) \
+    /* not shown */
+
+#define ZVAL_STRING(z, s, duplicate) \
+    ZVAL_STRING_ENC(z, s, enc_unassociated, duplicate)
 ```
 
-Add modifiers to zend_parse_arg_impl:
+Same thing for array insertion (replace add_[assoc|index]_stringl? with macros on add_[assoc|index]_stringl?_enc):
+
+```C
+#define add_assoc_string_ex(arg, key, key_len, str, duplicate) \
+    add_assoc_string_enc_ex(arg, key, key_len, str, enc_unassociated, duplicate)
+
+ZEND_API int add_assoc_string_enc_ex(zval *arg, const char *key, uint key_len, char *str, EncodingPtr enc, int duplicate);
+```
+
+Introduce new modifiers to zend_parse_arg_impl:
 * 's', a string without an associated encoding (or we don't care about its encoding): `char **ptr, int *ptr_len`, is kept as is for compatibility (at least temporarily)
 * 'e', a string encoded or compatible with a given encoding: ` char **ptr, int *ptr_len, EncodingPtr enc`
 * 'u', for convenience, an utf-8 string: `char **ptr, int *ptr_len`
 * 'E', same as 's' but we want to get its encoding: `char **ptr, int *ptr_len, EncodingPtr *enc`
 
-Add convenient function for array insertion (add_[assoc|index]_stringl?_enc)
+And add 2 parameters to zend_parse_arg_impl (and its callers):
+* int mbaware: is the function multibyte aware, permit to automatically emit a warning with non compatible function
+* EncodingPtr default_enc: for convenience, if set (!= NULL), it overrides charset for modifier s
 
-TODO: need to keep charset associated to identifiers but hashtables for symbols use a char * as key, not a zval *.
+Helpers (macros):
+* zend_parse_\*parameters_utf8\* to override charset of modifier s to utf-8 (become equivalent to modifier u)
+* zend_parse_\*parameters_fs\* to override charset of modifier s to filesystem encoding
+* zend_parse_\*parameters_mbunaware\* for functions incompatible with a multibyte encoding
+
+Files altered:
+* Zend/zend_API.[ch]
+* Zend/zend_hash.[ch]
 
 # Extension specific
 
@@ -258,6 +279,15 @@ See: [.ZIP File Format Specification](http://www.pkware.com/documents/casestudie
 
 * `string str_encoding(string $str)` return current encoding of given string
 * `bool str_force_encoding(mixed &$variable, string $encoding)` true if the new encoding was successfully associated to the string variable
+
+# Current state
+
+* partial on string functions
+* partial on extension mysqli
+* partial on extension pgsql
+* utf8_[en|de]code
+* check compatibility on concatenations
+* use declared encoding of each script
 
 # Examples
 
