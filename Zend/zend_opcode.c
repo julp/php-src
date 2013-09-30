@@ -101,6 +101,7 @@ void init_op_array(zend_op_array *op_array, zend_uchar type, int initial_ops_siz
 	op_array->last_literal = 0;
 	op_array->literals = NULL;
 
+	op_array->encoding = enc_unassociated;
 	op_array->run_time_cache = NULL;
 	op_array->last_cache_slot = 0;
 

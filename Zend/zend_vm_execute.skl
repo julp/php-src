@@ -1,6 +1,6 @@
 {%DEFINES%}
 
-ZEND_API void {%EXECUTOR_NAME%}_ex(zend_execute_data *execute_data TSRMLS_DC)
+ZEND_API void {%EXECUTOR_NAME%}_ex(zend_execute_data *execute_data, TSRMLS_D)
 {
 	DCL_OPLINE
 	zend_bool original_in_execution;
@@ -14,7 +14,7 @@ ZEND_API void {%EXECUTOR_NAME%}_ex(zend_execute_data *execute_data TSRMLS_DC)
 
 	if (0) {
 zend_vm_enter:
-		execute_data = i_create_execute_data_from_op_array(EG(active_op_array), 1 TSRMLS_CC);
+		execute_data = i_create_execute_data_from_op_array(EG(active_op_array), 1, TSRMLS_C);
 	}
 
 	LOAD_REGS();
@@ -36,12 +36,12 @@ zend_vm_enter:
 	zend_error_noreturn(E_ERROR, "Arrived at end of main loop which shouldn't happen");
 }
 
-ZEND_API void zend_{%EXECUTOR_NAME%}(zend_op_array *op_array TSRMLS_DC)
+ZEND_API void zend_{%EXECUTOR_NAME%}(zend_op_array *op_array, TSRMLS_D)
 {
 	if (EG(exception)) {
 		return;
 	} 
-	zend_{%EXECUTOR_NAME%}_ex(i_create_execute_data_from_op_array(op_array, 0 TSRMLS_CC) TSRMLS_CC);
+	zend_{%EXECUTOR_NAME%}_ex(i_create_execute_data_from_op_array(op_array, 0, TSRMLS_C), TSRMLS_C);
 }
 
 {%EXTERNAL_EXECUTOR%}

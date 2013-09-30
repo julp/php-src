@@ -3820,7 +3820,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -4719,7 +4719,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -5581,7 +5581,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -6281,7 +6281,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -7217,7 +7217,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -9089,7 +9089,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -9952,7 +9952,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -10818,7 +10818,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -11397,7 +11397,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -12257,7 +12257,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -15691,7 +15691,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -17949,7 +17949,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -20265,7 +20265,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -21684,7 +21684,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -23717,7 +23717,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -32942,7 +32942,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -35064,7 +35064,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -37243,7 +37243,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -38533,7 +38533,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);
@@ -40412,7 +40412,7 @@ num_index:
 						hval = zend_hash_func(Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1);
 					}
 				}
-				zend_hash_quick_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, hval, &expr_ptr, sizeof(zval *), NULL);
+				zend_hash_quick_update_enc(Z_ARRVAL(EX_T(opline->result.var).tmp_var), Z_STRVAL_P(offset), Z_STRLEN_P(offset)+1, Z_STRENC_P(offset), hval, &expr_ptr, sizeof(zval *), NULL);
 				break;
 			case IS_NULL:
 				zend_hash_update(Z_ARRVAL(EX_T(opline->result.var).tmp_var), "", sizeof(""), &expr_ptr, sizeof(zval *), NULL);

@@ -1036,7 +1036,7 @@ fetch_string_dim:
 							zval *new_zval = &EG(uninitialized_zval);
 
 							Z_ADDREF_P(new_zval);
-							zend_hash_quick_update(ht, offset_key, offset_key_length+1, hval, &new_zval, sizeof(zval *), (void **) &retval);
+							zend_hash_quick_update_enc(ht, offset_key, offset_key_length+1, Z_STRENC_P(dim), hval, &new_zval, sizeof(zval *), (void **) &retval);
 						}
 						break;
 				}
